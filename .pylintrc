@@ -1,0 +1,7 @@
+[MAIN]
+generated-members=PySide6.QtWidgets.*,PySide6.QtCore.*,PySide6.QtGui.*
+ignore-paths= old
+
+[MESSAGES CONTROL]
+
+disable=C0114,C0115,C0116,C0301, W0621, E0611
