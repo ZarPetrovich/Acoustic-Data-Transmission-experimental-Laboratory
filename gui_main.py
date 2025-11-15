@@ -15,11 +15,13 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QTabWidget,
     QWidget,
-    QVBoxLayout
+    QVBoxLayout,
+    QDialog
 )
 
 # Local Application/Library Specific Imports
 
+from adtx_lab.src.ui.intro_dialog import *
 # Application Constants & Logging
 from adtx_lab.src.constants import PulseShape, ModulationScheme
 from adtx_lab.src.logging.formatter import CustomFormatter
@@ -32,7 +34,7 @@ from adtx_lab.src.baseband_modules.shape_generator import CosinePulse, Rectangle
 
 # Application GUI (Widgets)
 from adtx_lab.src.ui.qt_widgets import (
-    GlobalParameterWidget,
+    Header,
     FooterWidget,
     PulseTab,
     BasebandTab
@@ -41,7 +43,7 @@ from adtx_lab.src.ui.qt_widgets import (
 
 class MainGUILogic(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, initial_values):
 
         super().__init__()
 
@@ -50,11 +52,11 @@ class MainGUILogic(QMainWindow):
 
         # DEFAULT PARAMETERS
 
-        self.fs = 48000
-        self.sym_sec = 100
-        self.pulse_parameters = None
-        self.pulse_object = None
+        self.fs = initial_values["fs"]
+        self.sym_rate = initial_values["sym_rate"]
+        self.dict_pulse_signals = None
 
+        # Set ENUM Constants Name
         self.pulse_shape_map = {
             PulseShape.RECTANGLE: "Rectangle",
             PulseShape.COSINE_SQUARED: "Cosine²"
@@ -65,13 +67,12 @@ class MainGUILogic(QMainWindow):
         }
 
         # +++ Init Widgets +++
+
         # Footer
-        self.footer = FooterWidget(self)
+        self.widget_footer = FooterWidget(self)
 
         # Header "Global Parameters"
-        self.global_params_widget = GlobalParameterWidget()
-        self.global_params_widget.txt_input_param_fs.setText(str(self.fs))
-        self.global_params_widget.spinbox_sym_sec.setValue(self.sym_sec)
+        self.widget_header = Header(self.fs, self.sym_rate)
 
         # +++ Init Tabs +++
         # PULSE
@@ -96,15 +97,14 @@ class MainGUILogic(QMainWindow):
 
         # Add Header Widget & Tab Widget to Main Layout
 
-        main_layout.addWidget(self.global_params_widget)
+        main_layout.addWidget(self.widget_header)
         main_layout.addWidget(self.tab_widget)
         self.setCentralWidget(main_content_container)
 
         # QT SIGNALS
 
         # +++ Main Connections +++
-        self.global_params_widget.signal_global_changes.connect(
-            self.save_global_param)
+
         self.content_tab_pulse.signal_pulse_created.connect(
             self.create_pulse)
         self.content_tab_baseband.signal_create_basebandsignal.connect(
@@ -128,35 +128,28 @@ class MainGUILogic(QMainWindow):
         else:
             formatted_text = message
 
-        self.footer.set_info(formatted_text)
+        self.widget_footer.set_info(formatted_text)
 
     # Main Logic
-
-    def save_global_param(self):
-        fs_value = self.global_params_widget.txt_input_param_fs.text()
-        sym_rate_value = self.global_params_widget.spinbox_sym_sec.value()
-
-        self.log_info("Fs and Sym/s saved: Fs=%s, Symbols/s=%d",
-                      fs_value, sym_rate_value)
-
     def create_pulse(self):
 
-        try:
-            self.content_tab_pulse.get_values()
+        values = self.content_tab_pulse.get_values()
+        shape = values['shape']
+        span = values['span']
 
-            self.pulse_parameters = self.content_tab_pulse.get_values()
+        if shape == PulseShape.RECTANGLE:
+            rect_generator = rect_generator = RectanglePulse(self.sym_rate, self.fs, span)
+            rect_pulse_data = rect_generator.generate()
+            rectangle_pulse_01 = PulseSignal(
+                  "Rectangle Pulse 01",
+                  rect_pulse_data,
+                  self.fs,
+                  self.sym_rate,
+                  PulseShape.RECTANGLE,
+                  span
+                    )
+            return rectangle_pulse_01
 
-        except Exception as e:
-            logging.error(
-                "An error occurred while saving pulse parameters: %s", e)
-
-        # ELIF for every Pulse
-
-        if self.pulse_parameters['shape'] == PulseShape.RECTANGLE:
-            None
-
-        elif self.pulse_parameters['shape'] == PulseShape.COSINE_SQUARED:
-            None
 
     def create_baseband_signal(self):
 
@@ -177,7 +170,22 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    main_app = MainGUILogic()
+    main_app = MainGUILogic(initial_values = {"fs": 48000, "sym_rate": 100})
     main_app.show()
 
     sys.exit(app.exec())
+
+    # dialog = IntroDialog()
+
+    # if dialog.exec() == QDialog.Accepted:
+
+    #     values = dialog.get_values()
+
+    #     main_app = MainGUILogic(initial_values = values)
+    #     main_app.show()
+
+    #     sys.exit(app.exec())
+
+    # else:
+    #     logging.info("Application closed by user before start.")
+    #     sys.exit(0)

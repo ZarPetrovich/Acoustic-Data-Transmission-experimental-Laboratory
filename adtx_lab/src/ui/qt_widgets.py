@@ -10,36 +10,24 @@ from PySide6.QtWidgets import(
     QComboBox)
 
 
-class GlobalParameterWidget(QWidget):
+class Header(QWidget):
 
-    signal_global_changes = Signal()
+    def __init__(self, fs,sym_rate, parent=None):
 
-    def __init__(self, main_window=None):
+        super().__init__(parent)
 
-        super().__init__(main_window)
+        layout = QGridLayout(self)
 
-        outer_layout = QGridLayout(self)
+        self.label_fs = QLabel(f"FS : {fs} Hz ")
+        layout.addWidget(self.label_fs)
 
-        form_layout = QFormLayout()
+        self.label_sym_rate = QLabel(f"Symbolrate : {sym_rate} Symbol/s")
+        layout.addWidget(self.label_sym_rate)
 
-        self.txt_input_param_fs = QLineEdit()                           # fs Entry
-        form_layout.addRow("Fs (Sampling Freq. :)", self.txt_input_param_fs)
+        self.label_samples_per_symbol = QLabel(f"Samples/Symbol: {int(fs/sym_rate)} samples ")
+        layout.addWidget(self.label_samples_per_symbol)
 
-        self.spinbox_sym_sec = QSpinBox(self)
-        self.spinbox_sym_sec.setRange(1, 600)
-        self.spinbox_sym_sec.setSingleStep(1)
 
-        form_layout.addRow("Symbols/s :", self.spinbox_sym_sec)
-
-        btn_save_global = QPushButton("Save Fs & Sym/s")
-        form_layout.addRow(btn_save_global)
-
-        outer_layout.addLayout(form_layout, 0, 0)
-        outer_layout.setColumnStretch(1, 1)
-
-        btn_save_global.clicked.connect(self.signal_global_changes.emit)
-        self.txt_input_param_fs.returnPressed.connect(
-            self.signal_global_changes.emit)
 
 
 class PulseTab(QWidget):
@@ -129,11 +117,11 @@ class FooterWidget:
 
         # Labels
 
-        self.pulse_label = QLabel("Pulse: N/A")
-        self.mod_label = QLabel("Mod: N/A")
+        # self.pulse_label = QLabel("Pulse: N/A")
+        # self.mod_label = QLabel("Mod: N/A")
 
-        self.pulse_label.setStyleSheet("margin-right: 10px;")
-        self.mod_label.setStyleSheet("margin-right: 10px;")
+        # self.pulse_label.setStyleSheet("margin-right: 10px;")
+        # self.mod_label.setStyleSheet("margin-right: 10px;")
         # Buttons
 
         close_button = QPushButton("Exit")
@@ -142,19 +130,19 @@ class FooterWidget:
         close_button.clicked.connect(main_window.close)
         restart_button.clicked.connect(main_window.restart_application)
 
-        self.status_bar.addPermanentWidget(self.mod_label)
-        self.status_bar.addPermanentWidget(self.pulse_label)
+        # self.status_bar.addPermanentWidget(self.mod_label)
+        # self.status_bar.addPermanentWidget(self.pulse_label)
 
         self.status_bar.addPermanentWidget(restart_button)
         self.status_bar.addPermanentWidget(close_button)
 
         self.set_ready()
 
-    def update_pulse_shape(self, shape_text):
-        self.pulse_label.setText(f"Pulse: {shape_text}")
+    # def update_pulse_shape(self, shape_text):
+    #     self.pulse_label.setText(f"Pulse: {shape_text}")
 
-    def update_mod_scheme(self, scheme_text):
-        self.mod_label.setText(f"Mod: {scheme_text}")
+    # def update_mod_scheme(self, scheme_text):
+    #     self.mod_label.setText(f"Mod: {scheme_text}")
 
     def set_ready(self):
         self.status_bar.showMessage("Ready for action")
