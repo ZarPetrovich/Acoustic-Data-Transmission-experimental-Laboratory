@@ -54,7 +54,8 @@ class MainGUILogic(QMainWindow):
 
         self.fs = initial_values["fs"]
         self.sym_rate = initial_values["sym_rate"]
-        self.dict_pulse_signals = None
+        self.dict_pulse_signals = {}
+        self.pulse_counter = 1
 
         # Set ENUM Constants Name
         self.pulse_shape_map = {
@@ -137,22 +138,39 @@ class MainGUILogic(QMainWindow):
         shape = values['shape']
         span = values['span']
 
-        if shape == PulseShape.RECTANGLE:
-            rect_generator = rect_generator = RectanglePulse(self.sym_rate, self.fs, span)
-            rect_pulse_data = rect_generator.generate()
-            rectangle_pulse_01 = PulseSignal(
-                  "Rectangle Pulse 01",
-                  rect_pulse_data,
-                  self.fs,
-                  self.sym_rate,
-                  PulseShape.RECTANGLE,
-                  span
-                    )
-            return rectangle_pulse_01
+        pulse_generators = {
+            PulseShape.RECTANGLE: RectanglePulse,
+            PulseShape.COSINE_SQUARED: CosinePulse
+        }
+
+        generator_cls = pulse_generators.get(shape)
+
+        if not generator_cls:
+            self.log_info("Unknown Pulse Shape")
+
+        generator = generator_cls (self.sym_rate, self.fs, span)
+        pulse_data = generator.generate()
+
+        new_pulse_name = f"{self.pulse_shape_map[shape]}_Pulse_{self.pulse_counter}"
+        self.pulse_counter += 1
+
+        pulse_signal = PulseSignal(
+            new_pulse_name,
+            pulse_data,
+            self.fs,
+            self.sym_rate,
+            shape,
+            span
+        )
+
+        self.dict_pulse_signals[new_pulse_name] = pulse_signal
+
+        logging.info(self.dict_pulse_signals.keys())
+
+        self.content_tab_baseband(self.dict_pulse_signals.keys())
 
 
     def create_baseband_signal(self):
-
         None
 
 

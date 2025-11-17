@@ -7,6 +7,7 @@ from PySide6.QtWidgets import(
     QPushButton,
     QSpinBox,
     QFormLayout,
+    QListWidget,
     QComboBox)
 
 
@@ -46,10 +47,12 @@ class PulseTab(QWidget):
 
         form_layout = QFormLayout()
 
+        # Pulse Shape
         self.combobox_pulse_shapes = QComboBox()
         self.combobox_pulse_shapes.addItems(pulse_shape_map.values())
         form_layout.addRow("Pulse Shape:", self.combobox_pulse_shapes)
 
+        # Pulse Span
         self.spinbox_pulse_span = QSpinBox(self)
         self.spinbox_pulse_span.setRange(1, 5)
         self.spinbox_pulse_span.setSingleStep(1)
@@ -57,12 +60,16 @@ class PulseTab(QWidget):
 
         form_layout.addRow("Pulse Span :", self.spinbox_pulse_span)
 
-        outer_layout.addLayout(form_layout, 0, 0)
-        outer_layout.setColumnStretch(1, 1)
-
+        # Buttons
         btn_create_pulse = QPushButton("Create Pulse")
         form_layout.addRow(btn_create_pulse)
 
+        # Outer Layout Init
+
+        outer_layout.addLayout(form_layout, 0, 0)
+        outer_layout.setColumnStretch(1, 1)
+
+        # Signal Emitter
         btn_create_pulse.clicked.connect(self.signal_pulse_created.emit)
 
     def get_values(self):
@@ -94,6 +101,10 @@ class BasebandTab(QWidget):
         self.combobox_mod_schemes.addItems(mod_scheme_map.values())
         form_layout.addRow("Modulation Scheme:", self.combobox_mod_schemes)
 
+        self.combobox_pulse_signals = QComboBox()
+        form_layout.addRow("Modulation Scheme:", self.combobox_pulse_signals)
+
+
         outer_layout.addLayout(form_layout, 0, 0)
         outer_layout.setColumnStretch(1, 1)
 
@@ -108,6 +119,10 @@ class BasebandTab(QWidget):
             None
 
 
+    def update_pulse_signals(self, pulse_signa_keys):
+
+        self.combobox_pulse_signals.clear()
+        self.combobox_pulse_signals.addItems(pulse_signal_names)
 
 class FooterWidget:
 
@@ -153,3 +168,5 @@ class FooterWidget:
 
     def set_error(self, text, timeout_ms=3000):
         self.status_bar.showMessage(f"Error: {text}", timeout_ms)
+
+
