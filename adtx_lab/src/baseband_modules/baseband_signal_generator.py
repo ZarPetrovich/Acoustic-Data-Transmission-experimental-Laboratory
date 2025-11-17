@@ -8,9 +8,7 @@ class BasebandSignalGenerator:
     Creates a instance that can generate baseband signals
     from pulse shapes. Each Pulse Shape need it´s own Generator
     Attributes:
-        pulse_data (np.ndarray): The pulse shape data.
-        sym_rate (int): Symbol rate.
-        samples_per_symbol (int): Number of samples per symbol.
+        PulseSignal pulse_obj: The Pulse Signal Object containing the pulse shape data
     """
     def __init__(self, pulse_obj: PulseSignal):
 
