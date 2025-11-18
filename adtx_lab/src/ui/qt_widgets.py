@@ -35,7 +35,7 @@ class Header(QWidget):
 
 class PulseTab(QWidget):
 
-    signal_pulse_created = Signal()
+    signal_create_Pulse = Signal()
 
     def __init__(self, pulse_shape_map, parent=None):
 
@@ -70,7 +70,7 @@ class PulseTab(QWidget):
         outer_layout.setColumnStretch(3, 3)
 
         # Signal Emitter
-        btn_create_pulse.clicked.connect(self.signal_pulse_created.emit)
+        btn_create_pulse.clicked.connect(self.signal_create_Pulse.emit)
 
     def get_values(self):
 

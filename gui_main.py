@@ -49,13 +49,14 @@ from adtx_lab.src.ui.qt_widgets import (
 class MainGUILogic(QMainWindow):
 
     def __init__(self, initial_values):
-
+        # region
         super().__init__()
 
         self.setWindowTitle("ADM Lab")
         self.setGeometry(100, 100, 900, 600)
+        # endregion
 
-        # DEFAULT PARAMETERS
+        # region DEFAULT PARAMETERS
 
         self.fs = initial_values["fs"]
         self.sym_rate = initial_values["sym_rate"]
@@ -74,16 +75,18 @@ class MainGUILogic(QMainWindow):
         self.modulation_scheme_map = {
             ModulationScheme.AMPLITUDE_MODULATION: "Amplitude Modulation"
         }
+        # endregion
 
-        # +++ Init Widgets +++
+        # region +++ Init Widgets +++
 
         # Footer
         self.widget_footer = FooterWidget(self)
 
         # Header "Global Parameters"
         self.widget_header = Header(self.fs, self.sym_rate)
+        # endregion
 
-        # +++ Init Tabs +++
+        # region +++ Init Tabs +++
         # PULSE
         self.tab_widget = QTabWidget()
         self.content_tab_pulse = PulseTab(pulse_shape_map=self.pulse_shape_map)
@@ -99,8 +102,10 @@ class MainGUILogic(QMainWindow):
             mod_scheme_map=self.modulation_scheme_map
         )
         self.tab_widget.addTab(self.content_tab_modulation, "Modulation")
-        # +++ Main Layout +++
+        # endregion
 
+        # region +++ Main Layout +++
+        #
         main_content_container = QWidget()
 
         main_layout = QVBoxLayout(main_content_container)
@@ -111,16 +116,23 @@ class MainGUILogic(QMainWindow):
         main_layout.addWidget(self.widget_header)
         main_layout.addWidget(self.tab_widget)
         self.setCentralWidget(main_content_container)
+        # endregion
 
-        # QT SIGNALS
+        # region +++ QT SIGNALS +++
 
         # +++ Main Connections +++
 
-        self.content_tab_pulse.signal_pulse_created.connect(self.create_pulse)
+        self.content_tab_pulse.signal_create_Pulse.connect(
+            self.create_pulse
+        )
         self.content_tab_baseband.signal_create_basebandsignal.connect(
             self.create_baseband_signal
         )
+        self.content_tab_modulation.signal_create_Modulation.connect(
+            self.modulate_transmit_signal
+        )
 
+        # endregion
         # END __INIT__
 
     # Helper Functions
@@ -141,14 +153,26 @@ class MainGUILogic(QMainWindow):
 
         self.widget_footer.set_info(formatted_text)
 
+    def log_error(self, message, *args):
+
+        logging.error(message, *args)
+
+        if args:
+            formatted_text = message % args
+        else:
+            formatted_text = message
+
+        self.widget_footer.set_info(formatted_text)
+
     # Main
 
     def create_pulse(self):
-
+        # Init Values
         values = self.content_tab_pulse.get_values()
         shape = values["shape"]
         span = values["span"]
 
+        # Init Generators
         pulse_generators = {
             PulseShape.RECTANGLE: RectanglePulse,
             PulseShape.COSINE_SQUARED: CosinePulse,
@@ -157,7 +181,7 @@ class MainGUILogic(QMainWindow):
         generator_cls = pulse_generators.get(shape)
 
         if not generator_cls:
-            self.log_info("Unknown Pulse Shape")
+            self.log_error("Unknown Pulse Shape")
 
         generator = generator_cls(self.sym_rate, self.fs, span)
         pulse_data = generator.generate()
@@ -165,15 +189,19 @@ class MainGUILogic(QMainWindow):
         new_pulse_name = f"{self.pulse_shape_map[shape]}_Pulse_{self.counter_pulse}"
         self.counter_pulse += 1
 
-        pulse_signal = PulseSignal(
+        generated_pulse_signal = PulseSignal(
             new_pulse_name, pulse_data, self.fs, self.sym_rate, shape, span
         )
 
-        self.dict_pulse_signals[new_pulse_name] = pulse_signal
+        # LOGINFO
+        self.log_info(f"Created Pulse Signal: {generated_pulse_signal.name}")
 
-        # logging.info(self.dict_pulse_signals.keys())
+        # Update Dictionary
+        self.dict_pulse_signals[new_pulse_name] = generated_pulse_signal
 
-        self.content_tab_baseband.update_pulse_signals(self.dict_pulse_signals.keys())
+        # Update Baseband Combobox
+        self.content_tab_baseband.update_pulse_signals(
+            self.dict_pulse_signals.keys())
 
     def get_sel_pulse_signal(self):
         try:
@@ -181,10 +209,12 @@ class MainGUILogic(QMainWindow):
                 "pulse_signal"
             )
 
-            sel_pulse_signal = self.dict_pulse_signals.get(sel_pulse_signal_name)
+            sel_pulse_signal = self.dict_pulse_signals.get(
+                sel_pulse_signal_name)
 
             if not sel_pulse_signal:
-                self.log_info(f"Pulse Signal '{sel_pulse_signal_name}' not found")
+                self.log_info(
+                    f"Pulse Signal '{sel_pulse_signal_name}' not found")
                 return None
 
             return sel_pulse_signal
@@ -222,7 +252,7 @@ class MainGUILogic(QMainWindow):
         new_baseband_name = f"Baseband_Signal_{self.counter_baseband}"
         self.counter_baseband += 1
 
-        baseband_signal = BasebandSignal(
+        generated_baseband_signal = BasebandSignal(
             new_baseband_name,
             baseband_signal_data,
             self.fs,
@@ -231,15 +261,17 @@ class MainGUILogic(QMainWindow):
             bit_seq_polar_no1.name,
         )
 
-        self.dict_baseband_signals[new_baseband_name] = baseband_signal
+        self.dict_baseband_signals[new_baseband_name] = generated_baseband_signal
 
-        self.content_tab_modulation.update_baseband_signals(self.dict_baseband_signals)
+        self.content_tab_modulation.update_baseband_signals(
+            self.dict_baseband_signals)
 
-        logging.info(self.dict_baseband_signals["Baseband_Signal_1"])
+        self.log_info(
+            f"Baseband Signal Created: {generated_baseband_signal.name}")
 
     def modulate_transmit_signal(self):
 
-        None
+        self.log_info("Modulation not yet implemented.")
 
 
 if __name__ == "__main__":
