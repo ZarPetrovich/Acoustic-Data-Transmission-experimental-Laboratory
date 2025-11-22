@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 from adtx_lab.src.ui.intro_dialog import *
 
 # Application Constants & Logging
-from adtx_lab.src.constants import PulseShape, ModulationScheme
+from adtx_lab.src.constants import PulseShape, BitMappingScheme, ModulationScheme
 from adtx_lab.src.logging.formatter import CustomFormatter
 
 # Application Logic (Processing)
@@ -35,12 +35,15 @@ from adtx_lab.src.baseband_modules.shape_generator import CosinePulse, Rectangle
 from adtx_lab.src.baseband_modules.baseband_signal_generator import (
     BasebandSignalGenerator,
 )
+from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy
+from adtx_lab.src.ui.plot_widgets import PlotWidget
 
 # Application GUI (Widgets)
 from adtx_lab.src.ui.qt_widgets import (
     Header,
     FooterWidget,
     PulseTab,
+    BitMappingTab,
     BasebandTab,
     ModulationTab,
 )
@@ -67,14 +70,18 @@ class MainGUILogic(QMainWindow):
         self.counter_baseband = 1
 
         # Set ENUM Constants Name
-        self.pulse_shape_map = {
+        self.map_pulse_shape = {
             PulseShape.RECTANGLE: "Rectangle",
             PulseShape.COSINE_SQUARED: "Cosine²",
         }
-
-        self.modulation_scheme_map = {
+        self.map_bitmapping_scheme = {
+            BitMappingScheme.POLARNRZMAPPING: "NRZ Polar",
+            BitMappingScheme.UNIPOLARNRZMAPPING: "NRZ Unipolar"
+        }
+        self.map_modulation_scheme = {
             ModulationScheme.AMPLITUDE_MODULATION: "Amplitude Modulation"
         }
+
         # endregion
 
         # region +++ Init Widgets +++
@@ -89,8 +96,13 @@ class MainGUILogic(QMainWindow):
         # region +++ Init Tabs +++
         # PULSE
         self.tab_widget = QTabWidget()
-        self.content_tab_pulse = PulseTab(pulse_shape_map=self.pulse_shape_map)
+        self.content_tab_pulse = PulseTab(pulse_shape_map=self.map_pulse_shape)
         self.tab_widget.addTab(self.content_tab_pulse, "Puls Shaping")
+
+        # BITSEQ
+
+        self.content_tab_bitseq = BitMappingTab(map_bitmapping_scheme = self.map_bitmapping_scheme)
+        self.tab_widget.addTab(self.content_tab_bitseq, " Bit Mapping")
 
         # BASEBAND
         self.content_tab_baseband = BasebandTab()
@@ -99,7 +111,7 @@ class MainGUILogic(QMainWindow):
         # Modulation
 
         self.content_tab_modulation = ModulationTab(
-            mod_scheme_map=self.modulation_scheme_map
+            mod_scheme_map=self.map_modulation_scheme
         )
         self.tab_widget.addTab(self.content_tab_modulation, "Modulation")
         # endregion
@@ -118,12 +130,19 @@ class MainGUILogic(QMainWindow):
         self.setCentralWidget(main_content_container)
         # endregion
 
+        # Plotting
+
+        self.pulse_plot_manager = PlotManager(self.content_tab_pulse.plot_pulses_widget)
+
         # region +++ QT SIGNALS +++
 
         # +++ Main Connections +++
 
         self.content_tab_pulse.signal_create_Pulse.connect(
             self.create_pulse
+        )
+        self.content_tab_pulse.signal_tab_pulse_selected.connect(
+            self.on_pulse_selected
         )
         self.content_tab_baseband.signal_create_basebandsignal.connect(
             self.create_baseband_signal
@@ -132,7 +151,10 @@ class MainGUILogic(QMainWindow):
             self.modulate_transmit_signal
         )
 
+
         # endregion
+
+
         # END __INIT__
 
     # Helper Functions
@@ -186,11 +208,16 @@ class MainGUILogic(QMainWindow):
         generator = generator_cls(self.sym_rate, self.fs, span)
         pulse_data = generator.generate()
 
-        new_pulse_name = f"{self.pulse_shape_map[shape]}_Pulse_{self.counter_pulse}"
+        new_pulse_name = f"{self.map_pulse_shape[shape]}_Pulse_{self.counter_pulse}"
         self.counter_pulse += 1
 
         generated_pulse_signal = PulseSignal(
-            new_pulse_name, pulse_data, self.fs, self.sym_rate, shape, span
+            new_pulse_name,
+            pulse_data,
+            self.fs,
+            self.sym_rate,
+            shape,
+            span
         )
 
         # LOGINFO
@@ -201,31 +228,25 @@ class MainGUILogic(QMainWindow):
 
         # Update Baseband Combobox
         self.content_tab_baseband.update_pulse_signals(
-            self.dict_pulse_signals.keys())
+            self.dict_pulse_signals)
 
-    def get_sel_pulse_signal(self):
-        try:
-            sel_pulse_signal_name = self.content_tab_baseband.get_values().get(
-                "pulse_signal"
-            )
+        # update Pulse List Widget
 
-            sel_pulse_signal = self.dict_pulse_signals.get(
-                sel_pulse_signal_name)
+        self.content_tab_pulse.update_list(
+            self.dict_pulse_signals
+        )
 
-            if not sel_pulse_signal:
-                self.log_info(
-                    f"Pulse Signal '{sel_pulse_signal_name}' not found")
-                return None
-
-            return sel_pulse_signal
-
-        except Exception as e:
-            self.log_info(f"Error retrieving pulse signal: {e}")
+    def on_pulse_selected(self, pulse_name):
+        signal_object = self.dict_pulse_signals.get(pulse_name)
+        if isinstance(signal_object, PulseSignal):
+            self.pulse_plot_manager.set_strategy(PulsePlotStrategy())
+            self.pulse_plot_manager.update_plot(signal_object)
+            self.log_info(f"plotting {signal_object.name}")
 
     def create_baseband_signal(self):
-        sel_pulse_signal = self.get_sel_pulse_signal()
-        if not sel_pulse_signal:
-            return
+
+        #
+        sel_pulse_signal = self.content_tab_baseband.combobox_pulse_signals.currentData()
 
         # For simplicity, we use a fixed bit sequence here
         bit_seq_no1 = np.array([1, 0, 1, 0])  # Example binary sequence
@@ -243,15 +264,18 @@ class MainGUILogic(QMainWindow):
             data_rate=1,
         )
 
+        # Init Baseband Signal Generator on selected Puls Signal
         baseband_generator = BasebandSignalGenerator(sel_pulse_signal)
 
+        # Gen Data with specific Bit Sequence
         baseband_signal_data = baseband_generator.generate_baseband_signal(
             bit_seq_polar_no1
         )
-
+        # Create Name with counter
         new_baseband_name = f"Baseband_Signal_{self.counter_baseband}"
         self.counter_baseband += 1
 
+        # Store In Dataclass Container
         generated_baseband_signal = BasebandSignal(
             new_baseband_name,
             baseband_signal_data,
@@ -260,14 +284,23 @@ class MainGUILogic(QMainWindow):
             sel_pulse_signal.name,
             bit_seq_polar_no1.name,
         )
+        # Update Main Dict of Baseband Signals
 
         self.dict_baseband_signals[new_baseband_name] = generated_baseband_signal
-
+        # Update List in Tab baseband
+        self.content_tab_baseband.update_list(self.dict_baseband_signals)
+        # Update Combo in Tab Modulation
         self.content_tab_modulation.update_baseband_signals(
             self.dict_baseband_signals)
-
+        # Log_Info
         self.log_info(
             f"Baseband Signal Created: {generated_baseband_signal.name}")
+
+
+
+    def modulate_update(self):
+        self.tab_content_modulation.combo
+        None
 
     def modulate_transmit_signal(self):
 

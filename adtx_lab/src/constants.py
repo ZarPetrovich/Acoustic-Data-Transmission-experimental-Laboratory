@@ -5,7 +5,10 @@ class PulseShape(Enum):
     RECTANGLE = auto()
     COSINE_SQUARED = auto()
 
-
+class BitMappingScheme(Enum):
+    """Defines the available bit mapping schemes as unique constants"""
+    POLARNRZMAPPING = auto()
+    UNIPOLARNRZMAPPING = auto()
 
 class ModulationScheme(Enum):
     """Defines the available modulation schemes as unique constants."""

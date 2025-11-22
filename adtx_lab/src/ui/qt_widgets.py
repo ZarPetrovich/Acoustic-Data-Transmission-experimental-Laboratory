@@ -9,9 +9,11 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QListWidget,
     QComboBox,
-    QVBoxLayout
+    QVBoxLayout,
+    QHBoxLayout
 )
 
+from adtx_lab.src.ui.plot_widgets import PlotWidget
 
 class Header(QWidget):
 
@@ -37,20 +39,29 @@ class PulseTab(QWidget):
 
     signal_create_Pulse = Signal()
 
+    signal_tab_pulse_selected = Signal(str)
+
     def __init__(self, pulse_shape_map, parent=None):
 
         super().__init__(parent)
 
         self.reverse_map_pulse_shape = {v: k for k, v in pulse_shape_map.items()}
 
-        outer_layout = QGridLayout(self)
+        # Outer layout 4 Columns
+        outer_layout = QHBoxLayout(self)
+        # Left Side 2 Rows in the first column
+        left_vert_layout = QVBoxLayout()
+        # First Column First Row is a FormLayout
+        vertical_form_layout = QFormLayout()
 
-        form_layout = QFormLayout()
+        # add layouts to each other
+        outer_layout.addLayout(left_vert_layout)
+        left_vert_layout.addLayout(vertical_form_layout)
 
         # Pulse Shape
         self.combobox_pulse_shapes = QComboBox()
         self.combobox_pulse_shapes.addItems(pulse_shape_map.values())
-        form_layout.addRow("Pulse Shape:", self.combobox_pulse_shapes)
+        vertical_form_layout.addRow("Pulse Shape:", self.combobox_pulse_shapes)
 
         # Pulse Span
         self.spinbox_pulse_span = QSpinBox(self)
@@ -58,19 +69,34 @@ class PulseTab(QWidget):
         self.spinbox_pulse_span.setSingleStep(1)
         self.spinbox_pulse_span.setValue(1)
 
-        form_layout.addRow("Pulse Span :", self.spinbox_pulse_span)
+        vertical_form_layout.addRow("Pulse Span:", self.spinbox_pulse_span)
 
-        # Buttons
+        # region Buttons
         btn_create_pulse = QPushButton("Create Pulse")
-        form_layout.addRow(btn_create_pulse)
+        vertical_form_layout.addRow(btn_create_pulse)
 
-        # Outer Layout Init
 
-        outer_layout.addLayout(form_layout, 0, 0)
-        outer_layout.setColumnStretch(3, 3)
+        # endregion
 
-        # Signal Emitter
+        # region List of Pulses
+        self.list_created_pulses = QListWidget()
+
+        left_vert_layout.addWidget(self.list_created_pulses)
+
+        # endregion
+
+        # Plot
+
+        self.plot_pulses_widget = PlotWidget("Pulse Preview")
+        outer_layout.addWidget(self.plot_pulses_widget, stretch=3)
+
+        # Btn Signal
+
+        self.list_created_pulses.itemClicked.connect(self.on_item_clicked)
+
         btn_create_pulse.clicked.connect(self.signal_create_Pulse.emit)
+
+
 
     def get_values(self):
 
@@ -81,41 +107,109 @@ class PulseTab(QWidget):
             "span": self.spinbox_pulse_span.value(),
         }
 
+    def on_item_clicked(self, item):
+        self.signal_tab_pulse_selected.emit(item.text())
+
+    def update_list(self, pulse_signal_items):
+        self.list_created_pulses.clear()
+        self.list_created_pulses.addItems(pulse_signal_items)
+
+
+
+
+class BitMappingTab(QWidget):
+
+    signal_create_Bitsequence = Signal()
+
+    def __init__(self, map_bitmapping_scheme, parent= None):
+        super().__init__(parent)
+
+        self.reverse_map_bitmapping_scheme = {v: k for k, v in map_bitmapping_scheme.items()}
+
+        outer_layout = QGridLayout(self)
+
+        form_layout = QVBoxLayout()
+
+        label_bitseq_headline = QLabel(
+            "<b> Enter Bitsequence <b>")
+        form_layout.addWidget(label_bitseq_headline)
+        self.line_edit_bitseq = QLineEdit()
+        form_layout.addWidget(self.line_edit_bitseq)
+
+        label_cb_mapping_scheme = QLabel("Select Mapping Scheme:")
+        form_layout.addWidget(label_cb_mapping_scheme)
+        self.combobox_mapping_scheme = QComboBox()
+        self.combobox_mapping_scheme.addItems(map_bitmapping_scheme.values())
+        form_layout.addWidget(self.combobox_mapping_scheme)
+
+
+        form_layout.addStretch(1)
+
+        outer_layout.addLayout(form_layout, 0, 0, -1, 2)
+
+        outer_layout.setColumnStretch(3,1)
+
 
 class BasebandTab(QWidget):
 
     signal_create_basebandsignal = Signal()
 
+    signal_tab_baseband_selected = Signal(str)
+
     def __init__(self, parent=None):
 
         super().__init__(parent)
 
-        outer_layout = QGridLayout(self)
+        # Outer layout 4 Columns
+        outer_layout = QHBoxLayout(self)
+        # Left Side 2 Rows in the first column
+        left_vert_layout = QVBoxLayout()
+        # First Column First Row is a FormLayout
+        vertical_form_layout = QFormLayout()
 
-        form_layout = QFormLayout(labelAlignment=Qt.AlignTop)
+        outer_layout.addLayout(left_vert_layout)
+        left_vert_layout.addLayout(vertical_form_layout)
 
+        # Forms inside left/top QVBox inside outer QHBox
         self.combobox_pulse_signals = QComboBox()
-        form_layout.addRow("Select a Pulse:", self.combobox_pulse_signals)
-
-        outer_layout.addLayout(form_layout, 0, 0)
-        outer_layout.setColumnStretch(3, 3)
+        vertical_form_layout.addRow("Select a Pulse:", self.combobox_pulse_signals)
 
         btn_create_baseband_signal = QPushButton("Create Baseband Signal")
-        form_layout.addRow(btn_create_baseband_signal)
+        vertical_form_layout.addRow(btn_create_baseband_signal)
 
         btn_create_baseband_signal.clicked.connect(
             self.signal_create_basebandsignal.emit
         )
+
+        # List inside left/bottom QVbox inside outer QHbox
+
+        self.list_created_baseband_signals = QListWidget()
+        left_vert_layout.addWidget(self.list_created_baseband_signals)
+
+        self.list_created_baseband_signals.itemClicked.connect(self.on_item_clicked)
+
+        # Plot bb=baseband
+
+        self.plot_bb_widget = PlotWidget("Baseband Signal Preview")
+        outer_layout.addWidget(self.plot_bb_widget, stretch=3)
+
 
     def get_values(self):
         sel_pulse_signal_text = self.combobox_pulse_signals.currentText()
 
         return {"pulse_signal": sel_pulse_signal_text}
 
-    def update_pulse_signals(self, pulse_signal_obj):
+    def update_pulse_signals(self, dict_pulse_signal_obj):
         self.combobox_pulse_signals.clear()
-        self.combobox_pulse_signals.addItems(pulse_signal_obj)
+        for pulse_signal in dict_pulse_signal_obj.values():
+            self.combobox_pulse_signals.addItem(pulse_signal.name, pulse_signal)
 
+    def update_list(self, baseband_signal_items):
+        self.list_created_baseband_signals.clear()
+        self.list_created_baseband_signals.addItems(baseband_signal_items)
+
+    def on_item_clicked(self, item):
+        self.signal_tab_baseband_selected.emit(item.text())
 
 class ModulationTab(QWidget):
 
@@ -131,32 +225,32 @@ class ModulationTab(QWidget):
         outer_layout = QGridLayout(self)
 
         # Vertical Layout for Comboboxes
-        controls_layout = QVBoxLayout()
+        form_layout = QVBoxLayout()
 
         # Modulation Scheme ComboBox
         label_mod_scheme = QLabel("Modulation Scheme:")
-        controls_layout.addWidget(label_mod_scheme)
+        form_layout.addWidget(label_mod_scheme)
         self.combobox_mod_schemes = QComboBox()
         self.combobox_mod_schemes.addItems(mod_scheme_map.values())
-        controls_layout.addWidget(self.combobox_mod_schemes)
+        form_layout.addWidget(self.combobox_mod_schemes)
 
         # Baseband ComboBox
         label_baseband = QLabel("Select Baseband Signal:")
-        controls_layout.addWidget(label_baseband)
+        form_layout.addWidget(label_baseband)
         self.combobox_baseband_signals = QComboBox()
-        controls_layout.addWidget(self.combobox_baseband_signals)
+        form_layout.addWidget(self.combobox_baseband_signals)
 
         # Modulate Button
         btn_create_modulation = QPushButton("Modulate")
-        controls_layout.addWidget(btn_create_modulation)
+        form_layout.addWidget(btn_create_modulation)
 
         # This pushes the info label to the bottom of the control column
-        controls_layout.addStretch()
+        form_layout.addStretch()
 
         # Info Label for Selected Baseband
         self.label_sel_name_baseband = QLabel("No Baseband Signal Selected")
         self.label_sel_name_baseband.setWordWrap(True)
-        controls_layout.addWidget(self.label_sel_name_baseband)
+        form_layout.addWidget(self.label_sel_name_baseband)
 
         # 3. --- Create a placeholder for the PLOT ---
         # This will be your plot widget later
@@ -176,7 +270,7 @@ class ModulationTab(QWidget):
         # Add the controls layout to column 0.
         # It starts at row 0, col 0, and spans ALL rows (-1), and 1 column.
 
-        outer_layout.addLayout(controls_layout, 0, 0, -1, 1)
+        outer_layout.addLayout(form_layout, 0, 0, -1, 1)
 
         # Add the plot placeholder to column 1.
         # It starts at row 0, col 1, spans ALL rows (-1), and 2 columns.
@@ -230,6 +324,7 @@ class ModulationTab(QWidget):
 
         else:
             self.label_sel_name_baseband.setText("INFO: No Baseband Selected")
+
 
 class FooterWidget:
 

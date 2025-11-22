@@ -14,10 +14,10 @@ class PulseShape():
     def __init__(self, symbol_rate, fs, span):
 
         self.symbol_rate = symbol_rate
-        self.fs = fs
+        self.fs = fs                                        # 1/T
         self.span = span
-        self.symbol_period = float(1 / symbol_rate)
-        self.samples_per_symbol = int(fs * self.symbol_period)
+        self.symbol_period = float(1 / symbol_rate)         # T
+        self.samples_per_symbol = int(fs * self.symbol_period) # fs/T
 
     @abstractmethod
     def generate(self):
@@ -46,6 +46,23 @@ class CosinePulse(PulseShape):
         t = np.linspace(- (self.symbol_period * self.span) / 2,
                         (self.symbol_period * self.span) / 2, total_samples, endpoint=True)
         pulse = np.cos(np.pi * t / self.symbol_period) ** 2
+        return pulse
+
+
+class RaisedCosinePulse(PulseShape):
+
+    def generate(self, roll_off):
+
+        total_samples = self.samples_per_symbol * self.span
+
+        t = np.linspace(- (self.symbol_period * self.span) / 2,
+                        (self.symbol_period * self.span) / 2, total_samples, endpoint=True)
+
+        si =np.sin(np.pi* t / self.symbol_period)
+
+        cos =np.cos(np.pi * roll_off * t / self.symbol_period)
+
+        pulse = si/ (np.pi*t /self.symbol_period) * cos/ (1- np.square(2*roll_off*t/ self.symbol_period ))
         return pulse
 
 
