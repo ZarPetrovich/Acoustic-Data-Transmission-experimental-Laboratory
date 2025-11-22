@@ -51,6 +51,8 @@ from adtx_lab.src.ui.qt_widgets import (
 
 class MainGUILogic(QMainWindow):
 
+    # Init Main GUI
+
     def __init__(self, initial_values):
         # region
         super().__init__()
@@ -130,10 +132,11 @@ class MainGUILogic(QMainWindow):
         self.setCentralWidget(main_content_container)
         # endregion
 
-        # Plotting
+        # region Plotting
 
         self.pulse_plot_manager = PlotManager(self.content_tab_pulse.plot_pulses_widget)
         self.baseband_plot_manager = PlotManager(self.content_tab_baseband.plot_bb_widget)
+        #endregion
 
         # region +++ QT SIGNALS +++
 
@@ -231,17 +234,16 @@ class MainGUILogic(QMainWindow):
         # Update Dictionary
         self.dict_pulse_signals[new_pulse_name] = generated_pulse_signal
 
+        # update Pulse List Widget
+        self.content_tab_pulse.update_list(
+            self.dict_pulse_signals)
+
         # Update Baseband Combobox
         self.content_tab_baseband.update_pulse_signals(
             self.dict_pulse_signals)
 
-        # update Pulse List Widget
-
-        self.content_tab_pulse.update_list(
-            self.dict_pulse_signals
-        )
-
-    def on_pulse_selected(self, pulse_name):
+    def on_pulse_selected(self):
+        pulse_name = self.content_tab_pulse.list_created_pulses.currentItem().text()
         signal_object = self.dict_pulse_signals.get(pulse_name)
         if isinstance(signal_object, PulseSignal):
             self.pulse_plot_manager.set_strategy(PulsePlotStrategy())
@@ -292,11 +294,14 @@ class MainGUILogic(QMainWindow):
         # Update Main Dict of Baseband Signals
 
         self.dict_baseband_signals[new_baseband_name] = generated_baseband_signal
+
         # Update List in Tab baseband
         self.content_tab_baseband.update_list(self.dict_baseband_signals)
+
         # Update Combo in Tab Modulation
         self.content_tab_modulation.update_baseband_signals(
             self.dict_baseband_signals)
+
         # Log_Info
         self.log_info(
             f"Baseband Signal Created: {generated_baseband_signal.name}")

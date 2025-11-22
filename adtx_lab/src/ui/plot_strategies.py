@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 from adtx_lab.src.ui.plot_widgets import PlotWidget
 from adtx_lab.src.dataclasses.signal_models import PulseSignal, BasebandSignal, BandpassSignal
 
+
 class PlotStrategy(ABC):
     @abstractmethod
-    def plot(elf, widget:PlotWidget, signal_model):
+    def plot(self, widget:PlotWidget, signal_model):
         pass
-
 
 
 class PulsePlotStrategy(PlotStrategy):
@@ -22,7 +22,7 @@ class PulsePlotStrategy(PlotStrategy):
 
         widget.plot_widget.setTitle(f"Pulse: {signal_model.name}")
 
-        widget.plot_data(timevector, signal_model.data, color='b', name="Pulse")
+        widget.plot_data(timevector, signal_model.data, color='b', name=signal_model.name)
 
 
 class BasebandPlotStrategy(PlotStrategy):
@@ -38,9 +38,6 @@ class BasebandPlotStrategy(PlotStrategy):
         widget.plot_widget.setTitle(f"Baseband Signal: {signal_model.name}")
 
         widget.plot_data(timevector, signal_model.data, color = 'b', name=signal_model.name)
-
-
-
 
 
 class PlotManager:

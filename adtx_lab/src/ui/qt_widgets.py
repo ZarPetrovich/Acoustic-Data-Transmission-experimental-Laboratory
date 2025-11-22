@@ -96,8 +96,6 @@ class PulseTab(QWidget):
 
         btn_create_pulse.clicked.connect(self.signal_create_Pulse.emit)
 
-
-
     def get_values(self):
 
         sel_shape_text = self.combobox_pulse_shapes.currentText()
@@ -107,14 +105,12 @@ class PulseTab(QWidget):
             "span": self.spinbox_pulse_span.value(),
         }
 
-    def on_item_clicked(self, item):
-        self.signal_tab_pulse_selected.emit(item.text())
-
     def update_list(self, pulse_signal_items):
         self.list_created_pulses.clear()
         self.list_created_pulses.addItems(pulse_signal_items)
 
-
+    def on_item_clicked(self, item):
+        self.signal_tab_pulse_selected.emit(item.text())
 
 
 class BitMappingTab(QWidget):
@@ -192,12 +188,6 @@ class BasebandTab(QWidget):
 
         self.plot_bb_widget = PlotWidget("Baseband Signal Preview")
         outer_layout.addWidget(self.plot_bb_widget, stretch=3)
-
-
-    def get_values(self):
-        sel_pulse_signal_text = self.combobox_pulse_signals.currentText()
-
-        return {"pulse_signal": sel_pulse_signal_text}
 
     def update_pulse_signals(self, dict_pulse_signal_obj):
         self.combobox_pulse_signals.clear()
