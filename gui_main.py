@@ -35,7 +35,7 @@ from adtx_lab.src.baseband_modules.shape_generator import CosinePulse, Rectangle
 from adtx_lab.src.baseband_modules.baseband_signal_generator import (
     BasebandSignalGenerator,
 )
-from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy
+from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, BasebandPlotStrategy
 from adtx_lab.src.ui.plot_widgets import PlotWidget
 
 # Application GUI (Widgets)
@@ -133,6 +133,7 @@ class MainGUILogic(QMainWindow):
         # Plotting
 
         self.pulse_plot_manager = PlotManager(self.content_tab_pulse.plot_pulses_widget)
+        self.baseband_plot_manager = PlotManager(self.content_tab_baseband.plot_bb_widget)
 
         # region +++ QT SIGNALS +++
 
@@ -146,6 +147,10 @@ class MainGUILogic(QMainWindow):
         )
         self.content_tab_baseband.signal_create_basebandsignal.connect(
             self.create_baseband_signal
+        )
+
+        self.content_tab_baseband.signal_tab_baseband_selected.connect(
+            self.on_baseband_selected
         )
         self.content_tab_modulation.signal_create_Modulation.connect(
             self.modulate_transmit_signal
@@ -296,7 +301,14 @@ class MainGUILogic(QMainWindow):
         self.log_info(
             f"Baseband Signal Created: {generated_baseband_signal.name}")
 
+    def on_baseband_selected(self):
+        baseband_name = self.content_tab_baseband.list_baseband_signals.currentItem().text()
 
+        signal_object = self.dict_baseband_signals.get(baseband_name)
+        if isinstance(signal_object, BasebandSignal):
+            self.baseband_plot_manager.set_strategy(BasebandPlotStrategy())
+            self.baseband_plot_manager.update_plot(signal_object)
+            self.log_info(f"plotting {signal_object.name}")
 
     def modulate_update(self):
         self.tab_content_modulation.combo

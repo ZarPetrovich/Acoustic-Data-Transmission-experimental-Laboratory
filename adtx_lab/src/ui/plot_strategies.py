@@ -25,6 +25,23 @@ class PulsePlotStrategy(PlotStrategy):
         widget.plot_data(timevector, signal_model.data, color='b', name="Pulse")
 
 
+class BasebandPlotStrategy(PlotStrategy):
+
+    def plot(self, widget: PlotWidget, signal_model: BasebandSignal):
+
+        num_samples = len(signal_model.data)
+        timevector = np.arange(num_samples) / signal_model.fs
+
+        widget.plot_widget.setLabel('bottom', 'Time', units='s')
+        widget.plot_widget.setLabel('left', 'Amplitude', units='V')
+
+        widget.plot_widget.setTitle(f"Baseband Signal: {signal_model.name}")
+
+        widget.plot_data(timevector, signal_model.data, color = 'b', name=signal_model.name)
+
+
+
+
 
 class PlotManager:
     def __init__(self, widget:PlotWidget):

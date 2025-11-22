@@ -183,10 +183,10 @@ class BasebandTab(QWidget):
 
         # List inside left/bottom QVbox inside outer QHbox
 
-        self.list_created_baseband_signals = QListWidget()
-        left_vert_layout.addWidget(self.list_created_baseband_signals)
+        self.list_baseband_signals = QListWidget()
+        left_vert_layout.addWidget(self.list_baseband_signals)
 
-        self.list_created_baseband_signals.itemClicked.connect(self.on_item_clicked)
+        self.list_baseband_signals.itemClicked.connect(self.on_item_clicked)
 
         # Plot bb=baseband
 
@@ -205,8 +205,8 @@ class BasebandTab(QWidget):
             self.combobox_pulse_signals.addItem(pulse_signal.name, pulse_signal)
 
     def update_list(self, baseband_signal_items):
-        self.list_created_baseband_signals.clear()
-        self.list_created_baseband_signals.addItems(baseband_signal_items)
+        self.list_baseband_signals.clear()
+        self.list_baseband_signals.addItems(baseband_signal_items)
 
     def on_item_clicked(self, item):
         self.signal_tab_baseband_selected.emit(item.text())
