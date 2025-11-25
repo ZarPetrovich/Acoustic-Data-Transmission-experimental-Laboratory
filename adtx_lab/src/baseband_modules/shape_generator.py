@@ -6,10 +6,10 @@ Each pulse shape class implements a `generate` method to create the pulse data.
 
 '''
 
-from abc import abstractmethod
+from abc import ABC,abstractmethod
 import numpy as np
 
-class PulseShape():
+class PulseShape(ABC):
 
     def __init__(self, symbol_rate, fs, span):
 
@@ -51,7 +51,11 @@ class CosinePulse(PulseShape):
 
 class RaisedCosinePulse(PulseShape):
 
-    def generate(self, roll_off):
+    def __init__(self, symbol_rate, fs, span, roll_off):
+        super().__init__(symbol_rate, fs, span)
+        self.roll_off = roll_off
+
+    def generate(self):
 
         total_samples = self.samples_per_symbol * self.span
 
@@ -60,7 +64,7 @@ class RaisedCosinePulse(PulseShape):
 
         si =np.sin(np.pi* t / self.symbol_period)
 
-        cos =np.cos(np.pi * roll_off * t / self.symbol_period)
+        cos =np.cos(np.pi * self.roll_off * t / self.symbol_period)
 
         pulse = si/ (np.pi*t /self.symbol_period) * cos/ (1- np.square(2*roll_off*t/ self.symbol_period ))
         return pulse

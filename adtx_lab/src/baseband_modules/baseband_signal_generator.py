@@ -1,5 +1,5 @@
 import numpy as np
-from adtx_lab.src.dataclasses.bitseq_models import BitSequence
+from adtx_lab.src.dataclasses.bitseq_models import SymbolSequence
 from adtx_lab.src.dataclasses.signal_models import PulseSignal
 
 
@@ -18,12 +18,14 @@ class BasebandSignalGenerator:
         self.sym_rate = pulse_obj.sym_rate
         self.samples_per_symbol = self.fs // self.sym_rate
 
-    def generate_baseband_signal(self, symbol_object: BitSequence) -> np.ndarray:
+    def generate_baseband_signal(self, symbol_object: SymbolSequence) -> np.ndarray:
         """
         Creates the baseband signal by adding scaled and shifted pulses.
         This avoids a large convolution.
+        The Baseband Signal is also Complex to support M-PSK/QA Modulations.
+
         Args:
-            symbol_object (BitSequence): The object containing the mapped symbols.
+            symbol_object (Symbol Sequence): The object containing the mapped symbols.
         Returns:
             BasebandData: The generated baseband signal wrapped in a data container.
         """
@@ -31,13 +33,16 @@ class BasebandSignalGenerator:
         num_sym = len(symbols)
 
         output_len = (num_sym - 1) * self.samples_per_symbol + self.pulse_len
-        baseband = np.zeros(output_len)
+
+        baseband = np.zeros(output_len, dtype=complex)
 
         for i, symbol in enumerate(symbols):
-            if symbol == 0:  # No need to add anything for a zero
+            if np.isclose(symbol,0,0):
                 continue
+
             start_index = i * self.samples_per_symbol
             end_index = start_index + self.pulse_len
+
             baseband[start_index:end_index] += self.pulse_data * symbol
 
         final_len = num_sym * self.samples_per_symbol

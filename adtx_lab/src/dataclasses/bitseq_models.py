@@ -2,11 +2,21 @@ from dataclasses import dataclass
 import numpy as np
 
 @dataclass
-class BitSequence:
-    """The base class for all signal types in the application."""
+class SymbolSequence:
+
+    def __post_init__(self):
+        if self.data is not None:
+            self.length = len(self.data)
     name: str
     data: np.ndarray
+    length: int = None
+    symbol_rate: float = None
     data_rate: float = None
+    length: int
+    mod_scheme: str = None
+
+
+
 
 
 

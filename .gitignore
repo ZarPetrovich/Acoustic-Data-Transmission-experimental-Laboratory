@@ -4,6 +4,7 @@ main.py
 01_code.code-workspace
 old
 audio_exports
+test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

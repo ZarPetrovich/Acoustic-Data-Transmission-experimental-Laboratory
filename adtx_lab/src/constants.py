@@ -13,3 +13,10 @@ class BitMappingScheme(Enum):
 class ModulationScheme(Enum):
     """Defines the available modulation schemes as unique constants."""
     AMPLITUDE_MODULATION = auto()
+
+    AMPLITUDE_SHIFT_KEYING = auto()
+    ASK = AMPLITUDE_SHIFT_KEYING
+
+    PHASE_SHIFT_KEYING = auto()
+    PSK = PHASE_SHIFT_KEYING
+

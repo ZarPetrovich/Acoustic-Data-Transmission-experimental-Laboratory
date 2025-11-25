@@ -1,9 +1,11 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal,QRegularExpression
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QWidget,
     QGridLayout,
     QLabel,
     QLineEdit,
+    QTextEdit,
     QPushButton,
     QSpinBox,
     QFormLayout,
@@ -11,7 +13,9 @@ from PySide6.QtWidgets import (
     QComboBox,
     QVBoxLayout,
     QHBoxLayout
+
 )
+import numpy as np
 
 from adtx_lab.src.ui.plot_widgets import PlotWidget
 
@@ -115,35 +119,51 @@ class PulseTab(QWidget):
 
 class BitMappingTab(QWidget):
 
-    signal_create_Bitsequence = Signal()
+    signal_create_sym_sequence = Signal(int)
 
-    def __init__(self, map_bitmapping_scheme, parent= None):
+    def __init__(self,parent= None):
         super().__init__(parent)
 
-        self.reverse_map_bitmapping_scheme = {v: k for k, v in map_bitmapping_scheme.items()}
+        outer_layout = QHBoxLayout(self)
+        left_vert_layout = QVBoxLayout()
 
-        outer_layout = QGridLayout(self)
+        form_layout = QFormLayout()
 
-        form_layout = QVBoxLayout()
+        # Content Form Layout Left/Top Inside QVbox inside QHbox
 
-        label_bitseq_headline = QLabel(
-            "<b> Enter Bitsequence <b>")
-        form_layout.addWidget(label_bitseq_headline)
-        self.line_edit_bitseq = QLineEdit()
-        form_layout.addWidget(self.line_edit_bitseq)
+        left_vert_layout.addLayout(form_layout)
+        outer_layout.addLayout(left_vert_layout)
 
-        label_cb_mapping_scheme = QLabel("Select Mapping Scheme:")
-        form_layout.addWidget(label_cb_mapping_scheme)
-        self.combobox_mapping_scheme = QComboBox()
-        self.combobox_mapping_scheme.addItems(map_bitmapping_scheme.values())
-        form_layout.addWidget(self.combobox_mapping_scheme)
+        self.entry_bitsequence = QLineEdit()
+        form_layout.addRow("Enter Bit Sequence:", self.entry_bitsequence)
 
+        regex = QRegularExpression("^[01]+$")
+        bit_validator = QRegularExpressionValidator(regex, self)
+        self.entry_bitsequence.setValidator(bit_validator)
 
-        form_layout.addStretch(1)
+        self.btn_create_bitseq = QPushButton("2-ASK")
+        form_layout.addRow(self.btn_create_bitseq)
 
-        outer_layout.addLayout(form_layout, 0, 0, -1, 2)
+        self.btn_create_bitseq.clicked.connect(
+            lambda: self.signal_create_sym_sequence.emit(1))
+        # Qlist left/bottom inside QVBox inside QHbox
 
-        outer_layout.setColumnStretch(3,1)
+        self.list_bitseq = QListWidget()
+        left_vert_layout.addWidget(self.list_bitseq)
+
+        outer_layout.addStretch(1)
+
+    def get_bitseq(self):
+        bitseq_text = self.entry_bitsequence.text()
+
+        if not bitseq_text:
+            # Return None to signal a critical error to the main logic
+            return None
+
+        # Convert the string of bits (e.g., "10110") to a list of integers [1, 0, 1, 1, 0]
+        bitseq_array = np.fromiter(bitseq_text, dtype=int)
+
+        return bitseq_array
 
 
 class BasebandTab(QWidget):
@@ -170,6 +190,10 @@ class BasebandTab(QWidget):
         self.combobox_pulse_signals = QComboBox()
         vertical_form_layout.addRow("Select a Pulse:", self.combobox_pulse_signals)
 
+        self.combobox_symseq = QComboBox()
+        vertical_form_layout.addRow("Select Symbol Sequence", self.combobox_symseq)
+
+
         btn_create_baseband_signal = QPushButton("Create Baseband Signal")
         vertical_form_layout.addRow(btn_create_baseband_signal)
 
@@ -189,14 +213,21 @@ class BasebandTab(QWidget):
         self.plot_bb_widget = PlotWidget("Baseband Signal Preview")
         outer_layout.addWidget(self.plot_bb_widget, stretch=3)
 
-    def update_pulse_signals(self, dict_pulse_signal_obj):
+    def update_combox_pulse_signals(self, dict_pulse_signal_obj):
         self.combobox_pulse_signals.clear()
         for pulse_signal in dict_pulse_signal_obj.values():
             self.combobox_pulse_signals.addItem(pulse_signal.name, pulse_signal)
 
-    def update_list(self, baseband_signal_items):
+    def update_combox_symseq(self, dict_symseq_obj):
+
+        self.combobox_symseq.clear()
+        for symseq in dict_symseq_obj.values():
+            self.combobox_symseq.addItem(symseq.name, symseq)
+
+    def update_list_pulse(self, baseband_signal_items):
         self.list_baseband_signals.clear()
         self.list_baseband_signals.addItems(baseband_signal_items)
+
 
     def on_item_clicked(self, item):
         self.signal_tab_baseband_selected.emit(item.text())
@@ -205,24 +236,15 @@ class ModulationTab(QWidget):
 
     signal_create_Modulation = Signal()
 
-    def __init__(self, mod_scheme_map, parent=None):
+    def __init__(self, parent=None):
 
         super().__init__(parent)
-
-        self.reverse_map_mod_schemes = {v: k for k, v in mod_scheme_map.items()}
 
         # +++ Main layout GRID +++
         outer_layout = QGridLayout(self)
 
         # Vertical Layout for Comboboxes
         form_layout = QVBoxLayout()
-
-        # Modulation Scheme ComboBox
-        label_mod_scheme = QLabel("Modulation Scheme:")
-        form_layout.addWidget(label_mod_scheme)
-        self.combobox_mod_schemes = QComboBox()
-        self.combobox_mod_schemes.addItems(mod_scheme_map.values())
-        form_layout.addWidget(self.combobox_mod_schemes)
 
         # Baseband ComboBox
         label_baseband = QLabel("Select Baseband Signal:")
