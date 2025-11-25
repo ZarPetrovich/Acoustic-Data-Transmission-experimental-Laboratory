@@ -10,7 +10,7 @@ class SymbolSequence:
     name: str
     data: np.ndarray
     length: int = None
-    symbol_rate: float = None
+    sym_rate: float = None
     data_rate: float = None
     length: int
     mod_scheme: str = None

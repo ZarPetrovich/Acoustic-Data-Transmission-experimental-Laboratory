@@ -36,7 +36,7 @@ from adtx_lab.src.baseband_modules.baseband_signal_generator import (
     BasebandSignalGenerator,
 )
 from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, BasebandPlotStrategy
-from adtx_lab.src.ui.plot_widgets import PlotWidget
+
 
 # Application GUI (Widgets)
 from adtx_lab.src.ui.main_widgets import (
@@ -284,6 +284,8 @@ class MainGUILogic(QMainWindow):
 
             self.content_tab_baseband.update_combox_symseq(self.dict_symbol_sequences)
 
+            self.content_tab_bitseq.update_list(
+                self.dict_symbol_sequences)
 
     # +++ Baseband +++
     def create_baseband_signal(self):
@@ -337,8 +339,8 @@ class MainGUILogic(QMainWindow):
             self.log_info(f"plotting {signal_object.name}")
 
     def modulate_update(self):
-        self.tab_content_modulation.combo
-        None
+
+        pass
 
     def modulate_transmit_signal(self):
 

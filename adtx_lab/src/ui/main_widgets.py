@@ -151,7 +151,16 @@ class BitMappingTab(QWidget):
         self.list_bitseq = QListWidget()
         left_vert_layout.addWidget(self.list_bitseq)
 
+        # self.label_sel_symseq_list = QLabel("Nothing Selected")
+        # self.label_sel_symseq_list.setWordWrap(True)
+        # left_vert_layout.addWidget(self.label_sel_symseq_list)
+
         outer_layout.addStretch(1)
+
+        # self.list_bitseq.currentItemChanged.connect(
+        #     self.update_label_selected_symseq
+        # )
+
 
     def get_bitseq(self):
         bitseq_text = self.entry_bitsequence.text()
@@ -164,6 +173,29 @@ class BitMappingTab(QWidget):
         bitseq_array = np.fromiter(bitseq_text, dtype=int)
 
         return bitseq_array
+
+    def update_list(self, dict_symbol_sequences):
+        self.list_bitseq.clear()
+        self.list_bitseq.addItems(dict_symbol_sequences)
+
+    def update_label_selected_symseq(self):
+
+        sel_sequence = self.list_bitseq.currentItem()
+
+        if sel_sequence:
+
+            info_text = (
+                f"<b>Selected Baseband Signal:<b> <br>"
+                f"{sel_sequence.name}<br>"
+                f"Scheme Used: {sel_sequence.mod_scheme}<br>"
+                f"Symbol Rate: {sel_sequence.sym_rate} Symbol/s"
+                f"Data: {sel_sequence.data}"
+            )
+
+            self.label_sel_name_baseband.setText(info_text)
+
+        else:
+            self.label_sel_name_baseband.setText("INFO: No Baseband Selected")
 
 
 class BasebandTab(QWidget):
@@ -231,6 +263,7 @@ class BasebandTab(QWidget):
 
     def on_item_clicked(self, item):
         self.signal_tab_baseband_selected.emit(item.text())
+
 
 class ModulationTab(QWidget):
 
