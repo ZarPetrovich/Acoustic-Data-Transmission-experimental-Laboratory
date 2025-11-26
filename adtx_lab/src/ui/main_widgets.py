@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal,QRegularExpression
+from PySide6.QtCore import Qt, Signal,QRegularExpression, QPoint
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QWidget,
@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QListWidget,
     QComboBox,
     QVBoxLayout,
-    QHBoxLayout
+    QHBoxLayout,
+    QMenu
 
 )
 import numpy as np
@@ -78,8 +79,6 @@ class PulseTab(QWidget):
         # region Buttons
         btn_create_pulse = QPushButton("Create Pulse")
         vertical_form_layout.addRow(btn_create_pulse)
-
-
         # endregion
 
         # region List of Pulses
@@ -151,15 +150,15 @@ class BitMappingTab(QWidget):
         self.list_bitseq = QListWidget()
         left_vert_layout.addWidget(self.list_bitseq)
 
-        # self.label_sel_symseq_list = QLabel("Nothing Selected")
-        # self.label_sel_symseq_list.setWordWrap(True)
-        # left_vert_layout.addWidget(self.label_sel_symseq_list)
+        self.label_sel_symseq = QLabel("Nothing Selected")
+        self.label_sel_symseq.setWordWrap(True)
+        left_vert_layout.addWidget(self.label_sel_symseq)
 
         outer_layout.addStretch(1)
 
-        # self.list_bitseq.currentItemChanged.connect(
-        #     self.update_label_selected_symseq
-        # )
+        self.list_bitseq.currentItemChanged.connect(
+            self.update_label_selected_symseq
+        )
 
 
     def get_bitseq(self):
@@ -176,26 +175,13 @@ class BitMappingTab(QWidget):
 
     def update_list(self, dict_symbol_sequences):
         self.list_bitseq.clear()
-        self.list_bitseq.addItems(dict_symbol_sequences)
+        self.list_bitseq.addItems(dict_symbol_sequences.keys())
 
     def update_label_selected_symseq(self):
-
         sel_sequence = self.list_bitseq.currentItem()
 
         if sel_sequence:
-
-            info_text = (
-                f"<b>Selected Baseband Signal:<b> <br>"
-                f"{sel_sequence.name}<br>"
-                f"Scheme Used: {sel_sequence.mod_scheme}<br>"
-                f"Symbol Rate: {sel_sequence.sym_rate} Symbol/s"
-                f"Data: {sel_sequence.data}"
-            )
-
-            self.label_sel_name_baseband.setText(info_text)
-
-        else:
-            self.label_sel_name_baseband.setText("INFO: No Baseband Selected")
+            self.label_sel_symseq.setText(f"Selected Symbol Sequence:\n{sel_sequence.data.name}")
 
 
 class BasebandTab(QWidget):
@@ -203,6 +189,8 @@ class BasebandTab(QWidget):
     signal_create_basebandsignal = Signal()
 
     signal_tab_baseband_selected = Signal(str)
+
+    signal_context_menu_baseband = Signal(QPoint)
 
     def __init__(self, parent=None):
 
@@ -225,7 +213,6 @@ class BasebandTab(QWidget):
         self.combobox_symseq = QComboBox()
         vertical_form_layout.addRow("Select Symbol Sequence", self.combobox_symseq)
 
-
         btn_create_baseband_signal = QPushButton("Create Baseband Signal")
         vertical_form_layout.addRow(btn_create_baseband_signal)
 
@@ -236,9 +223,18 @@ class BasebandTab(QWidget):
         # List inside left/bottom QVbox inside outer QHbox
 
         self.list_baseband_signals = QListWidget()
+        self.list_baseband_signals.setSelectionMode(QListWidget.SingleSelection)
+        self.list_baseband_signals.itemClicked.connect(
+            parent.on_baseband_selected
+        )
         left_vert_layout.addWidget(self.list_baseband_signals)
 
         self.list_baseband_signals.itemClicked.connect(self.on_item_clicked)
+
+        self.list_baseband_signals.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list_baseband_signals.customContextMenuRequested.connect(
+            self.emit_context_menu_signal
+        )
 
         # Plot bb=baseband
 
@@ -264,6 +260,11 @@ class BasebandTab(QWidget):
     def on_item_clicked(self, item):
         self.signal_tab_baseband_selected.emit(item.text())
 
+    def emit_context_menu_signal(self, pos: QPoint):
+        """Maps local position to global and emits the signal for MainGUILogic."""
+        if self.list_baseband_signals.itemAt(pos):
+            global_pos = self.list_baseband_signals.mapToGlobal(pos)
+            self.signal_context_menu_baseband.emit(global_pos)
 
 class ModulationTab(QWidget):
 

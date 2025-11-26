@@ -34,7 +34,13 @@ class PulseShape(ABC):
 class RectanglePulse(PulseShape):
 
     def generate(self):
-        pulse = np.ones(self.samples_per_symbol)
+        total_samples = self.samples_per_symbol * self.span
+        pulse = np.zeros(total_samples)
+        ones_of_rect_pulse = np.ones(self.samples_per_symbol)
+        tail_len = total_samples - self.samples_per_symbol
+        start_index = tail_len // 2
+        end_index = start_index + self.samples_per_symbol
+        pulse[start_index:end_index] = ones_of_rect_pulse
         return pulse
 
 

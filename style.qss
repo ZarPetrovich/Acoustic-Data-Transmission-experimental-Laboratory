@@ -1,0 +1,19 @@
+/* Style for QPushButton */
+QPushButton {
+    background-color: #0078D7; /* Blue background */
+    color: white;             /* White text */
+    border: 2px solid #005A9E; /* Darker blue border */
+    border-radius: 0px;       /* No rounded corners (rectangle) */
+    padding: 2px 4px;        /* Add some padding */
+    font-size: 10px;          /* Font size */
+}
+
+/* Hover effect */
+QPushButton:hover {
+    background-color: #005A9E; /* Darker blue on hover */
+}
+
+/* Pressed effect */
+QPushButton:pressed {
+    background-color: #003E73; /* Even darker blue when pressed */
+}
