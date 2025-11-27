@@ -1,19 +1,41 @@
-/* Style for QPushButton */
+/*
+    COLOR PALETTE
+    - Backgrounds:
+        - bg-dark: {{bg-dark}}
+        - bg-secondary: {{bg-secondary}}
+        - bg-tertiary: {{bg-tertiary}}
+    - Text:
+        - text-light: {{text-light}}
+        - text-secondary: {{text-secondary}}
+    - Accents:
+        - accent-primary: {{accent-primary}}
+        - accent-secondary: {{accent-secondary}}
+        - accent-success: {{accent-success}}
+        - accent-error: {{accent-error}}
+        - accent-muted: {{accent-muted}}
+*/
+
+/* --- Global Styles --- */
+QMainWindow, QDialog {
+    background-color: {{bg-dark}};
+}
+
+QLabel {
+    color: {{text-light}};
+}
+
+QGroupBox {
+    color: {{text-light}};
+    background-color: {{bg-secondary}};
+    border: 1px solid {{bg-tertiary}};
+}
+
+/* --- Buttons --- */
 QPushButton {
-    background-color: #0078D7; /* Blue background */
-    color: white;             /* White text */
-    border: 2px solid #005A9E; /* Darker blue border */
-    border-radius: 0px;       /* No rounded corners (rectangle) */
-    padding: 2px 4px;        /* Add some padding */
-    font-size: 10px;          /* Font size */
+    background-color: {{accent-primary}};
+    color: {{text-light}};
 }
 
-/* Hover effect */
 QPushButton:hover {
-    background-color: #005A9E; /* Darker blue on hover */
-}
-
-/* Pressed effect */
-QPushButton:pressed {
-    background-color: #003E73; /* Even darker blue when pressed */
+    background-color: {{accent-secondary}};
 }
