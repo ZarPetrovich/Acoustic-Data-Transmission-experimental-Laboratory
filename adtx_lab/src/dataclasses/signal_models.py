@@ -17,6 +17,12 @@ class PulseSignal(BaseSignal):
     span: int = None
 
 @dataclass
+class ConstellationSignal(BaseSignal):
+    """Represents the I/Q Symbols (Complex Plane)."""
+    mod_scheme: ModulationScheme
+    bit_mapping: str
+
+@dataclass
 class BasebandSignal(BaseSignal):
     """Represents a modulated baseband signal."""
     pulse_name: str
