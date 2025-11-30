@@ -15,7 +15,7 @@ from adtx_lab.src.logging.formatter import CustomFormatter
 from adtx_lab.src.dataclasses.bitseq_models import SymbolSequence
 from adtx_lab.src.dataclasses.signal_models import PulseSignal, BasebandSignal
 from adtx_lab.src.baseband_modules.shape_generator import CosinePulse, RectanglePulse
-from adtx_lab.src.bitmapping.mod_symbol_generator import AmpShiftKeying
+from adtx_lab.src.bitmapping.symbol_modulation import AmpShiftKeying
 from adtx_lab.src.baseband_modules.baseband_signal_generator import (
     BasebandSignalGenerator,
 )
