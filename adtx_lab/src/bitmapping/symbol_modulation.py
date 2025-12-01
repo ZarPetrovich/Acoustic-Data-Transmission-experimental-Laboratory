@@ -21,6 +21,7 @@ from adtx_lab.src.bitmapping.bitmapper import *
 
 class SymbolModulation(ABC):
     def __init__(self, m: int, mapper: BitMapper):
+    # def __init__(self, m: int):
         if m <= 1 or (m & (m - 1)) != 0:
             raise ValueError("Cardinality (m) must be a power of 2 and greater than 1.")
         self.cardinality = m
@@ -43,11 +44,15 @@ class AmpShiftKeying(SymbolModulation):
         8: np.array([-7, -5, -3, -1, 1, 3, 5, 7]),
 
     }
+    _ask_bit_book: Dict[int,np.ndarray] = {
+        2: np.array([0,1]),
+        4: np.array([[0,0],[0,1],[1,1],[1,0]])
+    }
 
     def __init__(self, cardinality: int, mapper: BitMapper):
         super().__init__(cardinality, mapper)
         # Generate the Gray-coded look-up table upon initialization
-        self.codebook = self._generate_gray_coded_codebook()
+        self.codebook = self._generate_coded_codebook()
 
     def _generate_coded_codebook(self) -> Dict[int, complex]:
         """
@@ -66,7 +71,6 @@ class AmpShiftKeying(SymbolModulation):
         map_indices = self.mapper.get_indices(self.k)
 
         # 3. Apply the Mapping and Normalization
-
         # Rearrange the base amplitudes according to the map
         coded_real_symbols = amplitude_levels[map_indices]
 
@@ -76,7 +80,6 @@ class AmpShiftKeying(SymbolModulation):
         normalized_real_symbols = coded_real_symbols / normalization_factor
 
         # 4. Create the Final Dictionary Look-up Book
-        # The key is the Binary Index (0, 1, 2, 3...) calculated from the input bits.
         # The value is the Complex Symbol (I + j0)
         complex_codebook = normalized_real_symbols + 0.0j
 

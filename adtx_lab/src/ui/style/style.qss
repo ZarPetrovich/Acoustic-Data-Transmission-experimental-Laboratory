@@ -14,14 +14,11 @@
         - accent-error: {{accent-error}}
         - accent-muted: {{accent-muted}}
 */
-
-/* --- Global Styles --- */
 QMainWindow, QDialog {
     background-color: {{bg-dark}};
 }
 
-Q
-
+/*
 QLabel {
     color: {{text-light}};
 }
@@ -32,7 +29,8 @@ QGroupBox {
     border: 1px solid {{bg-dark}};
 }
 
-/* --- Buttons --- */
+
+
 QPushButton {
     background-color: {{accent-secondary}};
     color: {{text-light}};
@@ -42,29 +40,38 @@ QPushButton:hover {
     background-color: {{accent-secondary}};
 }
 
+
 QGroupBox {
-    /* 1. Set the border */
+     1. Set the border
     border: 1px solid #5a5a5a;
     border-radius: 1px;
 
-    /* 2. Create space for the title to sit */
-    /* Adjust 'margin-top' based on your font size */
+    /* 2. Create space for the title to sit
+    /* Adjust 'margin-top' based on your font size
     margin-top: 6px;
 
-    /* 3. Set internal padding for the contents */
+    /* 3. Set internal padding for the contents
     padding: 8px;
 }
 
-QGroupBox::title {
-    /* 1. Control where the title is placed */
+QGroupBox::title
+    /* 1. Control where the title is placed
     subcontrol-origin: margin;
-    subcontrol-position: top left; /* Or top center, etc. */
+    subcontrol-position: top left;
 
-    /* 2. Optional: Style the text background */
-    /* background-color: white; */
+    /* 2. Optional: Style the text background
+    /* background-color: white;
 
-    /* 3. Adjust the exact position and padding around the text */
-    /* The 'left' property is often needed for horizontal offset */
+    /* 3. Adjust the exact position and padding around the text
+    /* The 'left' property is often needed for horizontal offset
     left: 4px;
     padding: 0 2px;
+}
+*/
+
+QWidget#PlotContainer {
+    /* Use your primary application background color */
+    background-color: {{bg-dark}};
+    border: 1px solid {{bg-secondary}};
+    border-radius: 4px;
 }

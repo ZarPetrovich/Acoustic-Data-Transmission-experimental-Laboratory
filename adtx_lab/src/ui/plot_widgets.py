@@ -2,17 +2,25 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget)
+from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_RGB
+
+
+
+
 
 class PlotWidget(QWidget):
     def __init__(self, title="Signal Plot", parent = None):
 
         super().__init__(parent)
 
+        self.setObjectName("PlotContainer")
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)
 
         self.plot_widget = pg.PlotWidget(title = title)
-        self.plot_widget.showGrid(x = True, y = True)
+        #self.plot_widget.setBackground(LIGHT_THEME_RGB["bg-dark"])
+        #self.plot_widget.showGrid(x = True, y = True)
         self.plot_widget.getPlotItem().setContentsMargins(10, 10, 30, 50)
         self.plot_widget_legend = pg.LegendItem(offset=(0, 0))
         self.plot_widget_legend.setParentItem(self.plot_widget.getPlotItem())
@@ -20,11 +28,9 @@ class PlotWidget(QWidget):
         # Anchor legend to bottom center of the plot
         self.plot_widget_legend.anchor((0.4,1.0), (1, 1.0))
 
-        #
         self.plot_widget_legend.setOffset((40, -10))
 
         self.layout.addWidget(self.plot_widget)
-
 
         self.current_curve = None
 

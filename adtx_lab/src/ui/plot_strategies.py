@@ -29,32 +29,111 @@ class PulsePlotStrategy(PlotStrategy):
         widget.plot_data(timevector, signal_model.data, color='cyan', name=signal_model.name)
 
 class ConstellationPlotStrategy(PlotStrategy):
+    """
+    Plots the constellation diagram, including bit labels next to each symbol point.
+    """
     def plot(self, widget: PlotWidget, signal_model: ConstellationSignal):
         widget.plot_widget.clear()
         widget.plot_widget.setTitle(f"Constellation: {signal_model.name}")
-        widget.plot_widget.setLabel('bottom', 'In-Phase (I)')
-        widget.plot_widget.setLabel('left', 'Quadrature (Q)')
+        widget.plot_widget.setLabel('bottom', 'In-Phase (I / Real)')
+        widget.plot_widget.setLabel('left', 'Quadrature (Q / Imaginary)')
 
         # Force square aspect ratio
         widget.plot_widget.setAspectLocked(True)
 
-        i_data = np.real(signal_model.data)
-        q_data = np.imag(signal_model.data)
+        dict_look_up_table = signal_model.look_up_table
 
-        # Create Scatter Plot
+        # --- 1. Plot the Symbols ---
+
+        # Prepare data for plotting
+        complex_symbols = np.array(list(dict_look_up_table.values()))
+        i_data = complex_symbols.real
+        q_data = complex_symbols.imag
+
+        # Create Scatter Plot Item (Dots)
         scatter = pg.ScatterPlotItem(
-            size=15,
+            size=8,
             pen=pg.mkPen('w', width=1),
-            brush=pg.mkBrush(100, 100, 255, 200),
+            brush=pg.mkBrush('b'), # Use a solid blue brush
             hoverable=True
         )
         scatter.addPoints(i_data, q_data)
-
         widget.plot_widget.addItem(scatter)
 
-        # Add Crosshairs
+        # --- 2. Add Bit Labels (Annotation) ---
+
+        # Determine the number of bits per symbol (k) from the cardinality (M)
+        M = len(dict_look_up_table)
+        k = int(np.log2(M)) if M > 0 else 0
+
+        # Define an offset for the label so it doesn't overlap the symbol point
+        label_offset_i = 0.1 * np.max(np.abs(i_data)) if len(i_data) > 0 else 0.1
+        label_offset_q = 0.1 * np.max(np.abs(q_data)) if len(q_data) > 0 else 0.1
+
+        # Iterate through the codebook to add labels
+        for binary_index, symbol in dict_look_up_table.items():
+
+            # Convert the key (0, 1, 2, 3...) to its corresponding bit sequence ('00', '01', '10', '11'...)
+            bit_label = format(binary_index, f'0{k}b')
+
+            # Create a pyqtgraph TextItem for the label
+            # We add a small offset (label_offset_i) to position the text clearly
+            text_item = pg.TextItem(
+                text=bit_label,
+                color=(255, 255, 255), # White text
+                anchor=(0.5, 0)        # Anchor text center-bottom relative to the point
+            )
+
+            # Position the text slightly above the symbol point
+            text_item.setPos(symbol.real + label_offset_i, symbol.imag + label_offset_q)
+
+            widget.plot_widget.addItem(text_item)
+
+
+        # --- 3. Add Crosshairs and Tidy Up ---
+
+        # Add Crosshairs (Axes)
         widget.plot_widget.addLine(x=0, pen=pg.mkPen('w', style=pg.QtCore.Qt.DashLine))
         widget.plot_widget.addLine(y=0, pen=pg.mkPen('w', style=pg.QtCore.Qt.DashLine))
+
+        # Ensure the view bounds encompass all symbols and labels
+        if len(i_data) > 0:
+            max_val_i = np.max(np.abs(i_data)) * 1.4
+            max_val_q = np.max(np.abs(q_data))
+            widget.plot_widget.setXRange(-max_val_i, max_val_i, padding=0)
+            widget.plot_widget.setYRange(-max_val_q, max_val_q, padding=0)
+
+        widget.plot_widget.showGrid(x = True, y = False)
+# class ConstellationPlotStrategy(PlotStrategy):
+#     def plot(self, widget: PlotWidget, signal_model: ConstellationSignal):
+#         widget.plot_widget.clear()
+#         widget.plot_widget.setTitle(f"Constellation: {signal_model.name}")
+#         widget.plot_widget.setLabel('bottom', 'In-Phase (I)')
+#         widget.plot_widget.setLabel('left', 'Quadrature (Q)')
+
+#         # Force square aspect ratio
+#         widget.plot_widget.setAspectLocked(True)
+
+#         dict_look_up_table = signal_model.look_up_table
+#         complex_symbols = np.array(list(dict_look_up_table.values()))
+
+#         i_data = complex_symbols.real
+#         q_data = complex_symbols.imag
+
+#         # Create Scatter Plot
+#         scatter = pg.ScatterPlotItem(
+#             size=15,
+#             pen=pg.mkPen('w', width=1),
+#             brush=pg.mkBrush(100, 100, 255, 200),
+#             hoverable=True
+#         )
+#         scatter.addPoints(i_data, q_data)
+
+#         widget.plot_widget.addItem(scatter)
+
+#         # Add Crosshairs
+#         widget.plot_widget.addLine(x=0, pen=pg.mkPen('w', style=pg.QtCore.Qt.DashLine))
+#         widget.plot_widget.addLine(y=0, pen=pg.mkPen('w', style=pg.QtCore.Qt.DashLine))
 
 class PlotManager:
     def __init__(self, widget: PlotWidget):

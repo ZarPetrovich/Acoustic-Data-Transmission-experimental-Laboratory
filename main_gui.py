@@ -15,10 +15,12 @@ from adtx_lab.src.logging.formatter import CustomFormatter
 from adtx_lab.src.dataclasses.bitseq_models import SymbolSequence
 from adtx_lab.src.dataclasses.signal_models import PulseSignal, BasebandSignal
 from adtx_lab.src.baseband_modules.shape_generator import CosinePulse, RectanglePulse
+from adtx_lab.src.bitmapping.bitmapper import BinaryMapper, GrayMapper, RandomMapper
 from adtx_lab.src.bitmapping.symbol_modulation import AmpShiftKeying
 from adtx_lab.src.baseband_modules.baseband_signal_generator import (
     BasebandSignalGenerator,
 )
+
 from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
 from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy
 
@@ -49,9 +51,12 @@ class MainGUILogic(QMainWindow):
         self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
         self.pulse_plotter.set_strategy(PulsePlotStrategy())
 
+        self.const_plotter = PlotManager(self.matrix_widget.plot_const)
+        self.const_plotter.set_strategy(ConstellationPlotStrategy())
 
+        # Initialize Active Signals
         self.current_pulse_signal = self._on_pulse_update
-        #self.current_const_signal = self._init_active_const_signal()
+        self.current_const_signal = self._init_active_const_signal()
 
 
     def _setup_ui(self):
@@ -92,9 +97,10 @@ class MainGUILogic(QMainWindow):
         # 4. Footer
         self.footer.btn_restart.clicked.connect(self.restart_application)
         self.ctrl_widget.sig_pulse_changed.connect(self._on_pulse_update)
+        self.ctrl_widget.sig_mod_changed.connect(self._on_mod_update)
+        self.ctrl_widget.sig_bit_seq_changed .connect(self._on_iq_update)
 
     def _init_active_pulse(self):
-
 
         init_rect_pulse_obj = RectanglePulse(self.sym_rate, self.fs, span = 2)
         init_rect_data = init_rect_pulse_obj.generate()
@@ -113,19 +119,22 @@ class MainGUILogic(QMainWindow):
         return init_pulse_signal
 
     def _init_active_const_signal(self):
-        ask_modulator = AmpShiftKeying(m=2)
-        init_symbols = ask_modulator.generate(init_bits)
 
-        init_const_signal = BasebandSignal(
-            name="BPSK Signal",
-            data=init_symbols,
-            fs=self.fs,
-            sym_rate=self.sym_rate,
-            mod_scheme="BPSK",
-            mapping="Gray"
+        two_ask_object = AmpShiftKeying(2, mapper=BinaryMapper())
+
+        look_up_data = two_ask_object.codebook
+
+        print(look_up_data)
+
+        init_symbol_seq = SymbolSequence(
+            name="2-ASK Symbols",
+            data=None,
+            look_up_table = look_up_data,
+            mod_scheme = "2-ASK"
         )
 
-        return init_const_signal
+        self.const_plotter.update_plot(init_symbol_seq)
+        return init_symbol_seq
 
     # --- Logic Handlers ---
 
@@ -164,12 +173,47 @@ class MainGUILogic(QMainWindow):
 
     @Slot(dict)
     def _on_mod_update(self, partial_data):
-        pass
+
+        sel_mod_scheme = partial_data.get("mod_scheme")
+        sel_mapper = partial_data.get("bit_mapping")
+
+        print(f"Mapper: {sel_mapper}\n Mod Scheme: {sel_mod_scheme}")
+
+        if isinstance(sel_mapper, str):
+            if sel_mapper == "Binary":
+                mapper = BinaryMapper()
+            elif sel_mapper == "Gray":
+                mapper = GrayMapper()
+            elif sel_mapper == "Random":
+                mapper = RandomMapper()
+            else:
+                raise ValueError(f"Unsupported bit mapping: {sel_mapper}")
+
+        if isinstance(sel_mod_scheme, str):
+            if sel_mod_scheme == "2-ASK":
+                look_up_data = AmpShiftKeying(2, mapper=mapper).codebook
+            elif sel_mod_scheme == "4-ASK":
+                look_up_data = AmpShiftKeying(4, mapper=mapper).codebook
+            elif sel_mod_scheme == "8-ASK":
+                look_up_data = AmpShiftKeying(8, mapper=mapper).codebook
+            else:
+                raise ValueError(f"Unsupported modulation scheme: {sel_mod_scheme}")
+
+
+
+        self.current_const_signal = SymbolSequence(
+            name=f"{sel_mod_scheme} Symbols",
+            data=None,
+            look_up_table=look_up_data,
+            mod_scheme=sel_mod_scheme
+        )
+
+        self.const_plotter.update_plot(self.current_const_signal)
 
     @Slot(dict)
     def _on_iq_update(self, partial_data):
-        pass
-
+        bit_seq = partial_data.get("bit_seq")
+        print(bit_seq)
 
     @Slot(int)
     def _on_save_slot(self, slot_idx):
@@ -181,7 +225,10 @@ class MainGUILogic(QMainWindow):
     def restart_application(self):
         QApplication.instance().quit()
         os.execl(sys.executable, sys.executable, *sys.argv)
-from color_pallete import LIGHT_THEME
+
+
+from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_HEX
+
 def load_stylesheet_with_palette(qss_path, palette):
     with open(qss_path, "r") as f:
         qss = f.read()
@@ -195,7 +242,7 @@ if __name__ == '__main__':
     main_app = MainGUILogic(initial_values={"fs": 48000, "sym_rate": 100})
     main_app.show()
     # Load and apply stylesheet with palette
-    # qss = load_stylesheet_with_palette("style.qss", LIGHT_THEME)
-    # app.setStyleSheet(qss)
+    #qss = load_stylesheet_with_palette(r"adtx_lab\src\ui\style\style.qss", LIGHT_THEME_HEX)
+    #app.setStyleSheet(qss)
 
     sys.exit(app.exec())

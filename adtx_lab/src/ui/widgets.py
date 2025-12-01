@@ -8,52 +8,16 @@ from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression
 from PySide6.QtGui import QFont, QRegularExpressionValidator
 from adtx_lab.src.ui.plot_widgets import PlotWidget
 
-# --- Helper Class for Matrix Plots ---
-class SinglePlotPlaceholder(QWidget):
-    """Internal helper for MatrixWidget: Shows Live (Top) vs Saved (Bottom)"""
-    def __init__(self, title, parent=None):
-        super().__init__(parent)
-        self.setMinimumSize(200, 180)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
-
-        # Title
-        lbl_title = QLabel(title)
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_title.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-        layout.addWidget(lbl_title)
-
-        # Top: Live
-        self.live_box = QLabel("LIVE: N/A")
-        self.live_box.setStyleSheet("background-color: #e3f2fd; border: 1px solid #90caf9; padding: 5px;")
-        self.live_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.live_box, 1)
-
-        # Bottom: Saved
-        self.saved_box = QLabel("SAVED: Empty")
-        self.saved_box.setStyleSheet("background-color: #BDDDFC; border: 1px solid #a5d6a7; padding: 5px;")
-        self.saved_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.saved_box, 1)
-
-    def set_live_text(self, text):
-        self.live_box.setText(text)
-        # Visual flash effect
-        self.live_box.setStyleSheet("background-color: #6A89A7; border: 1px solid #64b5f6; padding: 5px;")
-        QTimer.singleShot(200, lambda: self.live_box.setStyleSheet("background-color: #88BDF2; border: 1px solid #90caf9; padding: 5px;"))
-
-    def set_saved_text(self, text):
-        self.saved_box.setText(text)
 
 # --- Main Widgets ---
 
 class ControlWidget(QWidget):
     # SIGNALS: The outside world listens to these
-    sig_pulse_changed = Signal(dict)      # Emits {pulse_type, span, roll_off}
-    sig_mod_changed = Signal(dict)        # Emits {mod_scheme, mapping}
+    sig_pulse_changed = Signal(dict)        # Emits {pulse_type, span, roll_off}
+    sig_mod_changed = Signal(dict)          # Emits {mod_scheme, mapping}
+    sig_bit_seq_changed = Signal(dict)      # Emits {bit_sequence}
 
-    sig_save_requested = Signal(int)      # Emits slot_index (0-3) to save to
+    sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
     def __init__(self, parent=None,
@@ -132,18 +96,10 @@ class ControlWidget(QWidget):
         group = QGroupBox("2. Constellation")
         layout = QVBoxLayout(group)
 
-        self.entry_bitsequence = QLineEdit()
-        self.entry_bitsequence.setText("1010")
-        layout.addWidget(self.entry_bitsequence)
-
-        regex = QRegularExpression("^[01]+$")
-        bit_validator = QRegularExpressionValidator(regex, self)
-        self.entry_bitsequence.setValidator(bit_validator)
-
         # Radio Buttons
         self.mod_bg = QButtonGroup(self)
         h_rad = QHBoxLayout()
-        for txt in ["2-ASK", "2-BPSK", "4-QAM"]:
+        for txt in ["2-ASK", "4-ASK", "8-ASK"]:
             rb = QRadioButton(txt)
             self.mod_bg.addButton(rb)
             h_rad.addWidget(rb)
@@ -155,6 +111,7 @@ class ControlWidget(QWidget):
         layout.addWidget(self.map_combo)
 
         # Internal Connections
+
         self.mod_bg.buttonClicked.connect(self._emit_mod)
         self.map_combo.currentTextChanged.connect(self._emit_mod)
 
@@ -164,18 +121,27 @@ class ControlWidget(QWidget):
         group = QGroupBox("3. IQ Modulator")
         layout = QVBoxLayout(group)
 
-        self.slider_freq = QSlider(Qt.Orientation.Horizontal)
-        self.slider_freq.setRange(100, 1000)
-        self.slider_freq.setValue(550)
-        layout.addWidget(QLabel("Carrier Freq:"))
-        layout.addWidget(self.slider_freq)
+        self.entry_bitsequence = QLineEdit()
+        self.entry_bitsequence.setText("1010")
+        layout.addWidget(self.entry_bitsequence)
+        regex = QRegularExpression("^[01]+$")
+        bit_validator = QRegularExpressionValidator(regex, self)
+        self.entry_bitsequence.setValidator(bit_validator)
 
-        self.slider_phase = QSlider(Qt.Orientation.Horizontal)
-        self.slider_phase.setRange(0, 360)
-        layout.addWidget(QLabel("Phase Offset:"))
-        layout.addWidget(self.slider_phase)
+        # self.slider_freq = QSlider(Qt.Orientation.Horizontal)
+        # self.slider_freq.setRange(100, 1000)
+        # self.slider_freq.setValue(550)
+        # layout.addWidget(QLabel("Carrier Freq:"))
+        # layout.addWidget(self.slider_freq)
+
+        # self.slider_phase = QSlider(Qt.Orientation.Horizontal)
+        # self.slider_phase.setRange(0, 360)
+        # layout.addWidget(QLabel("Phase Offset:"))
+        # layout.addWidget(self.slider_phase)
 
         self.vbox.addWidget(group)
+
+        self.entry_bitsequence.textChanged.connect(self._emit_bb_signal)
 
     def _init_save_group(self):
         group = QGroupBox("4. Save Baseline")
@@ -217,6 +183,10 @@ class ControlWidget(QWidget):
             "bit_mapping": self.map_combo.currentText()
         })
 
+    def _emit_bb_signal(self):
+        self.sig_bit_seq_changed.emit({
+            "bit_seq": self.entry_bitsequence.text()
+        })
 
 
 class MatrixWidget(QWidget):
