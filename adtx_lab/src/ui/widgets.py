@@ -117,37 +117,20 @@ class ControlWidget(QWidget):
 
         self.vbox.addWidget(group)
 
-    def _init_iq_group(self):
-        group = QGroupBox("3. IQ Modulator")
+
+    def _init_save_group(self):
+        group = QGroupBox("4. Save Baseline")
         layout = QVBoxLayout(group)
 
+        layout.addWidget(QLabel("Enter Bitsequence: "))
         self.entry_bitsequence = QLineEdit()
         self.entry_bitsequence.setText("1010")
         layout.addWidget(self.entry_bitsequence)
         regex = QRegularExpression("^[01]+$")
         bit_validator = QRegularExpressionValidator(regex, self)
         self.entry_bitsequence.setValidator(bit_validator)
-
-        # self.slider_freq = QSlider(Qt.Orientation.Horizontal)
-        # self.slider_freq.setRange(100, 1000)
-        # self.slider_freq.setValue(550)
-        # layout.addWidget(QLabel("Carrier Freq:"))
-        # layout.addWidget(self.slider_freq)
-
-        # self.slider_phase = QSlider(Qt.Orientation.Horizontal)
-        # self.slider_phase.setRange(0, 360)
-        # layout.addWidget(QLabel("Phase Offset:"))
-        # layout.addWidget(self.slider_phase)
-
-        self.vbox.addWidget(group)
-
-        self.entry_bitsequence.textChanged.connect(self._emit_bb_signal)
-
-    def _init_save_group(self):
-        group = QGroupBox("4. Save Baseline")
-        layout = QVBoxLayout(group)
-
         self.slot_bg = QButtonGroup(self)
+
         h_lay = QHBoxLayout()
         for i in range(1, 5):
             rb = QRadioButton(f"Slot {i}")
@@ -162,8 +145,28 @@ class ControlWidget(QWidget):
 
         # Connection for slot changing (viewing)
         self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
+        self.entry_bitsequence.textChanged.connect(self._emit_create_bb_signal)
+        self.vbox.addWidget(group)
+
+
+    def _init_iq_group(self):
+        group = QGroupBox("3. IQ Modulator")
+        layout = QVBoxLayout(group)
+
+        # self.slider_freq = QSlider(Qt.Orientation.Horizontal)
+        # self.slider_freq.setRange(100, 1000)
+        # self.slider_freq.setValue(550)
+        # layout.addWidget(QLabel("Carrier Freq:"))
+        # layout.addWidget(self.slider_freq)
+
+        # self.slider_phase = QSlider(Qt.Orientation.Horizontal)
+        # self.slider_phase.setRange(0, 360)
+        # layout.addWidget(QLabel("Phase Offset:"))
+        # layout.addWidget(self.slider_phase)
 
         self.vbox.addWidget(group)
+
+
 
     # --- Internal Emitters (Format data before sending) ---
     def _emit_pulse(self):
@@ -183,7 +186,7 @@ class ControlWidget(QWidget):
             "bit_mapping": self.map_combo.currentText()
         })
 
-    def _emit_bb_signal(self):
+    def _emit_create_bb_signal(self):
         self.sig_bit_seq_changed.emit({
             "bit_seq": self.entry_bitsequence.text()
         })
@@ -206,14 +209,14 @@ class MatrixWidget(QWidget):
 
 
         # 3. Baseband (Placeholder for now as requested)
-        self.plot_time = PlotWidget(title="Baseband (Time) - Pending")
+        self.plot_baseband = PlotWidget(title="Baseband (Time) - Pending")
 
         # 4. FFT (Placeholder)
         self.plot_fft = PlotWidget(title="Spectrum - Pending")
 
         layout.addWidget(self.plot_pulse, 0, 0)
         layout.addWidget(self.plot_const, 0, 1)
-        layout.addWidget(self.plot_time, 1, 0)
+        layout.addWidget(self.plot_baseband, 1, 0)
         layout.addWidget(self.plot_fft, 1, 1)
 
 

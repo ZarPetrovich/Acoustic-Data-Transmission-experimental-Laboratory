@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import pyqtgraph as pg
 
 from adtx_lab.src.ui.plot_widgets import PlotWidget
-from adtx_lab.src.dataclasses.signal_models import PulseSignal, ConstellationSignal
+from adtx_lab.src.dataclasses.signal_models import PulseSignal, ConstellationSignal, BasebandSignal
 from adtx_lab.src.constants import PulseShape
 
 class PlotStrategy(ABC):
@@ -104,36 +104,10 @@ class ConstellationPlotStrategy(PlotStrategy):
             widget.plot_widget.setYRange(-max_val_q, max_val_q, padding=0)
 
         widget.plot_widget.showGrid(x = True, y = False)
-# class ConstellationPlotStrategy(PlotStrategy):
-#     def plot(self, widget: PlotWidget, signal_model: ConstellationSignal):
-#         widget.plot_widget.clear()
-#         widget.plot_widget.setTitle(f"Constellation: {signal_model.name}")
-#         widget.plot_widget.setLabel('bottom', 'In-Phase (I)')
-#         widget.plot_widget.setLabel('left', 'Quadrature (Q)')
 
-#         # Force square aspect ratio
-#         widget.plot_widget.setAspectLocked(True)
-
-#         dict_look_up_table = signal_model.look_up_table
-#         complex_symbols = np.array(list(dict_look_up_table.values()))
-
-#         i_data = complex_symbols.real
-#         q_data = complex_symbols.imag
-
-#         # Create Scatter Plot
-#         scatter = pg.ScatterPlotItem(
-#             size=15,
-#             pen=pg.mkPen('w', width=1),
-#             brush=pg.mkBrush(100, 100, 255, 200),
-#             hoverable=True
-#         )
-#         scatter.addPoints(i_data, q_data)
-
-#         widget.plot_widget.addItem(scatter)
-
-#         # Add Crosshairs
-#         widget.plot_widget.addLine(x=0, pen=pg.mkPen('w', style=pg.QtCore.Qt.DashLine))
-#         widget.plot_widget.addLine(y=0, pen=pg.mkPen('w', style=pg.QtCore.Qt.DashLine))
+class BasebandPlotStrategy(PlotStrategy):
+    def plot(self, widget: PlotWidget, signal_model: BasebandSignal):
+        print("Plotting Baseband")
 
 class PlotManager:
     def __init__(self, widget: PlotWidget):

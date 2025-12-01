@@ -1,6 +1,5 @@
 import numpy as np
-from adtx_lab.src.dataclasses.bitseq_models import SymbolSequence
-from adtx_lab.src.dataclasses.signal_models import PulseSignal
+from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal
 
 
 class BasebandSignalGenerator:

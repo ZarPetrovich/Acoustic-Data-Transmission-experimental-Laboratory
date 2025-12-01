@@ -2,61 +2,44 @@ import sys, os
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStatusBar
 from PySide6.QtCore import Slot
 
-
 # Local Application/Library Specific Imports
-
 from adtx_lab.src.ui.intro_dialog import *
+from adtx_lab.src.core.AppState import AppState
 
 # Application Constants & Logging
 from adtx_lab.src.constants import PulseShape
-from adtx_lab.src.logging.formatter import CustomFormatter
 
 # Application Logic (Processing)
-from adtx_lab.src.dataclasses.bitseq_models import SymbolSequence
-from adtx_lab.src.dataclasses.signal_models import PulseSignal, BasebandSignal
-from adtx_lab.src.baseband_modules.shape_generator import CosinePulse, RectanglePulse
-from adtx_lab.src.bitmapping.bitmapper import BinaryMapper, GrayMapper, RandomMapper
-from adtx_lab.src.bitmapping.symbol_modulation import AmpShiftKeying
-from adtx_lab.src.baseband_modules.baseband_signal_generator import (
-    BasebandSignalGenerator,
-)
+from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal, BasebandSignal
 
 from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
-from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy
+from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy, BasebandPlotStrategy
 
 class MainGUILogic(QMainWindow):
     def __init__(self, initial_values):
-        # region
         super().__init__()
         self.setWindowTitle(f"ADTX Labor - Main FS: {initial_values['fs']} Hz | Sym Rate: {initial_values['sym_rate']} sps")
         self.resize(1200, 800)
 
-        # --- 1. Initialize Values ----
-
-        self.fs = initial_values["fs"]
-        self.sym_rate = initial_values["sym_rate"]
-
-        self.map_pulse_shape = {
-            PulseShape.RECTANGLE: "Rectangle",
-            PulseShape.COSINE_SQUARED: "Cosine",
-        }
-
-        self.saved_configs = [None] * 4 # 4 Empty slots
-        self.selected_slot_index = 0
+        # --- 1. Initialize AppState ----
+        self.app_state = AppState(initial_values["fs"], initial_values["sym_rate"])
 
         self._setup_ui()
         self._setup_connections()
 
-        # Init Pulse Plotter
+        # Init Plotters
         self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
         self.pulse_plotter.set_strategy(PulsePlotStrategy())
 
         self.const_plotter = PlotManager(self.matrix_widget.plot_const)
         self.const_plotter.set_strategy(ConstellationPlotStrategy())
 
-        # Initialize Active Signals
-        self.current_pulse_signal = self._on_pulse_update
-        self.current_const_signal = self._init_active_const_signal()
+        self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
+        self.baseband_plotter.set_strategy(BasebandPlotStrategy())
+
+        # Initialize plots with initial state
+        self._on_pulse_update(self.app_state.current_pulse_signal)
+        self._on_sym_sequence_update(self.app_state.current_sym_signal)
 
 
     def _setup_ui(self):
@@ -72,7 +55,7 @@ class MainGUILogic(QMainWindow):
 
         # Instantiate Widgets
         self.ctrl_widget = ControlWidget(
-            map_pulse_shape = self.map_pulse_shape)
+            map_pulse_shape = self.app_state.map_pulse_shape)
         self.matrix_widget = MatrixWidget()
         self.meta_widget = MetaDataWidget()
         self.media_widget = MediaPlayerWidget()
@@ -93,132 +76,35 @@ class MainGUILogic(QMainWindow):
         self.setStatusBar(QStatusBar())
 
     def _setup_connections(self):
+        # Connect control widget signals to app_state slots
+        self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
+        self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
+        self.ctrl_widget.sig_bit_seq_changed.connect(self.app_state.on_bitseq_update)
 
-        # 4. Footer
+        # Connect app_state signals to GUI update slots
+        self.app_state.pulse_signal_changed.connect(self._on_pulse_update)
+        self.app_state.symbol_sequence_changed.connect(self._on_sym_sequence_update)
+        self.app_state.baseband_signal_changed.connect(self._on_baseband_update)
+
+        # Footer
         self.footer.btn_restart.clicked.connect(self.restart_application)
-        self.ctrl_widget.sig_pulse_changed.connect(self._on_pulse_update)
-        self.ctrl_widget.sig_mod_changed.connect(self._on_mod_update)
-        self.ctrl_widget.sig_bit_seq_changed .connect(self._on_iq_update)
 
-    def _init_active_pulse(self):
+    @Slot(PulseSignal)
+    def _on_pulse_update(self, pulse_signal):
+        self.pulse_plotter.update_plot(pulse_signal)
 
-        init_rect_pulse_obj = RectanglePulse(self.sym_rate, self.fs, span = 2)
-        init_rect_data = init_rect_pulse_obj.generate()
+    @Slot(SymbolSequence)
+    def _on_sym_sequence_update(self, sym_sequence):
+        self.const_plotter.update_plot(sym_sequence)
 
-        init_pulse_signal = PulseSignal(
-            name="Rectangular Pulse",
-            data=init_rect_data,
-            fs = self.fs,
-            sym_rate = self.sym_rate,
-            shape = PulseShape.RECTANGLE,
-            span = 2
-        )
-
-        self.pulse_plotter.update_plot(init_pulse_signal)
-
-        return init_pulse_signal
-
-    def _init_active_const_signal(self):
-
-        two_ask_object = AmpShiftKeying(2, mapper=BinaryMapper())
-
-        look_up_data = two_ask_object.codebook
-
-        print(look_up_data)
-
-        init_symbol_seq = SymbolSequence(
-            name="2-ASK Symbols",
-            data=None,
-            look_up_table = look_up_data,
-            mod_scheme = "2-ASK"
-        )
-
-        self.const_plotter.update_plot(init_symbol_seq)
-        return init_symbol_seq
-
-    # --- Logic Handlers ---
-
-    @Slot(dict)
-    def _on_pulse_update(self, partial_data):
-        pulse_type = partial_data.get("pulse_type")
-        span = partial_data.get("span", 2)
-        roll_off = partial_data.get("roll_off", 0.0)
-
-        if isinstance(pulse_type, str):
-            for enum_val, label in self.map_pulse_shape.items():
-                if label == pulse_type:
-                    pulse_type = enum_val
-                    break
-            if pulse_type == PulseShape.RECTANGLE:
-                pulse_obj = RectanglePulse(self.sym_rate, self.fs, span)
-            elif pulse_type == PulseShape.COSINE_SQUARED:
-                pulse_obj = CosinePulse(self.sym_rate, self.fs, span)
-            else:
-                raise ValueError(f"Unsupported pulse type: {pulse_type}")
-
-        pulse_data = pulse_obj.generate()
-
-        # Update current pulse signal
-        self.current_pulse_signal = PulseSignal(
-            name=f"{pulse_type} Pulse",
-            data=pulse_data,
-            fs=self.fs,
-            sym_rate=self.sym_rate,
-            shape=pulse_type,
-            span=span
-        )
-
-        # Update Plot
-        self.pulse_plotter.update_plot(self.current_pulse_signal)
-
-    @Slot(dict)
-    def _on_mod_update(self, partial_data):
-
-        sel_mod_scheme = partial_data.get("mod_scheme")
-        sel_mapper = partial_data.get("bit_mapping")
-
-        print(f"Mapper: {sel_mapper}\n Mod Scheme: {sel_mod_scheme}")
-
-        if isinstance(sel_mapper, str):
-            if sel_mapper == "Binary":
-                mapper = BinaryMapper()
-            elif sel_mapper == "Gray":
-                mapper = GrayMapper()
-            elif sel_mapper == "Random":
-                mapper = RandomMapper()
-            else:
-                raise ValueError(f"Unsupported bit mapping: {sel_mapper}")
-
-        if isinstance(sel_mod_scheme, str):
-            if sel_mod_scheme == "2-ASK":
-                look_up_data = AmpShiftKeying(2, mapper=mapper).codebook
-            elif sel_mod_scheme == "4-ASK":
-                look_up_data = AmpShiftKeying(4, mapper=mapper).codebook
-            elif sel_mod_scheme == "8-ASK":
-                look_up_data = AmpShiftKeying(8, mapper=mapper).codebook
-            else:
-                raise ValueError(f"Unsupported modulation scheme: {sel_mod_scheme}")
-
-
-
-        self.current_const_signal = SymbolSequence(
-            name=f"{sel_mod_scheme} Symbols",
-            data=None,
-            look_up_table=look_up_data,
-            mod_scheme=sel_mod_scheme
-        )
-
-        self.const_plotter.update_plot(self.current_const_signal)
-
-    @Slot(dict)
-    def _on_iq_update(self, partial_data):
-        bit_seq = partial_data.get("bit_seq")
-        print(bit_seq)
+    @Slot(BasebandSignal)
+    def _on_baseband_update(self, baseband_signal):
+        self.baseband_plotter.update_plot(baseband_signal)
 
     @Slot(int)
     def _on_save_slot(self, slot_idx):
         # Deep copy current config to saved array
-        self.saved_configs[slot_idx] = self.current_live_config.copy()
+        self.app_state.on_save_slot(slot_idx)
         self.statusBar().showMessage(f"Configuration saved to Slot {slot_idx + 1}", 3000)
 
     @Slot()
