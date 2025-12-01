@@ -10,13 +10,12 @@ from PySide6.QtWidgets import(
     QComboBox)
 
 
+from adtx_lab.src.constants import AVAILABLE_FS, DEFAULT_FS, DEFAULT_SYM_RATE
+
 class IntroDialog(QDialog):
 
-
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_values=None):
         super().__init__(parent)
-
-        GLOBAL_LIST_OF_FS =["44100" , "48000"]
 
         self.setWindowTitle("Welcome to ADTx Lab")
         self.setGeometry(100, 100, 900, 600)
@@ -51,7 +50,9 @@ class IntroDialog(QDialog):
 
         # FS ComboBox
         self.combobox_fs = QComboBox()
-        self.combobox_fs.addItems(GLOBAL_LIST_OF_FS)
+        self.combobox_fs.addItems([str(fs) for fs in AVAILABLE_FS])
+        fs_val = initial_values.get('fs', DEFAULT_FS) if initial_values else DEFAULT_FS
+        self.combobox_fs.setCurrentText(str(fs_val))
         # Use QFormLayout.addRow(label, widget)
         form_layout.addRow("FS (Hz):", self.combobox_fs)
 
@@ -59,7 +60,8 @@ class IntroDialog(QDialog):
         self.spinbox_sym_rate = QSpinBox()
         self.spinbox_sym_rate.setRange(1, 600)
         self.spinbox_sym_rate.setSingleStep(1)
-        self.spinbox_sym_rate.setValue(100) # Set a sensible default
+        sym_rate_val = initial_values.get('sym_rate', DEFAULT_SYM_RATE) if initial_values else DEFAULT_SYM_RATE
+        self.spinbox_sym_rate.setValue(sym_rate_val) # Set a sensible default
         form_layout.addRow("Symbols/s (Rs):", self.spinbox_sym_rate)
 
         # Add the form container to the main vertical stack

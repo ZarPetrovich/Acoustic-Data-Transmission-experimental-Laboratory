@@ -1,13 +1,11 @@
-import sys, os
+import sys, os, argparse
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStatusBar
 from PySide6.QtCore import Slot
 
 # Local Application/Library Specific Imports
 from adtx_lab.src.ui.intro_dialog import *
 from adtx_lab.src.core.AppState import AppState
-
-# Application Constants & Logging
-from adtx_lab.src.constants import PulseShape
+from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE
 
 # Application Logic (Processing)
 from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal, BasebandSignal
@@ -24,8 +22,17 @@ class MainGUILogic(QMainWindow):
         # --- 1. Initialize AppState ----
         self.app_state = AppState(initial_values["fs"], initial_values["sym_rate"])
 
+        self.ctrl_widget = ControlWidget()
+        self.matrix_widget = MatrixWidget()
+        self.meta_widget = MetaDataWidget()
+        self.media_widget = MediaPlayerWidget()
+        self.footer = FooterWidget() # Just a button wrapper
+
         self._setup_ui()
         self._setup_connections()
+
+        # Manually trigger the config update to populate the UI
+        self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
 
         # Init Plotters
         self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
@@ -53,14 +60,6 @@ class MainGUILogic(QMainWindow):
         h_top = QHBoxLayout()
         h_btm = QHBoxLayout()
 
-        # Instantiate Widgets
-        self.ctrl_widget = ControlWidget(
-            map_pulse_shape = self.app_state.map_pulse_shape)
-        self.matrix_widget = MatrixWidget()
-        self.meta_widget = MetaDataWidget()
-        self.media_widget = MediaPlayerWidget()
-        self.footer = FooterWidget() # Just a button wrapper
-
         # Layout Assembly
         h_top.addWidget(self.ctrl_widget, 33)
         h_top.addWidget(self.matrix_widget, 66)
@@ -82,12 +81,17 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.sig_bit_seq_changed.connect(self.app_state.on_bitseq_update)
 
         # Connect app_state signals to GUI update slots
+        self.app_state.app_config_changed.connect(self._on_app_config_update)
         self.app_state.pulse_signal_changed.connect(self._on_pulse_update)
         self.app_state.symbol_sequence_changed.connect(self._on_sym_sequence_update)
         self.app_state.baseband_signal_changed.connect(self._on_baseband_update)
 
         # Footer
         self.footer.btn_restart.clicked.connect(self.restart_application)
+
+    @Slot(dict)
+    def _on_app_config_update(self, config):
+        self.ctrl_widget.set_pulse_shape_map(config["map_pulse_shape"])
 
     @Slot(PulseSignal)
     def _on_pulse_update(self, pulse_signal):
@@ -110,6 +114,8 @@ class MainGUILogic(QMainWindow):
     @Slot()
     def restart_application(self):
         QApplication.instance().quit()
+        # Add the --no-intro flag to the arguments when restarting
+        # We can remove the explicit --no-intro flag now, as argparse handles it
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 
@@ -122,13 +128,28 @@ def load_stylesheet_with_palette(qss_path, palette):
         qss = qss.replace(f"{{{{{key}}}}}", value)
     return qss
 
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser(description="ADTx Laboratory")
+    parser.add_argument('--no-intro', action='store_true', help='Skip the intro dialog and use default values.')
+    parser.add_argument('--fs', type=int, default=DEFAULT_FS, help='Set the sample rate in Hz.')
+    parser.add_argument('--sym-rate', type=int, default=DEFAULT_SYM_RATE, help='Set the symbol rate in sps.')
+    args = parser.parse_args()
 
     app = QApplication(sys.argv)
-    main_app = MainGUILogic(initial_values={"fs": 48000, "sym_rate": 100})
-    main_app.show()
-    # Load and apply stylesheet with palette
-    #qss = load_stylesheet_with_palette(r"adtx_lab\src\ui\style\style.qss", LIGHT_THEME_HEX)
-    #app.setStyleSheet(qss)
 
+    initial_values = {"fs": args.fs, "sym_rate": args.sym_rate}
+
+    if not args.no_intro:
+        intro_dialog = IntroDialog(initial_values=initial_values)
+        if intro_dialog.exec():
+            initial_values = intro_dialog.get_values()
+        else:
+            sys.exit()  # Exit if the user cancels the dialog
+
+    main_app = MainGUILogic(initial_values=initial_values)
+    main_app.show()
     sys.exit(app.exec())
+
+
+if __name__ == '__main__':
+    main()

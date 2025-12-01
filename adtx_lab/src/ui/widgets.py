@@ -20,8 +20,7 @@ class ControlWidget(QWidget):
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
-    def __init__(self, parent=None,
-                 map_pulse_shape = None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
         # Scroll Area setup
@@ -33,7 +32,7 @@ class ControlWidget(QWidget):
         self.vbox = QVBoxLayout(content_widget)
 
         # 1. Pulse Shaping
-        self._init_pulse_group(map_pulse_shape)
+        self._init_pulse_group()
         # 2. Constellation
         self._init_constellation_group()
         # 4. Save Controls
@@ -45,7 +44,7 @@ class ControlWidget(QWidget):
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
 
-    def _init_pulse_group(self, map_pulse_shape):
+    def _init_pulse_group(self):
         group = QGroupBox("1. Pulse Shaping")
         layout = QVBoxLayout(group)
 
@@ -53,7 +52,6 @@ class ControlWidget(QWidget):
         pulse_type_layout = QHBoxLayout()
         pulse_type_layout.addWidget(QLabel("Pulse Type:"))
         self.pulse_combo = QComboBox()
-        self.pulse_combo.addItems(map_pulse_shape.values())
         pulse_type_layout.addWidget(self.pulse_combo)
         layout.addLayout(pulse_type_layout)
 
@@ -190,6 +188,9 @@ class ControlWidget(QWidget):
         self.sig_bit_seq_changed.emit({
             "bit_seq": self.entry_bitsequence.text()
         })
+
+    def set_pulse_shape_map(self, map_pulse_shape):
+        self.pulse_combo.addItems(map_pulse_shape.values())
 
 
 class MatrixWidget(QWidget):

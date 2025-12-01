@@ -1,6 +1,5 @@
 from PySide6.QtCore import QObject, Signal
-
-from adtx_lab.src.constants import PulseShape
+from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP
 from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal, BasebandSignal
 from adtx_lab.src.modules.shape_generator import CosinePulse, RectanglePulse
 from adtx_lab.src.modules.bitmapper import BinaryMapper, GrayMapper, RandomMapper
@@ -14,6 +13,7 @@ class AppState(QObject):
     Manages the application's state and business logic.
     """
     # Signals to notify the GUI of state changes
+    app_config_changed = Signal(dict)
     pulse_signal_changed = Signal(PulseSignal)
     symbol_sequence_changed = Signal(SymbolSequence)
     baseband_signal_changed = Signal(BasebandSignal)
@@ -24,10 +24,7 @@ class AppState(QObject):
         self.fs = fs
         self.sym_rate = sym_rate
 
-        self.map_pulse_shape = {
-            PulseShape.RECTANGLE: "Rectangle",
-            PulseShape.COSINE_SQUARED: "Cosine",
-        }
+        self.map_pulse_shape = PULSE_SHAPE_MAP
 
         self.saved_configs = [None] * 4  # 4 Empty slots
         self.selected_slot_index = 0
@@ -37,6 +34,8 @@ class AppState(QObject):
         self.current_pulse_signal = self._init_active_pulse()
         self.current_sym_signal = self._init_active_sym_const_signal()
         self.active_baseband_signal = None
+
+        self.app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
 
 
     def _init_active_pulse(self):

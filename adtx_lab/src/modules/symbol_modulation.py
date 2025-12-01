@@ -16,7 +16,7 @@
 from abc import ABC,abstractmethod
 import numpy as np
 from typing import Dict, Union # You likely have this
-from adtx_lab.src.bitmapping.bitmapper import *
+from adtx_lab.src.modules.bitmapper import *
 
 
 class SymbolModulation(ABC):

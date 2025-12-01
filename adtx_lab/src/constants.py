@@ -20,3 +20,15 @@ class ModulationScheme(Enum):
     PHASE_SHIFT_KEYING = auto()
     PSK = PHASE_SHIFT_KEYING
 
+# Default Application Settings
+DEFAULT_FS = 48000
+DEFAULT_SYM_RATE = 100
+
+# UI Mappings
+PULSE_SHAPE_MAP = {
+    PulseShape.RECTANGLE: "Rectangle",
+    PulseShape.COSINE_SQUARED: "Cosine",
+}
+
+AVAILABLE_FS = [44100, 48000]
+
