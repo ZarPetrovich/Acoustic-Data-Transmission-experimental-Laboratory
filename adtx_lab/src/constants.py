@@ -10,6 +10,7 @@ class BitMappingScheme(Enum):
     """Defines the available bit mapping schemes."""
     GRAY = auto()
     BINARY = auto()
+    RANDOM = auto()
 
 class ModulationScheme(Enum):
     """Defines the available modulation schemes as unique constants."""

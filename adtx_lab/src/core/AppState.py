@@ -26,7 +26,8 @@ class AppState(QObject):
 
         self.map_pulse_shape = PULSE_SHAPE_MAP
 
-        self.saved_configs = [None] * 4  # 4 Empty slots
+
+        self.saved_configs = [None] * 4  #  4 Empty slots
         self.selected_slot_index = 0
 
         # Initialize Active Signals

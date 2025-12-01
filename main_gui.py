@@ -19,22 +19,16 @@ class MainGUILogic(QMainWindow):
         self.setWindowTitle(f"ADTX Labor - Main FS: {initial_values['fs']} Hz | Sym Rate: {initial_values['sym_rate']} sps")
         self.resize(1200, 800)
 
-        # --- 1. Initialize AppState ----
-        self.app_state = AppState(initial_values["fs"], initial_values["sym_rate"])
-
+        # --- 1. Initialize UI Elements First ---
         self.ctrl_widget = ControlWidget()
         self.matrix_widget = MatrixWidget()
         self.meta_widget = MetaDataWidget()
         self.media_widget = MediaPlayerWidget()
-        self.footer = FooterWidget() # Just a button wrapper
+        self.footer = FooterWidget()
 
         self._setup_ui()
-        self._setup_connections()
 
-        # Manually trigger the config update to populate the UI
-        self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
-
-        # Init Plotters
+        # --- 2. Init Plotters ---
         self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
         self.pulse_plotter.set_strategy(PulsePlotStrategy())
 
@@ -44,7 +38,14 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
-        # Initialize plots with initial state
+        # --- 3. Initialize AppState (which may emit signals) ---
+        self.app_state = AppState(initial_values["fs"], initial_values["sym_rate"])
+
+        # --- 4. Setup Connections ---
+        self._setup_connections()
+
+        # --- 5. Manually trigger initial UI updates ---
+        self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
         self._on_pulse_update(self.app_state.current_pulse_signal)
         self._on_sym_sequence_update(self.app_state.current_sym_signal)
 
