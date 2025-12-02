@@ -145,7 +145,7 @@ def main():
         if intro_dialog.exec():
             initial_values = intro_dialog.get_values()
         else:
-            sys.exit()  # Exit if the user cancels the dialog
+            sys.exit()  # ! Exit if the user cancels the dialog
 
     main_app = MainGUILogic(initial_values=initial_values)
     main_app.show()
