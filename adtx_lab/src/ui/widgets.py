@@ -9,16 +9,21 @@ from PySide6.QtGui import QFont, QRegularExpressionValidator
 from adtx_lab.src.ui.plot_widgets import PlotWidget
 
 
+
+
 # --- Main Widgets ---
 
+
 class ControlWidget(QWidget):
-    # SIGNALS: The outside world listens to these
+
+    # SIGNALS
     sig_pulse_changed = Signal(dict)        # Emits {pulse_type, span, roll_off}
     sig_mod_changed = Signal(dict)          # Emits {mod_scheme, mapping}
     sig_bit_seq_changed = Signal(dict)      # Emits {bit_sequence}
 
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -43,6 +48,7 @@ class ControlWidget(QWidget):
         self.vbox.addStretch()
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
+
 
     def _init_pulse_group(self):
         group = QGroupBox("1. Pulse Shaping")
@@ -89,6 +95,7 @@ class ControlWidget(QWidget):
         self.slider_roll.valueChanged.connect(self._emit_pulse)
 
         self.vbox.addWidget(group)
+
 
     def _init_constellation_group(self):
         group = QGroupBox("2. Constellation")
@@ -166,7 +173,6 @@ class ControlWidget(QWidget):
         self.vbox.addWidget(group)
 
 
-
     # --- Internal Emitters (Format data before sending) ---
     def _emit_pulse(self):
         val_roll_off = self.slider_roll.value() / 100.0
@@ -220,8 +226,6 @@ class MatrixWidget(QWidget):
         layout.addWidget(self.plot_const, 0, 1)
         layout.addWidget(self.plot_baseband, 1, 0)
         layout.addWidget(self.plot_fft, 1, 1)
-
-
 
 
 class MetaDataWidget(QWidget):
