@@ -127,6 +127,7 @@ class ControlWidget(QWidget):
         regex = QRegularExpression("^[01]+$")
         bit_validator = QRegularExpressionValidator(regex, self)
         self.entry_bitsequence.setValidator(bit_validator)
+
         self.slot_bg = QButtonGroup(self)
 
         h_lay = QHBoxLayout()

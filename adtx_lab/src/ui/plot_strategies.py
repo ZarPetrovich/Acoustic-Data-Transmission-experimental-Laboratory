@@ -107,7 +107,28 @@ class ConstellationPlotStrategy(PlotStrategy):
 
 class BasebandPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model: BasebandSignal):
-        print("Plotting Baseband")
+        widget.plot_widget.clear()
+
+        # Time Vector Calculation
+        symbol_period = 1 / signal_model.sym_rate
+        # For Rectangle/Cosine, length is determined by span * samples_per_symbol
+        # We can infer time from fs and data length
+        num_samples = len(signal_model.data)
+
+        # Center the pulse around 0
+        timevector = np.arange(num_samples) / signal_model.fs
+
+        real_component = np.real(signal_model.data)
+        img_component = np.imag(signal_model.data)
+
+
+        widget.plot_widget.setLabel('bottom', 'Time', units='s')
+        widget.plot_widget.setLabel('left', 'Amplitude', units='V')
+
+        widget.plot_widget.setTitle(f"Baseband Signal: {signal_model.name}")
+
+        widget.plot_data(timevector, real_component, color = 'b', name=signal_model.name)
+        widget.plot_data(timevector, img_component, color = 'r', name=signal_model.name + " Imaginary",clear=False)
 
 class PlotManager:
     def __init__(self, widget: PlotWidget):
