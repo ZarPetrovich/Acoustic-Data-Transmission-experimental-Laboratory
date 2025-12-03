@@ -68,5 +68,7 @@ class ModulationScheme(Enum):
 DEFAULT_FS = 48000
 DEFAULT_SYM_RATE = 100
 
+DEFAULT_SPAN = 2
+
 AVAILABLE_FS = [44100, 48000]
 

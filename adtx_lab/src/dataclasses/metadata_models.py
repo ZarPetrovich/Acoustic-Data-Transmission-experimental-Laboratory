@@ -31,6 +31,15 @@ class DataContainer:
 #------------------------------------------------------------
 
 @dataclass
+class ModSchemeLUT(DataContainer):
+    """
+    SymbolSequence is a data class that represents a sequence of symbols with associated metadata.
+    """
+    look_up_table: Dict[int, complex]
+    mapper: str
+    mod_scheme: str
+
+@dataclass
 class StreamContainer(DataContainer):
     length: int = field(init=False)
 
@@ -44,21 +53,15 @@ class StreamContainer(DataContainer):
 class BitStream(StreamContainer):
     ...
 
-
 @dataclass
-class ModSchemeLUT(DataContainer):
-    """
-    SymbolSequence is a data class that represents a sequence of symbols with associated metadata.
-    """
-    look_up_table: Dict[int, complex]
-    mod_scheme: ModulationScheme
-    cardinality: int
-
-@dataclass
-class SymbolStream(DataContainer):
+class SymbolStream(StreamContainer):
     mod_scheme: ModulationScheme
     lut: ModSchemeLUT
     bit_stream: BitStream
+
+
+
+
 
 
 #------------------------------------------------------------
@@ -72,7 +75,7 @@ class SignalContainer(DataContainer):
 
 @dataclass
 class PulseSignal(SignalContainer):
-    """Represents a generated pulse shape."""
+    """Data Container for created Pulses"""
     shape: PulseShape
     span: int = None
 

@@ -5,7 +5,7 @@ from PySide6.QtCore import Slot
 # Local Application/Library Specific Imports
 from adtx_lab.src.ui.intro_dialog import IntroDialog
 from adtx_lab.src.core.AppState import AppState
-from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE
+from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 
 # Application Logic (Processing)
 from adtx_lab.src.dataclasses.metadata_models import ModSchemeLUT, PulseSignal, BasebandSignal
@@ -42,7 +42,7 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
         # --- 3. Initialize AppState (which may emit signals) ---
-        self.app_state = AppState(initial_values["fs"], initial_values["sym_rate"])
+        self.app_state = AppState(initial_values)
 
         # --- 4. Setup Connections ---
         self._setup_connections()
@@ -50,7 +50,7 @@ class MainGUILogic(QMainWindow):
         # --- 5. Manually trigger initial UI updates ---
         self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
         self._on_pulse_update(self.app_state.current_pulse_signal)
-        #self._on_sym_sequence_update(self.app_state.current_sym_signal)
+        self._on_mod_scheme_lut_update(self.app_state.current_mod_scheme)
 
 
     def _setup_ui(self):
@@ -98,16 +98,16 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.set_pulse_shape_map(config["map_pulse_shape"])
 
     @Slot(PulseSignal)
-    def _on_pulse_update(self, pulse_signal):
-        self.pulse_plotter.update_plot(pulse_signal)
+    def _on_pulse_update(self, pulse_container):
+        self.pulse_plotter.update_plot(pulse_container)
 
     @Slot(ModSchemeLUT)
-    def _on_mod_scheme_lut_update(self, sym_sequence):
-        self.const_plotter.update_plot(sym_sequence)
+    def _on_mod_scheme_lut_update(self, mod_scheme_container):
+        self.const_plotter.update_plot(mod_scheme_container)
 
     @Slot(BasebandSignal)
-    def _on_baseband_update(self, baseband_signal):
-        self.baseband_plotter.update_plot(baseband_signal)
+    def _on_baseband_update(self, baseband_container):
+        self.baseband_plotter.update_plot(baseband_container)
 
     @Slot(int)
     def _on_save_slot(self, slot_idx):
@@ -135,11 +135,12 @@ def main():
     parser.add_argument('--no-intro', action='store_true', help='Skip the intro dialog and use default values.')
     parser.add_argument('--fs', type=int, default=DEFAULT_FS, help='Set the sample rate in Hz.')
     parser.add_argument('--sym-rate', type=int, default=DEFAULT_SYM_RATE, help='Set the symbol rate in sps.')
+    parser.add_argument('--span', type = int, default = DEFAULT_SPAN, help="Set the pulse span as integer.")
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
 
-    initial_values = {"fs": args.fs, "sym_rate": args.sym_rate}
+    initial_values = {"fs": args.fs, "sym_rate": args.sym_rate, "span": args.span}
 
     if not args.no_intro:
         intro_dialog = IntroDialog(initial_values=initial_values)
