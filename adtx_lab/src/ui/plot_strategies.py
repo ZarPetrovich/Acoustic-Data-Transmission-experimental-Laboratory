@@ -1,9 +1,10 @@
 import numpy as np
 from abc import ABC, abstractmethod
-import pyqtgraph as pg
 
+import pyqtgraph as pg
+from PySide6.QtCore import Qt
 from adtx_lab.src.ui.plot_widgets import PlotWidget
-from adtx_lab.src.dataclasses.signal_models import PulseSignal, ConstellationSignal, BasebandSignal
+from adtx_lab.src.dataclasses.metadata_models import PulseSignal, ModSchemeLUT, BasebandSignal
 from adtx_lab.src.constants import PulseShape
 
 
@@ -34,24 +35,56 @@ class ConstellationPlotStrategy(PlotStrategy):
     """
     Plots the constellation diagram, including bit labels next to each symbol point.
     """
-    def plot(self, widget: PlotWidget, signal_model: ConstellationSignal):
+
+    def _design_plot(self, widget: PlotWidget, modscheme_signal_container: ModSchemeLUT):
+        """
+        Sets up the design and layout of the plot.
+        """
         widget.plot_widget.clear()
-        widget.plot_widget.setTitle(f"Constellation: {signal_model.name}")
+        widget.plot_widget.setTitle(f"Constellation: {modscheme_signal_container.name}")
         widget.plot_widget.setLabel('bottom', 'In-Phase (I / Real)')
         widget.plot_widget.setLabel('left', 'Quadrature (Q / Imaginary)')
-
         widget.plot_widget.setAspectLocked(True)
+        widget.plot_widget.showGrid(x=True, y=False)
 
-        dict_look_up_table = signal_model.look_up_table
+        plot_item = widget.plot_widget.getPlotItem()
 
-        # --- 1. Plot the Symbols ---
+        cross_hair_pen = pg.mkPen('w', style=Qt.PenStyle.DashLine)
+        plot_item.addLine(x = 0, pen = cross_hair_pen)
+        plot_item.addLine(y = 0, pen = cross_hair_pen)
+
+
+    def _process_data(self, modscheme_signal_container: ModSchemeLUT):
+        """
+        Processes the incoming data to prepare for plotting.
+        """
+        dict_look_up_table = modscheme_signal_container.look_up_table
 
         # Prepare data for plotting
         complex_symbols = np.array(list(dict_look_up_table.values()))
         i_data = complex_symbols.real
         q_data = complex_symbols.imag
 
-        # Create Scatter Plot Item (Dots)
+        # Determine the number of bits per symbol (k) from the cardinality (M)
+        M = len(dict_look_up_table)
+        k = int(np.log2(M)) if M > 0 else 0
+
+        # Define an offset for the label so it doesn't overlap the symbol point
+        label_offset_i = 0.1 * np.max(np.abs(i_data)) if len(i_data) > 0 else 0.1
+        label_offset_q = 0.1 * np.max(np.abs(q_data)) if len(q_data) > 0 else 0.1
+
+        return dict_look_up_table, i_data, q_data, k, label_offset_i, label_offset_q
+
+    def plot(self, widget: PlotWidget, modscheme_signal_container: ModSchemeLUT):
+        """
+        Combines design and data processing to plot the constellation diagram.
+        """
+        self._design_plot(widget, modscheme_signal_container)
+
+        # Process data
+        dict_look_up_table, i_data, q_data, k, label_offset_i, label_offset_q = self._process_data(modscheme_signal_container)
+
+        # --- 1. Plot the Symbols ---
         scatter = pg.ScatterPlotItem(
             size=8,
             pen=pg.mkPen('w', width=1),
@@ -89,13 +122,6 @@ class ConstellationPlotStrategy(PlotStrategy):
             text_item.setPos(symbol.real + label_offset_i, symbol.imag + label_offset_q)
 
             widget.plot_widget.addItem(text_item)
-
-
-        # --- 3. Add Crosshairs and Tidy Up ---
-
-        # Add Crosshairs (Axes)
-        widget.plot_widget.addLine(x=0, pen=pg.mkPen('w', style=pg.Qt.DashLine))
-        widget.plot_widget.addLine(y=0, pen=pg.mkPen('w', style=pg.Qt.DashLine))
 
         # Ensure the view bounds encompass all symbols and labels
         if len(i_data) > 0:

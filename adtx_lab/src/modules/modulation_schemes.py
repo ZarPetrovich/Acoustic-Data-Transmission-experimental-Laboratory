@@ -14,12 +14,12 @@
     """
 
 from abc import ABC,abstractmethod
+from typing import Dict
 import numpy as np
-from typing import Dict, Union # You likely have this
-from adtx_lab.src.modules.bitmapper import *
+from adtx_lab.src.modules.bit_mapping import BitMapper
 
 
-class SymbolModulation(ABC):
+class ModulationScheme(ABC):
     def __init__(self, m: int, mapper: BitMapper):
     # def __init__(self, m: int):
         if m <= 1 or (m & (m - 1)) != 0:
@@ -29,11 +29,11 @@ class SymbolModulation(ABC):
         self.mapper = mapper
 
     @abstractmethod
-    def generate(self, bit_stream: np.ndarray):
-        raise NotImplementedError("This method should be implemented by subclasses.")
+    def _generate_lut(self):
+        raise NotImplementedError("This method should be implemented by subclasses")
 
 
-class AmpShiftKeying(SymbolModulation):
+class AmpShiftKeying(ModulationScheme):
 
 
     _ask_amplitude_levels: Dict[int, np.ndarray] = {
@@ -52,9 +52,9 @@ class AmpShiftKeying(SymbolModulation):
     def __init__(self, cardinality: int, mapper: BitMapper):
         super().__init__(cardinality, mapper)
         # Generate the Gray-coded look-up table upon initialization
-        self.codebook = self._generate_coded_codebook()
+        self.codebook = self._generate_lut()
 
-    def _generate_coded_codebook(self) -> Dict[int, complex]:
+    def _generate_lut(self) -> Dict[int, complex]:
         """
         Generates the complex, power-normalized symbol look-up book
         based on the injected mapping strategy.
@@ -89,22 +89,5 @@ class AmpShiftKeying(SymbolModulation):
 
         return look_up_book
 
-    def generate(self, bit_stream: str) -> np.ndarray:
-        """
-        Generates the complex symbol sequence using the look-up book.
-        """
-        if isinstance(bit_stream, str):
-            bit_stream = np.array([int(b) for b in bit_stream])
-
-        if len(bit_stream) % self.k != 0:
-            raise ValueError("Length of bit sequence is not a multiple of log2(cardinality).")
-        # 1. Bit Grouping and Binary-to-Decimal Indexing
-        bit_groups = bit_stream.reshape(-1, self.k)
-        weights = 2**np.arange(self.k - 1, -1, -1)
-        # This index IS the binary index (0, 1, 2, 3, ...), which is the key for the lookup book.
-        binary_symbol_indices = np.dot(bit_groups, weights)
-        # 2. Look-up Symbols (Map each index to its complex symbol)
-        symbol_sequence = np.array([self.codebook[i] for i in binary_symbol_indices])
-        return symbol_sequence
 
 

@@ -3,15 +3,18 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Slot
 
 # Local Application/Library Specific Imports
-from adtx_lab.src.ui.intro_dialog import *
+from adtx_lab.src.ui.intro_dialog import IntroDialog
 from adtx_lab.src.core.AppState import AppState
 from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE
 
 # Application Logic (Processing)
-from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal, BasebandSignal
+from adtx_lab.src.dataclasses.metadata_models import ModSchemeLUT, PulseSignal, BasebandSignal
 
 from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
 from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy, BasebandPlotStrategy
+
+from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_HEX
+
 
 class MainGUILogic(QMainWindow):
     def __init__(self, initial_values):
@@ -47,7 +50,7 @@ class MainGUILogic(QMainWindow):
         # --- 5. Manually trigger initial UI updates ---
         self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
         self._on_pulse_update(self.app_state.current_pulse_signal)
-        self._on_sym_sequence_update(self.app_state.current_sym_signal)
+        #self._on_sym_sequence_update(self.app_state.current_sym_signal)
 
 
     def _setup_ui(self):
@@ -84,7 +87,7 @@ class MainGUILogic(QMainWindow):
         # Connect app_state signals to GUI update slots
         self.app_state.app_config_changed.connect(self._on_app_config_update)
         self.app_state.pulse_signal_changed.connect(self._on_pulse_update)
-        self.app_state.symbol_sequence_changed.connect(self._on_sym_sequence_update)
+        self.app_state.modulation_lut_changed.connect(self._on_mod_scheme_lut_update)
         self.app_state.baseband_signal_changed.connect(self._on_baseband_update)
 
         # Footer
@@ -98,8 +101,8 @@ class MainGUILogic(QMainWindow):
     def _on_pulse_update(self, pulse_signal):
         self.pulse_plotter.update_plot(pulse_signal)
 
-    @Slot(SymbolSequence)
-    def _on_sym_sequence_update(self, sym_sequence):
+    @Slot(ModSchemeLUT)
+    def _on_mod_scheme_lut_update(self, sym_sequence):
         self.const_plotter.update_plot(sym_sequence)
 
     @Slot(BasebandSignal)
@@ -119,8 +122,6 @@ class MainGUILogic(QMainWindow):
         # We can remove the explicit --no-intro flag now, as argparse handles it
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-
-from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_HEX
 
 def load_stylesheet_with_palette(qss_path, palette):
     with open(qss_path, "r") as f:

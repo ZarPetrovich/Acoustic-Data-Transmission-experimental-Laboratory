@@ -1,5 +1,5 @@
 import numpy as np
-from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal
+from adtx_lab.src.dataclasses.metadata_models import SymbolStream, PulseSignal
 
 
 class BasebandSignalGenerator:
@@ -7,29 +7,29 @@ class BasebandSignalGenerator:
     Creates a instance that can generate baseband signals
     from pulse shapes. Each Pulse Shape need it´s own Generator
     Attributes:
-        PulseSignal pulse_obj: The Pulse Signal Object containing the pulse shape data
+        PulseSignal pulse_signal_container: The Pulse Signal Dataclass Object containing the pulse shape data
     """
-    def __init__(self, pulse_obj: PulseSignal):
+    def __init__(self, pulse_signal_container: PulseSignal):
 
-        self.pulse_data = pulse_obj.data
-        self.pulse_len = len(pulse_obj.data)
-        self.fs = pulse_obj.fs
-        self.sym_rate = pulse_obj.sym_rate
+        self.pulse_data = pulse_signal_container.data
+        self.pulse_len = len(pulse_signal_container.data)
+        self.fs = pulse_signal_container.fs
+        self.sym_rate = pulse_signal_container.sym_rate
         self.samples_per_symbol = self.fs // self.sym_rate
-        self.span = pulse_obj.span
+        self.span = pulse_signal_container.span
 
-    def generate_baseband_signal(self, symbol_object: SymbolSequence) -> np.ndarray:
+    def generate_baseband_signal(self, symbol_stream: SymbolStream) -> np.ndarray:
         """
         Creates the baseband signal by adding scaled and shifted pulses.
         This avoids a large convolution.
         The Baseband Signal is also Complex to support M-PSK/QA Modulations.
 
         Args:
-            symbol_object (Symbol Sequence): The object containing the mapped symbols.
+            symbol_stream (Symbol Data Container): The Dataclass Object containing the mapped symbols.
         Returns:
             BasebandData: The generated baseband signal wrapped in a data container.
         """
-        symbols = symbol_object.data
+        symbols = symbol_stream.data
         num_sym = len(symbols)
 
 
@@ -42,17 +42,17 @@ class BasebandSignalGenerator:
             baseband[start_index : start_index + self.pulse_len] += self.pulse_data * symbol
         return baseband
 
-    def generate_iteration_breakdown(self, symbol_object: SymbolSequence):
+    def generate_iteration_breakdown(self, symbol_stream: SymbolStream):
         """
         Generates the baseband signal while yielding the iteration breakdown.
         This is useful for debugging or visualization purposes.
 
         Args:
-            symbol_object (Symbol Sequence): The object containing the mapped symbols.
+            symbol_stream (Symbol Data Container): The object containing the mapped symbols.
         Yields:
             Tuple: (current_index, start_index, end_index, current_baseband)
         """
-        symbols = symbol_object.data
+        symbols = symbol_stream.data
         num_sym = len(symbols)
 
         output_len = (num_sym - 1) * self.samples_per_symbol + self.pulse_len

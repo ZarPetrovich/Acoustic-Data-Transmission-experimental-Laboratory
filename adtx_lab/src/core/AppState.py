@@ -1,12 +1,11 @@
 from PySide6.QtCore import QObject, Signal
 from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP
-from adtx_lab.src.dataclasses.models import SymbolSequence, PulseSignal, BasebandSignal
-from adtx_lab.src.modules.shape_generator import CosinePulse, RectanglePulse
-from adtx_lab.src.modules.bitmapper import BinaryMapper, GrayMapper, RandomMapper
-from adtx_lab.src.modules.symbol_modulation import AmpShiftKeying
-from adtx_lab.src.modules.baseband_signal_generator import (
-    BasebandSignalGenerator,
-)
+from adtx_lab.src.dataclasses.metadata_models import ModSchemeLUT, PulseSignal, BasebandSignal
+from adtx_lab.src.modules.pulse_shapes import CosinePulse, RectanglePulse
+from adtx_lab.src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
+from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
+from adtx_lab.src.modules.baseband_modulator import BasebandSignalGenerator
+
 
 class AppState(QObject):
     """
@@ -15,7 +14,7 @@ class AppState(QObject):
     # Signals to notify the GUI of state changes
     app_config_changed = Signal(dict)
     pulse_signal_changed = Signal(PulseSignal)
-    symbol_sequence_changed = Signal(SymbolSequence)
+    modulation_lut_changed = Signal(ModSchemeLUT)
     baseband_signal_changed = Signal(BasebandSignal)
 
     def __init__(self, fs, sym_rate):
@@ -26,15 +25,16 @@ class AppState(QObject):
 
         self.map_pulse_shape = PULSE_SHAPE_MAP
 
-
+        # TODO Implement Save Slot Logic
         self.saved_configs = [None] * 4  #  4 Empty slots
         self.selected_slot_index = 0
 
+
         # Initialize Active Signals
-        self.active_const_gen_object = AmpShiftKeying(2, mapper=BinaryMapper())
+        #self.active_const_gen_object = AmpShiftKeying(2, mapper=BinaryMapper())
         self.current_pulse_signal = self._init_active_pulse()
-        self.current_sym_signal = self._init_active_sym_const_signal()
-        self.active_baseband_signal = None
+        #self.current_sym_signal = self._init_active_sym_const_signal()
+        #self.active_baseband_signal = None
 
         self.app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
 
@@ -67,7 +67,7 @@ class AppState(QObject):
             look_up_table = look_up_data,
             mod_scheme = "2-ASK"
         )
-        self.symbol_sequence_changed.emit(init_symbol_seq)
+        self.modulation_lut_changed.emit(init_symbol_seq)
         return init_symbol_seq
 
     def on_pulse_update(self, partial_data):
@@ -133,7 +133,7 @@ class AppState(QObject):
             look_up_table=look_up_data,
             mod_scheme=sel_mod_scheme
         )
-        self.symbol_sequence_changed.emit(self.current_sym_signal)
+        self.modulation_lut_changed.emit(self.current_sym_signal)
 
     def on_bitseq_update(self, partial_data):
         bit_seq = partial_data.get("bit_seq")
@@ -155,8 +155,8 @@ class AppState(QObject):
             data = bb_data,
             fs = self.fs,
             sym_rate = self.sym_rate,
-            pulse_name = self.current_pulse_signal.name,
-            bit_seq = bit_seq,
+            pulse = self.current_pulse_signal,
+            symbol_stream = bit_seq,
             sym_name = self.current_sym_signal.name
         )
         self.baseband_signal_changed.emit(self.active_baseband_signal)

@@ -10,8 +10,8 @@ The Datacan be stored in a Signal dataclass Container for further Action.
 
 from abc import abstractmethod
 import numpy as np
+from adtx_lab.src.dataclasses.models import BasebandSignal
 
-from adtx_lab.src.dataclasses.signal_models import BasebandSignal
 
 
 class Modulator():
