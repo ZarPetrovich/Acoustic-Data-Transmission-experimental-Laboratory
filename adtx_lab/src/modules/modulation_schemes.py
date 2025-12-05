@@ -49,11 +49,6 @@ class AmpShiftKeying(ModulationScheme):
         4: np.array([[0,0],[0,1],[1,1],[1,0]])
     }
 
-    def __init__(self, cardinality: int, mapper: BitMapper):
-        super().__init__(cardinality, mapper)
-        # Generate the Gray-coded look-up table upon initialization
-        self.codebook = self._generate_lut()
-
     def _generate_lut(self) -> Dict[int, complex]:
         """
         Generates the complex, power-normalized symbol look-up book
@@ -88,6 +83,12 @@ class AmpShiftKeying(ModulationScheme):
         look_up_book = {i: complex_codebook[i] for i in range(self.cardinality)}
 
         return look_up_book
+
+    def __init__(self, cardinality: int, mapper: BitMapper):
+        super().__init__(cardinality, mapper)
+        # Generate the Gray-coded look-up table upon initialization
+        self.codebook = self._generate_lut()
+        self.k = int(np.log2(cardinality))  # Store k separately for later use
 
 
 

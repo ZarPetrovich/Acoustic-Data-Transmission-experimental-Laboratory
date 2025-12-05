@@ -44,6 +44,7 @@ PULSE_SHAPE_MAP = {
     PulseShape.RECTANGLE: "Rectangle",
     PulseShape.COSINE_SQUARED: "Cosine",
 }
+
 class BitMappingScheme(Enum):
     """Defines the available bit mapping schemes."""
     GRAY = auto()

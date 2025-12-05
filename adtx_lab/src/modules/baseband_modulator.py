@@ -32,7 +32,6 @@ class BasebandSignalGenerator:
         symbols = symbol_stream.data
         num_sym = len(symbols)
 
-
         output_len = (num_sym - 1) * self.samples_per_symbol + self.pulse_len
 
         baseband = np.zeros(output_len, dtype=complex)

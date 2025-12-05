@@ -7,20 +7,30 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression
 from PySide6.QtGui import QFont, QRegularExpressionValidator
 from adtx_lab.src.ui.plot_widgets import PlotWidget
+from adtx_lab.src.constants import PulseShape
 
 
+# ===========================================================
+#   Main Widget Classes
+#       1. Control Widget: Holds Elements to Control
+#           the Application (Left Side) @@@control Widget
+#       2. Matrix Widgget: Displays Plot
+#       3. MetaData Widget: Shows Current Config
+#       4. Media Player Widget: Play/Stop Signals
+#       5. Footer Widget
+# ===========================================================
 
 
-# --- Main Widgets ---
-
-
+#------------------------------------------------------------
+# +++++ Control Widget +++++
+#------------------------------------------------------------
 class ControlWidget(QWidget):
 
     # SIGNALS
     sig_pulse_changed = Signal(dict)        # Emits {pulse_type, span, roll_off}
     sig_mod_changed = Signal(dict)          # Emits {mod_scheme, mapping}
     sig_bit_seq_changed = Signal(dict)      # Emits {bit_sequence}
-
+    sig_carrier_freq_changed = Signal(dict)
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
@@ -48,7 +58,6 @@ class ControlWidget(QWidget):
         self.vbox.addStretch()
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
-
 
     def _init_pulse_group(self):
         group = QGroupBox("1. Pulse Shaping")
@@ -96,7 +105,6 @@ class ControlWidget(QWidget):
 
         self.vbox.addWidget(group)
 
-
     def _init_constellation_group(self):
         group = QGroupBox("2. Constellation")
         layout = QVBoxLayout(group)
@@ -121,7 +129,6 @@ class ControlWidget(QWidget):
         self.map_combo.currentTextChanged.connect(self._emit_mod)
 
         self.vbox.addWidget(group)
-
 
     def _init_save_group(self):
         group = QGroupBox("4. Save Baseline")
@@ -154,16 +161,20 @@ class ControlWidget(QWidget):
         self.entry_bitsequence.textChanged.connect(self._emit_create_bb_signal)
         self.vbox.addWidget(group)
 
-
     def _init_iq_group(self):
         group = QGroupBox("3. IQ Modulator")
         layout = QVBoxLayout(group)
+        layout.addWidget(QLabel("Carrier Frequency:"))
 
-        # self.slider_freq = QSlider(Qt.Orientation.Horizontal)
-        # self.slider_freq.setRange(100, 1000)
-        # self.slider_freq.setValue(550)
-        # layout.addWidget(QLabel("Carrier Freq:"))
-        # layout.addWidget(self.slider_freq)
+        carrier_freq_layout = QHBoxLayout()
+        self.slider_freq = QSlider(Qt.Orientation.Horizontal)
+        self.slider_freq.setRange(100, 1000)
+        self.slider_freq.setValue(550)
+        self.lbl_slider_freq = QLabel(f"{550} Hz")
+        carrier_freq_layout.addWidget(self.slider_freq)
+        carrier_freq_layout.addWidget(self.lbl_slider_freq)
+
+        layout.addLayout(carrier_freq_layout)
 
         # self.slider_phase = QSlider(Qt.Orientation.Horizontal)
         # self.slider_phase.setRange(0, 360)
@@ -172,6 +183,8 @@ class ControlWidget(QWidget):
 
         self.vbox.addWidget(group)
 
+        # Internal Connections
+        self.slider_freq.valueChanged.connect(self._emit_carrier_freq)
 
     # --- Internal Emitters (Format data before sending) ---
     def _emit_pulse(self):
@@ -180,7 +193,7 @@ class ControlWidget(QWidget):
         self.lbl_span.setText(f"{val_span}")
         self.lbl_roll.setText(f"{val_roll_off:.2f}")
         self.sig_pulse_changed.emit({
-            "pulse_type": self.pulse_combo.currentText(),
+            "pulse_type": PulseShape[self.pulse_combo.currentText()],  # Emit enum value
             "span": val_span,
             "roll_off": val_roll_off,
         })
@@ -196,10 +209,19 @@ class ControlWidget(QWidget):
             "bit_seq": self.entry_bitsequence.text()
         })
 
+    def _emit_carrier_freq(self):
+        self.sig_carrier_freq_changed.emit({
+            "carrier_freq": self.slider_freq.value()
+        })
+
+
+
     def set_pulse_shape_map(self, map_pulse_shape):
-        self.pulse_combo.addItems(map_pulse_shape.values())
+        self.pulse_combo.addItems([shape.name for shape in PulseShape])  # Use enum names
 
-
+#------------------------------------------------------------
+# +++++ Matrix Widget +++++
+#------------------------------------------------------------
 class MatrixWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -227,7 +249,9 @@ class MatrixWidget(QWidget):
         layout.addWidget(self.plot_baseband, 1, 0)
         layout.addWidget(self.plot_fft, 1, 1)
 
-
+#------------------------------------------------------------
+# +++++ Meta Data Widget +++++
+#------------------------------------------------------------
 class MetaDataWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -255,7 +279,9 @@ class MetaDataWidget(QWidget):
         self.lbl_pulse.setText(f"{config.get('pulse_type')} (a={config.get('roll_off')})")
         self.lbl_iq.setText(f"Freq: {config.get('carrier_freq')}, Phase: {config.get('phase_offset')}")
 
-
+#------------------------------------------------------------
+# +++++ Media Player +++++
+#------------------------------------------------------------
 class MediaPlayerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -272,6 +298,9 @@ class MediaPlayerWidget(QWidget):
         hbox.addWidget(QPushButton("Stop"))
         vbox.addLayout(hbox)
 
+#------------------------------------------------------------
+# +++++ Footer Widget +++++
+#------------------------------------------------------------
 class FooterWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

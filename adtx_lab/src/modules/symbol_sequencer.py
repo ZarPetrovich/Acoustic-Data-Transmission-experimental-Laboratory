@@ -4,24 +4,34 @@ from adtx_lab.src.dataclasses.metadata_models import ModSchemeLUT
 
 class SymbolSequencer:
 
-    def __init__(self, mod_scheme: ModSchemeLUT):
-        self.mod_scheme_lut = mod_scheme.look_up_table
-        self.k = int(np.log2(mod_scheme.mod_scheme.cardinality))
+    def __init__(self, mod_scheme_container: ModSchemeLUT):
+        self.mod_scheme_lut = mod_scheme_container.look_up_table
+        self.k = mod_scheme_container.cardinality
 
-    def generate(self, bit_stream: str) -> np.ndarray:
+    def generate(self, bit_stream: np.array) -> np.ndarray:
         """
         Generates the complex symbol sequence using the look-up book.
-        """
-        if isinstance(bit_stream, str):
-            bit_stream = np.array([int(b) for b in bit_stream])
 
-        if len(bit_stream) % self.k != 0:
-            raise ValueError("Length of bit sequence is not a multiple of log2(cardinality).")
-        # 1. Bit Grouping and Binary-to-Decimal Indexing
-        bit_groups = bit_stream.reshape(-1, self.k)
-        weights = 2**np.arange(self.k - 1, -1, -1)
-        # This index IS the binary index (0, 1, 2, 3, ...), which is the key for the lookup book.
-        binary_symbol_indices = np.dot(bit_groups, weights)
-        # 2. Look-up Symbols (Map each index to its complex symbol)
-        symbol_sequence = np.array([self.mod_scheme_lut[i] for i in binary_symbol_indices])
+        """
+        bits_per_symbol = int(np.log2(self.k))
+        num_symbols = len(bit_stream) // bits_per_symbol
+
+        # Convert Bit stream to chunks of size bit/symbol
+
+        truncated_bits = bit_stream[:num_symbols * bits_per_symbol] # slice Bitstream to fit complete symbols
+
+        chunk_array = truncated_bits.reshape((num_symbols, bits_per_symbol))
+
+        sym_idx_array = [] # Hold Mapped IDX from binary --> Integer loop Calculation
+
+        # The Loop Converts each chunk of bits into its corresponding symbol index for LUT Dictionary
+        # for eg. 01 --> 1 | 11 --> 3 | 10 --> 2 | 110 --> 5
+        for chunks in chunk_array:
+            index = chunks.dot(1 << np.arange(bits_per_symbol)[::-1])
+            sym_idx_array.append(index)
+
+        # Map Indices to Symbols using the Look-Up Table and Index from the loop
+        symbol_sequence = np.array([self.mod_scheme_lut[idx] for idx in sym_idx_array], dtype=object)
+
         return symbol_sequence
+

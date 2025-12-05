@@ -83,13 +83,14 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
         self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
         self.ctrl_widget.sig_bit_seq_changed.connect(self.app_state.on_bitseq_update)
+        self.ctrl_widget.sig_save_requested.connect(self._on_save_slot)
+        self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
 
         # Connect app_state signals to GUI update slots
         self.app_state.app_config_changed.connect(self._on_app_config_update)
         self.app_state.pulse_signal_changed.connect(self._on_pulse_update)
         self.app_state.modulation_lut_changed.connect(self._on_mod_scheme_lut_update)
         self.app_state.baseband_signal_changed.connect(self._on_baseband_update)
-
         # Footer
         self.footer.btn_restart.clicked.connect(self.restart_application)
 
@@ -109,9 +110,9 @@ class MainGUILogic(QMainWindow):
     def _on_baseband_update(self, baseband_container):
         self.baseband_plotter.update_plot(baseband_container)
 
+
     @Slot(int)
     def _on_save_slot(self, slot_idx):
-        # Deep copy current config to saved array
         self.app_state.on_save_slot(slot_idx)
         self.statusBar().showMessage(f"Configuration saved to Slot {slot_idx + 1}", 3000)
 
@@ -145,9 +146,12 @@ def main():
     if not args.no_intro:
         intro_dialog = IntroDialog(initial_values=initial_values)
         if intro_dialog.exec():
-            initial_values = intro_dialog.get_values()
+            updated_values = intro_dialog.get_values()
+            # Ensure 'span' is preserved if not explicitly updated
+            initial_values.update(updated_values)
         else:
             sys.exit()  # ! Exit if the user cancels the dialog
+
 
     main_app = MainGUILogic(initial_values=initial_values)
     main_app.show()

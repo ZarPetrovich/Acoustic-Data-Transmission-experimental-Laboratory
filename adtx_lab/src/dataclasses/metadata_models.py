@@ -33,11 +33,13 @@ class DataContainer:
 @dataclass
 class ModSchemeLUT(DataContainer):
     """
-    SymbolSequence is a data class that represents a sequence of symbols with associated metadata.
+    ModschemeLUT is a data class that represents a Look up Table for a
+    specific Modulation Scheme with associated metadata.
     """
     look_up_table: Dict[int, complex]
+    cardinality: int
     mapper: str
-    mod_scheme: str
+    mod_scheme: ModulationScheme
 
 @dataclass
 class StreamContainer(DataContainer):
@@ -55,8 +57,7 @@ class BitStream(StreamContainer):
 
 @dataclass
 class SymbolStream(StreamContainer):
-    mod_scheme: ModulationScheme
-    lut: ModSchemeLUT
+    mod_scheme: ModSchemeLUT
     bit_stream: BitStream
 
 

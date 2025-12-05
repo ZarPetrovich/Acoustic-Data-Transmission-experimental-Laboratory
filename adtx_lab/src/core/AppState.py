@@ -1,9 +1,12 @@
 from PySide6.QtCore import QObject, Signal
+import numpy as np
+
 from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP, BitMappingScheme, ModulationScheme
 from adtx_lab.src.dataclasses.metadata_models import BasebandSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
 from adtx_lab.src.modules.pulse_shapes import CosinePulse, RectanglePulse
 from adtx_lab.src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
+from adtx_lab.src.modules.symbol_sequencer import SymbolSequencer
 from adtx_lab.src.modules.baseband_modulator import BasebandSignalGenerator
 
 
@@ -32,7 +35,7 @@ class AppState(QObject):
 
 
         # Initialize current Interactive Signals
-        self.current_pulse_signal: PulseSignal
+        self.current_pulse_signal: PulseSignal = self._init_default_pulse()
         self.current_mod_scheme: ModSchemeLUT = self._init_default_mod_scheme()
         self.current_bitstream: BitStream
         self.current_symbol_stream: SymbolStream
@@ -40,27 +43,70 @@ class AppState(QObject):
 
         self.app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
 
+    def _init_default_pulse(self):
 
+        init_two_ask = RectanglePulse(self.sym_rate, self.fs, self.span)
+
+        pulse_data = init_two_ask.generate() # generate the actual Data
+
+        # Update current pulse signal
+        self.current_pulse_signal = PulseSignal(
+            name=f"Rectangle Pulse",
+            data=pulse_data,
+            fs=self.fs,
+            sym_rate=self.sym_rate,
+            shape=PulseShape.RECTANGLE,
+            span=self.span
+        )
+
+        self.pulse_signal_changed.emit(self.current_pulse_signal)
+        return self.current_pulse_signal
+
+    def _init_default_mod_scheme(self):
+
+        mapper = BinaryMapper()
+
+        lut_data = AmpShiftKeying(2, mapper=mapper).codebook
+
+        self.current_mod_scheme = ModSchemeLUT(
+            name=f"2-ASK LUT",
+            data=None,
+            look_up_table=lut_data,
+            cardinality = 2,
+            mapper = "Binary",
+            mod_scheme="2-ASK",
+        )
+
+        self.modulation_lut_changed.emit(self.current_mod_scheme)
+        return self.current_mod_scheme
 
     def on_pulse_update(self, partial_data):
+        pulse_type = partial_data.get("pulse_type")
+        span = partial_data.get("span")
+        roll_off = partial_data.get("roll_off", 0.0)  # Default roll-off to 0.0 if not provided
 
-        pulse_type = partial_data.get("pulse_type", PulseShape.RECTANGLE)
-        span = partial_data.get("span", 2)
-        roll_off = partial_data.get("roll_off", 0.0)
+        if pulse_type is None or span is None:
+            print("Missing required pulse parameters: 'pulse_type' or 'span'")
+            return
 
-        if isinstance(pulse_type, str):
-            for enum_val, label in self.map_pulse_shape.items():
-                if label == pulse_type:
-                    pulse_type = enum_val
-                    break
-            if pulse_type == PulseShape.RECTANGLE:
-                pulse_obj = RectanglePulse(self.sym_rate, self.fs, span)
-            elif pulse_type == PulseShape.COSINE_SQUARED:
-                pulse_obj = CosinePulse(self.sym_rate, self.fs, span)
-            else:
-                raise ValueError(f"Unsupported pulse type: {pulse_type}")
+        pulse_generators = {
+            PulseShape.RECTANGLE: RectanglePulse,
+            PulseShape.COSINE_SQUARED: CosinePulse,
+        }
 
-        pulse_data = pulse_obj.generate()
+        # Validate if shape is available
+        generator_cls = pulse_generators.get(pulse_type)
+        if not generator_cls:
+            print(f"Unknown Pulse Shape: {pulse_type}")
+            return
+
+        # Create Generator Object
+        try:
+            generator = generator_cls(self.sym_rate, self.fs, span)
+            pulse_data = generator.generate()  # Generate the actual data
+        except Exception as e:
+            print(f"Failed to generate pulse: {e}")
+            return
 
         # Update current pulse signal
         self.current_pulse_signal = PulseSignal(
@@ -72,30 +118,13 @@ class AppState(QObject):
             span=span
         )
 
+        # Emit signal to notify GUI
         self.pulse_signal_changed.emit(self.current_pulse_signal)
 
-
-    def _init_default_mod_scheme(self):
-
-
-        mapper = BinaryMapper()
-
-
-        lut_data = AmpShiftKeying(2, mapper=mapper).codebook
-
-        self.current_mod_scheme = ModSchemeLUT(
-            name=f"2-ASK LUT",
-            data=None,
-            look_up_table=lut_data,
-            mapper = "Binary",
-            mod_scheme="2-ASK",
-        )
-
-        self.modulation_lut_changed.emit(self.current_mod_scheme)
     def on_mod_update(self, partial_data):
 
-        sel_mod_scheme = partial_data.get("mod_scheme", "2-ASK")
-        sel_mapper = partial_data.get("bit_mapping", "Binary")
+        sel_mod_scheme = partial_data.get("mod_scheme")
+        sel_mapper = partial_data.get("bit_mapping")
 
         if sel_mapper == "Binary":
             mapper = BinaryMapper()
@@ -119,6 +148,7 @@ class AppState(QObject):
             name=f"{sel_mod_scheme} LUT",
             data=None,
             look_up_table=lut_data,
+            cardinality = int(sel_mod_scheme.split("-")[0]),
             mapper = sel_mapper,
             mod_scheme=sel_mod_scheme,
         )
@@ -126,33 +156,50 @@ class AppState(QObject):
         self.modulation_lut_changed.emit(self.current_mod_scheme)
 
     def on_bitseq_update(self, partial_data):
-        bit_seq = partial_data.get("bit_seq")
+        bit_stream = partial_data.get("bit_seq")
 
+        # Convert String into Numpy Array full of Int
+        bit_stream = [int(char) for char in bit_stream]
+        bit_stream = np.array(bit_stream, dtype=np.int8)
+
+        self.current_bitstream = BitStream(
+            name="Current Bit Stream",
+            data=bit_stream
+        )
+
+        # Create Symbol Sequence with Symbol Sequencer Module
+        symbol_stream_data = SymbolSequencer(self.current_mod_scheme).generate(self.current_bitstream.data)
+
+        self.current_symbol_stream = SymbolStream(
+            name="Current Symbol Stream",
+            data=symbol_stream_data,
+            mod_scheme=self.current_mod_scheme,
+            bit_stream=self.current_bitstream
+        )
+
+        self.update_baseband_signal()
+
+    def update_baseband_signal(self):
         # Init Baseband generator with active Pulse Object
         baseband_gen_obj = BasebandSignalGenerator(self.current_pulse_signal)
 
-        # Create Symbal Sequence with active Modulator
-        symbol_seq = self.active_const_gen_object.generate(bit_seq)
-
-        self.current_sym_signal.data = symbol_seq
-
         # Generate Baseband Signal
+        bb_data = baseband_gen_obj.generate_baseband_signal(self.current_symbol_stream)
 
-        bb_data = baseband_gen_obj.generate_baseband_signal(self.current_sym_signal)
-
-        self.active_baseband_signal = BasebandSignal (
-            name = "Active Baseband Signal",
+        self.current_baseband_signal = BasebandSignal (
+            name = "Current Baseband Signal",
             data = bb_data,
             fs = self.fs,
             sym_rate = self.sym_rate,
             pulse = self.current_pulse_signal,
-            symbol_stream = bit_seq,
-            sym_name = self.current_sym_signal.name
+            symbol_stream = self.current_symbol_stream
         )
-        self.baseband_signal_changed.emit(self.active_baseband_signal)
+
+        self.baseband_signal_changed.emit(self.current_baseband_signal)
+
+    def on_carrier_freq_update(self, partial_data):
+        pass
+
 
     def on_save_slot(self, slot_idx):
-        # Deep copy current config to saved array
-        self.saved_configs[slot_idx] = self.current_live_config.copy()
-        # This should be handled by the GUI
-        # self.statusBar().showMessage(f"Configuration saved to Slot {slot_idx + 1}", 3000)
+        self.saved_configs[slot_idx] = self.current_baseband_signal
