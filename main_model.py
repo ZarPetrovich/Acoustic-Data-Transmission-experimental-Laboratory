@@ -8,7 +8,7 @@ from adtx_lab.src.core.AppState import AppState
 from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 
 # Application Logic (Processing)
-from adtx_lab.src.dataclasses.metadata_models import ModSchemeLUT, PulseSignal, BasebandSignal
+from adtx_lab.src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal
 
 from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
 from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy, BasebandPlotStrategy
@@ -109,7 +109,6 @@ class MainGUILogic(QMainWindow):
     @Slot(BasebandSignal)
     def _on_baseband_update(self, baseband_container):
         self.baseband_plotter.update_plot(baseband_container)
-
 
     @Slot(int)
     def _on_save_slot(self, slot_idx):

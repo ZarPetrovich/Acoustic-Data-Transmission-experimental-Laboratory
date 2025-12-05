@@ -30,7 +30,8 @@ class ControlWidget(QWidget):
     sig_pulse_changed = Signal(dict)        # Emits {pulse_type, span, roll_off}
     sig_mod_changed = Signal(dict)          # Emits {mod_scheme, mapping}
     sig_bit_seq_changed = Signal(dict)      # Emits {bit_sequence}
-    sig_carrier_freq_changed = Signal(dict)
+    sig_carrier_freq_changed = Signal(dict) # Emits {carrie_freq}
+
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
@@ -110,13 +111,13 @@ class ControlWidget(QWidget):
         layout = QVBoxLayout(group)
 
         # Radio Buttons
-        self.mod_bg = QButtonGroup(self)
+        self.modulation_bg = QButtonGroup(self)
         h_rad = QHBoxLayout()
         for txt in ["2-ASK", "4-ASK", "8-ASK"]:
             rb = QRadioButton(txt)
-            self.mod_bg.addButton(rb)
+            self.modulation_bg.addButton(rb)
             h_rad.addWidget(rb)
-        self.mod_bg.buttons()[0].setChecked(True)
+        self.modulation_bg.buttons()[0].setChecked(True)
         layout.addLayout(h_rad)
 
         self.map_combo = QComboBox()
@@ -125,7 +126,7 @@ class ControlWidget(QWidget):
 
         # Internal Connections
 
-        self.mod_bg.buttonClicked.connect(self._emit_mod)
+        self.modulation_bg.buttonClicked.connect(self._emit_mod)
         self.map_combo.currentTextChanged.connect(self._emit_mod)
 
         self.vbox.addWidget(group)
@@ -166,27 +167,23 @@ class ControlWidget(QWidget):
         layout = QVBoxLayout(group)
         layout.addWidget(QLabel("Carrier Frequency:"))
 
-        carrier_freq_layout = QHBoxLayout()
-        self.slider_freq = QSlider(Qt.Orientation.Horizontal)
-        self.slider_freq.setRange(100, 1000)
-        self.slider_freq.setValue(550)
-        self.lbl_slider_freq = QLabel(f"{550} Hz")
-        carrier_freq_layout.addWidget(self.slider_freq)
-        carrier_freq_layout.addWidget(self.lbl_slider_freq)
-
-        layout.addLayout(carrier_freq_layout)
-
-        # self.slider_phase = QSlider(Qt.Orientation.Horizontal)
-        # self.slider_phase.setRange(0, 360)
-        # layout.addWidget(QLabel("Phase Offset:"))
-        # layout.addWidget(self.slider_phase)
+        # Radio Buttons
+        self.freq_bg = QButtonGroup(self)
+        h_rad = QHBoxLayout()
+        for txt in ["440 Hz", "4400 Hz", "8800 Hz"]:
+            rb = QRadioButton(txt)
+            self.freq_bg.addButton(rb)
+            h_rad.addWidget(rb)
+        self.freq_bg.buttons()[0].setChecked(True)
+        layout.addLayout(h_rad)
 
         self.vbox.addWidget(group)
 
         # Internal Connections
-        self.slider_freq.valueChanged.connect(self._emit_carrier_freq)
 
-    # --- Internal Emitters (Format data before sending) ---
+        self.freq_bg.buttonClicked.connect(self._emit_carrier_freq)
+
+    # --- Internal Emitters  ---
     def _emit_pulse(self):
         val_roll_off = self.slider_roll.value() / 100.0
         val_span = self.slider_span.value()
@@ -200,7 +197,7 @@ class ControlWidget(QWidget):
 
     def _emit_mod(self):
         self.sig_mod_changed.emit({
-            "mod_scheme": self.mod_bg.checkedButton().text(),
+            "mod_scheme": self.modulation_bg.checkedButton().text(),
             "bit_mapping": self.map_combo.currentText()
         })
 
@@ -210,11 +207,12 @@ class ControlWidget(QWidget):
         })
 
     def _emit_carrier_freq(self):
+
+        carrier_freq = self.freq_bg.checkedButton().text()
+        carrier_freq = carrier_freq.split(" ")[0]  # Get numeric part
         self.sig_carrier_freq_changed.emit({
-            "carrier_freq": self.slider_freq.value()
+            "carrier_freq": carrier_freq
         })
-
-
 
     def set_pulse_shape_map(self, map_pulse_shape):
         self.pulse_combo.addItems([shape.name for shape in PulseShape])  # Use enum names

@@ -1,13 +1,16 @@
 from PySide6.QtCore import QObject, Signal
 import numpy as np
+import sounddevice as sd
+
 
 from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP, BitMappingScheme, ModulationScheme
-from adtx_lab.src.dataclasses.metadata_models import BasebandSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
+from adtx_lab.src.dataclasses.dataclass_models import BasebandSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
 from adtx_lab.src.modules.pulse_shapes import CosinePulse, RectanglePulse
 from adtx_lab.src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
 from adtx_lab.src.modules.symbol_sequencer import SymbolSequencer
 from adtx_lab.src.modules.baseband_modulator import BasebandSignalGenerator
+from adtx_lab.src.modules.iq_modulator import QuadraturModulator
 
 
 class AppState(QObject):
@@ -198,8 +201,23 @@ class AppState(QObject):
         self.baseband_signal_changed.emit(self.current_baseband_signal)
 
     def on_carrier_freq_update(self, partial_data):
-        pass
 
+        carrier_freq = partial_data.get("carrier_freq")
+        if carrier_freq is None:
+            print("Carrier frequency is missing in the provided data.")
+            return
+        try:
+            carrier_freq = int(carrier_freq)
+        except ValueError:
+            print(f"Invalid carrier frequency value: {carrier_freq}")
+            return
+
+        iq_data = QuadraturModulator(carrier_freq).modulate(self.current_baseband_signal)
+
+        # Here you can handle the modulated IQ data as needed
+
+        sd.play(iq_data)
+        sd.wait()
 
     def on_save_slot(self, slot_idx):
         self.saved_configs[slot_idx] = self.current_baseband_signal

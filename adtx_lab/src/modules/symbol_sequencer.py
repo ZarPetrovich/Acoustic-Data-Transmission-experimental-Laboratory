@@ -1,5 +1,5 @@
 import numpy as np
-from adtx_lab.src.dataclasses.metadata_models import ModSchemeLUT
+from adtx_lab.src.dataclasses.dataclass_models import ModSchemeLUT
 
 
 class SymbolSequencer:
