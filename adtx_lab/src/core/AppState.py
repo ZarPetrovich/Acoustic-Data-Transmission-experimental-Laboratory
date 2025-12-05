@@ -4,7 +4,7 @@ import sounddevice as sd
 
 
 from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP, BitMappingScheme, ModulationScheme
-from adtx_lab.src.dataclasses.dataclass_models import BasebandSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
+from adtx_lab.src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
 from adtx_lab.src.modules.pulse_shapes import CosinePulse, RectanglePulse
 from adtx_lab.src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
@@ -30,7 +30,7 @@ class AppState(QObject):
         self.sym_rate = initial_values["sym_rate"]
         self.span = initial_values.get("span")
 
-        self.map_pulse_shape = PULSE_SHAPE_MAP
+        self.map_pulse_shape = PULSE_SHAPE_MAP # TODO Maybe move into INIT VALUE somehow
 
         # TODO Implement Save Slot Logic
         self.saved_configs = [None] * 4  #  4 Empty slots
@@ -79,8 +79,9 @@ class AppState(QObject):
             mapper = "Binary",
             mod_scheme="2-ASK",
         )
-
+        print("INIT MOD SCHEM LUT")
         self.modulation_lut_changed.emit(self.current_mod_scheme)
+
         return self.current_mod_scheme
 
     def on_pulse_update(self, partial_data):
@@ -124,6 +125,12 @@ class AppState(QObject):
         # Emit signal to notify GUI
         self.pulse_signal_changed.emit(self.current_pulse_signal)
 
+        try:
+            if isinstance(self.current_symbol_stream, SymbolStream):
+                self.update_baseband_signal()
+        except:
+            pass
+
     def on_mod_update(self, partial_data):
 
         sel_mod_scheme = partial_data.get("mod_scheme")
@@ -158,17 +165,38 @@ class AppState(QObject):
 
         self.modulation_lut_changed.emit(self.current_mod_scheme)
 
-    def on_bitseq_update(self, partial_data):
-        bit_stream = partial_data.get("bit_seq")
+        if hasattr(self, 'current_bitstream'):
+            self.update_symbol_stream()
 
-        # Convert String into Numpy Array full of Int
-        bit_stream = [int(char) for char in bit_stream]
-        bit_stream = np.array(bit_stream, dtype=np.int8)
+
+    def on_bitseq_update(self, partial_data):
+        bit_stream_str = partial_data.get("bit_seq")
+
+        if not bit_stream_str:
+            self.current_bitstream = BitStream(name="Empty Bit Stream", data=np.array([], dtype=np.int8))
+            return
+
+        try:
+            # Convert String into Numpy Array full of Int
+            bit_stream_arr = np.array([int(char) for char in bit_stream_str], dtype=np.int8)
+        except (ValueError, TypeError):
+            # Handle cases where the string is not valid for conversion
+            print(f"Invalid characters in bit sequence: {bit_stream_str}")
+            return
 
         self.current_bitstream = BitStream(
             name="Current Bit Stream",
-            data=bit_stream
+            data=bit_stream_arr
         )
+
+        # Trigger the update chain
+        self.update_symbol_stream()
+
+    def update_symbol_stream(self):
+        """Generates a new symbol stream and triggers a baseband signal update."""
+
+        if not hasattr(self, 'current_bitstream') or self.current_bitstream.data is None:
+            return
 
         # Create Symbol Sequence with Symbol Sequencer Module
         symbol_stream_data = SymbolSequencer(self.current_mod_scheme).generate(self.current_bitstream.data)
@@ -180,9 +208,14 @@ class AppState(QObject):
             bit_stream=self.current_bitstream
         )
 
+        # Automatically update the baseband signal after the symbol stream is updated
         self.update_baseband_signal()
 
     def update_baseband_signal(self):
+        """Generates a new baseband signal."""
+        if not hasattr(self, 'current_symbol_stream') or not hasattr(self, 'current_pulse_signal'):
+            return
+
         # Init Baseband generator with active Pulse Object
         baseband_gen_obj = BasebandSignalGenerator(self.current_pulse_signal)
 
@@ -214,10 +247,8 @@ class AppState(QObject):
 
         iq_data = QuadraturModulator(carrier_freq).modulate(self.current_baseband_signal)
 
-        # Here you can handle the modulated IQ data as needed
 
-        sd.play(iq_data)
-        sd.wait()
+
 
     def on_save_slot(self, slot_idx):
         self.saved_configs[slot_idx] = self.current_baseband_signal

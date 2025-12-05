@@ -44,14 +44,13 @@ class MainGUILogic(QMainWindow):
         # --- 3. Initialize AppState (which may emit signals) ---
         self.app_state = AppState(initial_values)
 
-        # --- 4. Setup Connections ---
         self._setup_connections()
+        # --- 4. Setup Connections ---
 
         # --- 5. Manually trigger initial UI updates ---
         self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
         self._on_pulse_update(self.app_state.current_pulse_signal)
         self._on_mod_scheme_lut_update(self.app_state.current_mod_scheme)
-
 
     def _setup_ui(self):
         central = QWidget()

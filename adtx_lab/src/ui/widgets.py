@@ -52,7 +52,7 @@ class ControlWidget(QWidget):
         # 2. Constellation
         self._init_constellation_group()
         # 4. Save Controls
-        self._init_save_group()
+        self._init_enter_bitstream()
         # 3. IQ Modulator
         self._init_iq_group()
 
@@ -131,13 +131,13 @@ class ControlWidget(QWidget):
 
         self.vbox.addWidget(group)
 
-    def _init_save_group(self):
+    def _init_enter_bitstream(self):
         group = QGroupBox("4. Save Baseline")
         layout = QVBoxLayout(group)
 
         layout.addWidget(QLabel("Enter Bitsequence: "))
         self.entry_bitsequence = QLineEdit()
-        self.entry_bitsequence.setText("1010")
+        self.entry_bitsequence.setPlaceholderText("Please Enter Bitsequence")
         layout.addWidget(self.entry_bitsequence)
         regex = QRegularExpression("^[01]+$")
         bit_validator = QRegularExpressionValidator(regex, self)
@@ -159,6 +159,7 @@ class ControlWidget(QWidget):
 
         # Connection for slot changing (viewing)
         self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
+
         self.entry_bitsequence.textChanged.connect(self._emit_create_bb_signal)
         self.vbox.addWidget(group)
 

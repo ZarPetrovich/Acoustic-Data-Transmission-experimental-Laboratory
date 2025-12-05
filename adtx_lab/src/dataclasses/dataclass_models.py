@@ -90,3 +90,7 @@ class BasebandSignal(SignalContainer):
     pulse: PulseSignal
     symbol_stream: SymbolStream
 
+class BandpassSignal(SignalContainer):
+
+    baseband_signal: BasebandSignal
+    carrier_freq: int
