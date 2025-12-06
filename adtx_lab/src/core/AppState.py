@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QTimer, Slot
 import numpy as np
 import sounddevice as sd
 
@@ -11,6 +11,7 @@ from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
 from adtx_lab.src.modules.symbol_sequencer import SymbolSequencer
 from adtx_lab.src.modules.baseband_modulator import BasebandSignalGenerator
 from adtx_lab.src.modules.iq_modulator import QuadraturModulator
+from adtx_lab.src.modules.audio_player import AudioPlaybackHandler
 
 
 class AppState(QObject):
@@ -22,6 +23,12 @@ class AppState(QObject):
     pulse_signal_changed = Signal(PulseSignal)
     modulation_lut_changed = Signal(ModSchemeLUT)
     baseband_signal_changed = Signal(BasebandSignal)
+    bandpass_signal_changed = Signal(BandpassSignal)
+
+
+    playback_status_changed = Signal(str)
+    start_audio_playback = Signal()
+    stop_audio_playback = Signal()
 
     def __init__(self, initial_values):
         super().__init__()
@@ -29,6 +36,12 @@ class AppState(QObject):
         self.fs = initial_values["fs"]
         self.sym_rate = initial_values["sym_rate"]
         self.span = initial_values.get("span")
+
+        self.audio_handler = AudioPlaybackHandler()
+        # Connect audio handler feedback signals to AppState slots
+        self.audio_handler.playback_started.connect(self._on_playback_started)
+        self.audio_handler.playback_finished.connect(self._on_playback_finished)
+        self.audio_handler.playback_error.connect(self._on_playback_error)
 
         self.map_pulse_shape = PULSE_SHAPE_MAP # TODO Maybe move into INIT VALUE somehow
 
@@ -43,6 +56,7 @@ class AppState(QObject):
         self.current_bitstream: BitStream
         self.current_symbol_stream: SymbolStream
         self.current_baseband_signal: BasebandSignal
+        self.current_bandpass_signal: BandpassSignal
 
         self.app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
 
@@ -168,7 +182,6 @@ class AppState(QObject):
         if hasattr(self, 'current_bitstream'):
             self.update_symbol_stream()
 
-
     def on_bitseq_update(self, partial_data):
         bit_stream_str = partial_data.get("bit_seq")
 
@@ -247,8 +260,53 @@ class AppState(QObject):
 
         iq_data = QuadraturModulator(carrier_freq).modulate(self.current_baseband_signal)
 
+        self.current_bandpass_signal = BandpassSignal (
+            name = "Current Bandpass Signal",
+            data = iq_data,
+            fs = self.fs,
+            sym_rate = self.sym_rate,
+            baseband_signal = self.current_baseband_signal,
+            carrier_freq = carrier_freq
+        )
+        self.bandpass_signal_changed.emit(self.current_bandpass_signal)
 
+
+    def play_audio(self):
+        """
+        Plays the real part of the current bandpass signal if it exists.
+        """
+        if hasattr(self, 'current_bandpass_signal') and self.current_bandpass_signal.data is not None:
+            # Audio hardware typically plays real-valued signals.
+            # We take the real part of the complex bandpass signal.
+            audio_data = np.real(self.current_bandpass_signal.data)
+            self.audio_handler.play(audio_data, self.fs)
+        else:
+            self.playback_status_changed.emit("Error: No signal generated to play.")
+            print("No bandpass signal available to play.")
 
 
     def on_save_slot(self, slot_idx):
         self.saved_configs[slot_idx] = self.current_baseband_signal
+
+    @Slot()
+    def on_play_btn_pressed(self):
+        """ Slot to be connected to the UI's play button. """
+        self.play_audio()
+
+    @Slot()
+    def on_stop_signal_pressed(self):
+        """ Slot to be connected to the UI's stop button. """
+        self.audio_handler.stop()
+
+    # --- Audio Handler Feedback Slots ---
+    @Slot()
+    def _on_playback_started(self):
+        self.playback_status_changed.emit("Status: Playing...")
+
+    @Slot()
+    def _on_playback_finished(self):
+        self.playback_status_changed.emit("Status: Idle")
+
+    @Slot(str)
+    def _on_playback_error(self, error_message):
+        self.playback_status_changed.emit(f"Error: {error_message}")

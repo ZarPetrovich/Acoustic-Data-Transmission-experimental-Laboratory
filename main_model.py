@@ -8,13 +8,16 @@ from adtx_lab.src.core.AppState import AppState
 from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 
 # Application Logic (Processing)
-from adtx_lab.src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal
+from adtx_lab.src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
 
 from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
-from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy, BasebandPlotStrategy
+from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy, BasebandPlotStrategy, BandpassPlotStrategy
 
 from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_HEX
 
+# ===========================================================
+#   GUI Constructor Logic
+# ===========================================================
 
 class MainGUILogic(QMainWindow):
     def __init__(self, initial_values):
@@ -41,6 +44,8 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
+        self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
+        self.bandpass_plotter.set_strategy(BandpassPlotStrategy())
         # --- 3. Initialize AppState (which may emit signals) ---
         self.app_state = AppState(initial_values)
 
@@ -78,19 +83,26 @@ class MainGUILogic(QMainWindow):
         self.setStatusBar(QStatusBar())
 
     def _setup_connections(self):
-        # Connect control widget signals to app_state slots
+        # # ---- Connect control widget signals to app_state slots ----
         self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
         self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
         self.ctrl_widget.sig_bit_seq_changed.connect(self.app_state.on_bitseq_update)
         self.ctrl_widget.sig_save_requested.connect(self._on_save_slot)
         self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
 
-        # Connect app_state signals to GUI update slots
+        # ---- Connect Media Player widget signals to app_state slots ----
+
+        self.media_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
+        self.media_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
+
+        # # ---- Connect app_state signals to GUI update slots ----
         self.app_state.app_config_changed.connect(self._on_app_config_update)
         self.app_state.pulse_signal_changed.connect(self._on_pulse_update)
         self.app_state.modulation_lut_changed.connect(self._on_mod_scheme_lut_update)
         self.app_state.baseband_signal_changed.connect(self._on_baseband_update)
-        # Footer
+        self.app_state.bandpass_signal_changed.connect(self._on_bandpass_update)
+
+        # # ---- Footer ----
         self.footer.btn_restart.clicked.connect(self.restart_application)
 
     @Slot(dict)
@@ -114,6 +126,11 @@ class MainGUILogic(QMainWindow):
         self.app_state.on_save_slot(slot_idx)
         self.statusBar().showMessage(f"Configuration saved to Slot {slot_idx + 1}", 3000)
 
+    @Slot(BandpassSignal)
+    def _on_bandpass_update(self, bandpass_container):
+        self.bandpass_plotter.update_plot(bandpass_container)
+
+
     @Slot()
     def restart_application(self):
         QApplication.instance().quit()
@@ -122,6 +139,9 @@ class MainGUILogic(QMainWindow):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 
+#------------------------------------------------------------
+# +++++ Stylesheet loader (if needed) +++++
+#------------------------------------------------------------
 def load_stylesheet_with_palette(qss_path, palette):
     with open(qss_path, "r") as f:
         qss = f.read()
@@ -129,7 +149,12 @@ def load_stylesheet_with_palette(qss_path, palette):
         qss = qss.replace(f"{{{{{key}}}}}", value)
     return qss
 
+#------------------------------------------------------------
+# +++++ Main Loop +++++
+#------------------------------------------------------------
 def main():
+
+
     parser = argparse.ArgumentParser(description="ADTx Laboratory")
     parser.add_argument('--no-intro', action='store_true', help='Skip the intro dialog and use default values.')
     parser.add_argument('--fs', type=int, default=DEFAULT_FS, help='Set the sample rate in Hz.')

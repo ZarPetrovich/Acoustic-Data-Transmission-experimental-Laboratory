@@ -31,12 +31,13 @@ class QuadraturModulator(Modulator):
 
         time_vector = np.arange(len(baseband_obj.data)) / baseband_obj.fs
 
-        carrier = np.cos( 2 * np.pi * time_vector * self.f_carrier)
+        carrier_cos = np.cos( 2 * np.pi * time_vector * self.f_carrier)
+        carrier_sin = np.sin( 2 * np.pi * time_vector * self.f_carrier)
 
         real_bb = np.real(baseband_obj.data)
         q_bb = np.imag(baseband_obj.data)
 
-        mod_signal = np.square(2) * (real_bb * carrier - q_bb * carrier)
+        mod_signal = np.square(2) * (real_bb * carrier_cos - q_bb * carrier_sin)
 
         return mod_signal
 

@@ -61,13 +61,10 @@ class SymbolStream(StreamContainer):
     bit_stream: BitStream
 
 
-
-
-
-
 #------------------------------------------------------------
 # +++++ @@@SignalContainer +++++
 #------------------------------------------------------------
+
 
 @dataclass
 class SignalContainer(DataContainer):
@@ -90,7 +87,7 @@ class BasebandSignal(SignalContainer):
     pulse: PulseSignal
     symbol_stream: SymbolStream
 
+@dataclass
 class BandpassSignal(SignalContainer):
-
     baseband_signal: BasebandSignal
     carrier_freq: int

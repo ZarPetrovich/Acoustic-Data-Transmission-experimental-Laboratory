@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
     QPushButton, QGroupBox, QSlider, QComboBox, QRadioButton,
     QButtonGroup, QGridLayout, QFormLayout, QScrollArea, QFrame, QAbstractButton,
-    QLineEdit
+    QPushButton, QLineEdit
 )
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression
 from PySide6.QtGui import QFont, QRegularExpressionValidator
@@ -132,7 +132,7 @@ class ControlWidget(QWidget):
         self.vbox.addWidget(group)
 
     def _init_enter_bitstream(self):
-        group = QGroupBox("4. Save Baseline")
+        group = QGroupBox("3. Baseline Signal")
         layout = QVBoxLayout(group)
 
         layout.addWidget(QLabel("Enter Bitsequence: "))
@@ -164,7 +164,7 @@ class ControlWidget(QWidget):
         self.vbox.addWidget(group)
 
     def _init_iq_group(self):
-        group = QGroupBox("3. IQ Modulator")
+        group = QGroupBox("4. IQ Modulator")
         layout = QVBoxLayout(group)
         layout.addWidget(QLabel("Carrier Frequency:"))
 
@@ -178,11 +178,14 @@ class ControlWidget(QWidget):
         self.freq_bg.buttons()[0].setChecked(True)
         layout.addLayout(h_rad)
 
+        self.btn_modulate = QPushButton("Modulate")
+        layout.addWidget(self.btn_modulate)
+
         self.vbox.addWidget(group)
 
         # Internal Connections
 
-        self.freq_bg.buttonClicked.connect(self._emit_carrier_freq)
+        self.btn_modulate.clicked.connect(self._emit_carrier_freq)
 
     # --- Internal Emitters  ---
     def _emit_pulse(self):
@@ -240,13 +243,22 @@ class MatrixWidget(QWidget):
         # 3. Baseband (Placeholder for now as requested)
         self.plot_baseband = PlotWidget(title="Baseband (Time) - Pending")
 
-        # 4. FFT (Placeholder)
-        self.plot_fft = PlotWidget(title="Spectrum - Pending")
+        # 4. Baseband FFT (Placeholder)
+        self.plot_bb_fft = PlotWidget(title="Spectrum - Pending")
+
+        # 5. Bandpass
+        self.plot_bandpass  = PlotWidget(title="Bandpass (Time) - Pending")
+
+        # 6. Bandpass FFT
+        self.plot_bp_fft = PlotWidget(title ="Bandpass Spectrum")
+
 
         layout.addWidget(self.plot_pulse, 0, 0)
         layout.addWidget(self.plot_const, 0, 1)
         layout.addWidget(self.plot_baseband, 1, 0)
-        layout.addWidget(self.plot_fft, 1, 1)
+        layout.addWidget(self.plot_bb_fft, 1, 1)
+        layout.addWidget(self.plot_bandpass,2,0)
+        layout.addWidget(self.plot_bp_fft,2,1)
 
 #------------------------------------------------------------
 # +++++ Meta Data Widget +++++
@@ -282,6 +294,11 @@ class MetaDataWidget(QWidget):
 # +++++ Media Player +++++
 #------------------------------------------------------------
 class MediaPlayerWidget(QWidget):
+
+    # ---- Signals for main Gui Controller ----
+    sig_play_button_pressed = Signal()
+    sig_stop_button_pressed = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -293,9 +310,16 @@ class MediaPlayerWidget(QWidget):
         vbox.addWidget(self.info_lbl)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(QPushButton("Play"))
-        hbox.addWidget(QPushButton("Stop"))
+        self.btn_play = QPushButton("Play")
+        hbox.addWidget(self.btn_play)
+        self.btn_stop = QPushButton("Stop")
+        hbox.addWidget(self.btn_stop)
         vbox.addLayout(hbox)
+
+        # ---- Internal Emitters ----
+
+        self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
+        self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
 
 #------------------------------------------------------------
 # +++++ Footer Widget +++++
