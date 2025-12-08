@@ -76,6 +76,7 @@ class PulseSignal(SignalContainer):
     """Data Container for created Pulses"""
     shape: PulseShape
     span: int = None
+    roll_off: float = None
 
 @dataclass
 class BasebandSignal(SignalContainer):

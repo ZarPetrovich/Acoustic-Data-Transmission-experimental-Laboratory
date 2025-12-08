@@ -37,7 +37,7 @@ class PlotWidget(QWidget):
         if clear:
             self.plot_widget.clear()
             # Remove all legend items when clearing
-            #elf.plot_widget_legend.clear()
+            #self.plot_widget_legend.clear()
 
         pen = pg.mkPen(color=color, width=2)
         self.current_curve = self.plot_widget.plot(timevector, datavector, pen=pen, name=name, stepMode = False)
@@ -45,4 +45,4 @@ class PlotWidget(QWidget):
         # Add the curve to the legend
         #elf.plot_widget_legend.addItem(self.current_curve, name)
 
-        self.plot_widget.enableAutoRange()
+        #self.plot_widget.enableAutoRange()

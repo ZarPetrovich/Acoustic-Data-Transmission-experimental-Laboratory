@@ -11,7 +11,9 @@ from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 from adtx_lab.src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
 
 from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
-from adtx_lab.src.ui.plot_strategies import PlotManager, PulsePlotStrategy, ConstellationPlotStrategy, BasebandPlotStrategy, BandpassPlotStrategy
+from adtx_lab.src.ui.plot_strategies import (
+    PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
+    BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy, PeriodogrammPlotStrategy)
 
 from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_HEX
 
@@ -44,8 +46,16 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
+        self.bb_fft_plotter = PlotManager(self.matrix_widget.plot_bb_fft)
+        self.bb_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
+
         self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
         self.bandpass_plotter.set_strategy(BandpassPlotStrategy())
+
+        self.bp_fft_plotter = PlotManager(self.matrix_widget.plot_bp_fft)
+        self.bp_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
+
+
         # --- 3. Initialize AppState (which may emit signals) ---
         self.app_state = AppState(initial_values)
 
@@ -120,7 +130,7 @@ class MainGUILogic(QMainWindow):
     @Slot(BasebandSignal)
     def _on_baseband_update(self, baseband_container):
         self.baseband_plotter.update_plot(baseband_container)
-
+        self.bb_fft_plotter.update_plot(baseband_container)
     @Slot(int)
     def _on_save_slot(self, slot_idx):
         self.app_state.on_save_slot(slot_idx)
@@ -129,7 +139,7 @@ class MainGUILogic(QMainWindow):
     @Slot(BandpassSignal)
     def _on_bandpass_update(self, bandpass_container):
         self.bandpass_plotter.update_plot(bandpass_container)
-
+        self.bp_fft_plotter.update_plot(bandpass_container)
 
     @Slot()
     def restart_application(self):

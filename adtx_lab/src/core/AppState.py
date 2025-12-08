@@ -5,7 +5,7 @@ import sounddevice as sd
 
 from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP, BitMappingScheme, ModulationScheme
 from adtx_lab.src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
-from adtx_lab.src.modules.pulse_shapes import CosinePulse, RectanglePulse
+from adtx_lab.src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
 from adtx_lab.src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
 from adtx_lab.src.modules.symbol_sequencer import SymbolSequencer
@@ -62,7 +62,7 @@ class AppState(QObject):
 
     def _init_default_pulse(self):
 
-        init_two_ask = RectanglePulse(self.sym_rate, self.fs, self.span)
+        init_two_ask = RectanglePulse(self.sym_rate, self.fs, self.span, roll_off = None)
 
         pulse_data = init_two_ask.generate() # generate the actual Data
 
@@ -109,7 +109,8 @@ class AppState(QObject):
 
         pulse_generators = {
             PulseShape.RECTANGLE: RectanglePulse,
-            PulseShape.COSINE_SQUARED: CosinePulse,
+            PulseShape.COSINE_SQUARED: CosineSquarePulse,
+            PulseShape.RAISED_COSINE: RaisedCosinePulse,
         }
 
         # Validate if shape is available
@@ -120,7 +121,7 @@ class AppState(QObject):
 
         # Create Generator Object
         try:
-            generator = generator_cls(self.sym_rate, self.fs, span)
+            generator = generator_cls(self.sym_rate, self.fs, span, roll_off)
             pulse_data = generator.generate()  # Generate the actual data
         except Exception as e:
             print(f"Failed to generate pulse: {e}")
@@ -270,7 +271,6 @@ class AppState(QObject):
         )
         self.bandpass_signal_changed.emit(self.current_bandpass_signal)
 
-
     def play_audio(self):
         """
         Plays the real part of the current bandpass signal if it exists.
@@ -283,7 +283,6 @@ class AppState(QObject):
         else:
             self.playback_status_changed.emit("Error: No signal generated to play.")
             print("No bandpass signal available to play.")
-
 
     def on_save_slot(self, slot_idx):
         self.saved_configs[slot_idx] = self.current_baseband_signal

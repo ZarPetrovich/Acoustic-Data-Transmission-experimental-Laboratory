@@ -78,7 +78,7 @@ class ControlWidget(QWidget):
         span_layout = QHBoxLayout()
         span_layout.addWidget(QLabel("Span:"))
         self.slider_span = QSlider(Qt.Orientation.Horizontal)
-        self.slider_span.setRange(1, 5)
+        self.slider_span.setRange(1, 50)
         self.slider_span.setValue(2)
         self.lbl_span = QLabel(f"{2}")
         span_layout.addWidget(self.slider_span)
