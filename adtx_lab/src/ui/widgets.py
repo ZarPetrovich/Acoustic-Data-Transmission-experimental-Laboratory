@@ -2,8 +2,9 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
     QPushButton, QGroupBox, QSlider, QComboBox, QRadioButton,
     QButtonGroup, QGridLayout, QFormLayout, QScrollArea, QFrame, QAbstractButton,
-    QPushButton, QLineEdit
+    QPushButton, QLineEdit,QFileDialog
 )
+
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression
 from PySide6.QtGui import QFont, QRegularExpressionValidator
 from adtx_lab.src.ui.plot_widgets import PlotWidget
@@ -29,7 +30,7 @@ class ControlWidget(QWidget):
     # SIGNALS
     sig_pulse_changed = Signal(dict)        # Emits {pulse_type, span, roll_off}
     sig_mod_changed = Signal(dict)          # Emits {mod_scheme, mapping}
-    sig_bit_seq_changed = Signal(dict)      # Emits {bit_sequence}
+    sig_bit_stream_changed = Signal(dict)      # Emits {bit_sequence}
     sig_carrier_freq_changed = Signal(dict) # Emits {carrie_freq}
 
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
@@ -136,12 +137,17 @@ class ControlWidget(QWidget):
         layout = QVBoxLayout(group)
 
         layout.addWidget(QLabel("Enter Bitsequence: "))
-        self.entry_bitsequence = QLineEdit()
-        self.entry_bitsequence.setPlaceholderText("Please Enter Bitsequence")
-        layout.addWidget(self.entry_bitsequence)
+        self.entry_bitstream = QLineEdit()
+        self.entry_bitstream.setPlaceholderText("Please Enter Bitsequence")
+        layout.addWidget(self.entry_bitstream)
         regex = QRegularExpression("^[01]+$")
         bit_validator = QRegularExpressionValidator(regex, self)
-        self.entry_bitsequence.setValidator(bit_validator)
+        self.entry_bitstream.setValidator(bit_validator)
+
+        # Import Data Button
+        self.btn_import_data = QPushButton("Import Data (.bin)")
+        layout.addWidget(self.btn_import_data)
+        self.btn_import_data.clicked.connect(self._open_import_dialog)
 
         self.slot_bg = QButtonGroup(self)
 
@@ -157,10 +163,10 @@ class ControlWidget(QWidget):
         btn_save.clicked.connect(lambda: self.sig_save_requested.emit(self.slot_bg.checkedId()))
         layout.addWidget(btn_save)
 
-        # Connection for slot changing (viewing)
+        # # ---- SIGNAL EMITTER ----
+        self.entry_bitstream.textChanged.connect(self._emit_bitstream_from_entry)
         self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
 
-        self.entry_bitsequence.textChanged.connect(self._emit_create_bb_signal)
         self.vbox.addWidget(group)
 
     def _init_iq_group(self):
@@ -205,9 +211,9 @@ class ControlWidget(QWidget):
             "bit_mapping": self.map_combo.currentText()
         })
 
-    def _emit_create_bb_signal(self):
-        self.sig_bit_seq_changed.emit({
-            "bit_seq": self.entry_bitsequence.text()
+    def _emit_bitstream_from_entry(self):
+        self.sig_bit_stream_changed.emit({
+            "bit_seq": self.entry_bitstream.text()
         })
 
     def _emit_carrier_freq(self):
@@ -220,6 +226,36 @@ class ControlWidget(QWidget):
 
     def set_pulse_shape_map(self, map_pulse_shape):
         self.pulse_combo.addItems([shape.name for shape in PulseShape])  # Use enum names
+
+    def _open_import_dialog(self):
+
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import Baseline Data", "", "Binary Files (*.bin)")
+
+        if file_path:
+            try:
+                with open(file_path, 'r') as f:
+                    raw_data = f.read()
+
+                clean_bit_sequence = "".join(raw_data.split())
+
+                regex = QRegularExpression("^[01]+$")
+                if not regex.match(clean_bit_sequence).hasMatch():
+                     print("Imported file contains invalid characters after cleaning. ""Only '0' and '1' are allowed.")
+                     return
+
+                # 3. MVVM INTEGRATION (UI & Signal)
+
+                self.entry_bitstream.hide()
+
+                self.sig_bit_stream_changed.emit({
+                    "bit_seq": clean_bit_sequence
+                    })
+
+            except FileNotFoundError:
+                print("File not found.")
+            except Exception as e:
+                print(f"Could not read or process file: {e}")
+
 
 #------------------------------------------------------------
 # +++++ Matrix Widget +++++

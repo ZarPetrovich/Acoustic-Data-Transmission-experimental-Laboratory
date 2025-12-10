@@ -96,7 +96,7 @@ class MainGUILogic(QMainWindow):
         # # ---- Connect control widget signals to app_state slots ----
         self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
         self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
-        self.ctrl_widget.sig_bit_seq_changed.connect(self.app_state.on_bitseq_update)
+        self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
         self.ctrl_widget.sig_save_requested.connect(self._on_save_slot)
         self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
 

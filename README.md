@@ -16,3 +16,9 @@ Create Data--> Store in Container --> pass over the whole Object to a combobox f
 
 The Combobox can hold items with name and actual data. So the Name is from the object, and the object itself is the data. Python does the job here. instead of copying the whole object, Python creates pointers automatically.
 To get the data from a combobox, you can access that without any Getter Workaroung. Clean and Simple
+
+
+Testbitstream is ASCII Encoding (The Simple Coding Algorithm)
+
+
+Text to Encode: Hello. I am a great Tool to understand the basic Principles of Data Transmission
