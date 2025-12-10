@@ -10,7 +10,7 @@ The Datacan be stored in a Signal dataclass Container for further Action.
 
 from abc import abstractmethod
 import numpy as np
-from adtx_lab.src.dataclasses.dataclass_models import BasebandSignal
+from src.dataclasses.dataclass_models import BasebandSignal
 
 
 
@@ -25,7 +25,7 @@ class Modulator():
         raise NotImplementedError("This method should be implemented by subclasses.")
 
 
-class QuadraturModulator(Modulator):
+class QuadratureModulator(Modulator):
 
     def modulate(self, baseband_obj: BasebandSignal):
 

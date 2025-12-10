@@ -3,19 +3,19 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Slot
 
 # Local Application/Library Specific Imports
-from adtx_lab.src.ui.intro_dialog import IntroDialog
-from adtx_lab.src.core.AppState import AppState
-from adtx_lab.src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
+from src.ui.intro_dialog import IntroDialog
+from src.core.AppState import AppState
+from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 
 # Application Logic (Processing)
-from adtx_lab.src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
+from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
 
-from adtx_lab.src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
-from adtx_lab.src.ui.plot_strategies import (
+from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
+from src.ui.plot_strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
     BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy, PeriodogrammPlotStrategy)
 
-from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_HEX
+from src.ui.style.color_pallete import LIGHT_THEME_HEX
 
 # ===========================================================
 #   GUI Constructor Logic
@@ -159,6 +159,22 @@ def load_stylesheet_with_palette(qss_path, palette):
         qss = qss.replace(f"{{{{{key}}}}}", value)
     return qss
 
+def get_resource_path(relative_path):
+    """
+    Get the absolute path to a resource, works for development and for
+    PyInstaller/cx_Freeze compiled executables.
+    """
+    # Check if the app is frozen (e.g., by PyInstaller)
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        # In a frozen environment, the base path is sys._MEIPASS
+        base_path = sys._MEIPASS
+    else:
+        # In development, the base path is the directory of the script
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    return os.path.join(base_path, relative_path)
+
+
 #------------------------------------------------------------
 # +++++ Main Loop +++++
 #------------------------------------------------------------
@@ -185,6 +201,9 @@ def main():
         else:
             sys.exit()  # ! Exit if the user cancels the dialog
 
+    # Load and apply the stylesheet with the color palette
+    qss_path = get_resource_path("src/ui/style/style.qss")
+    stylesheet = load_stylesheet_with_palette(qss_path, LIGHT_THEME_HEX)
 
     main_app = MainGUILogic(initial_values=initial_values)
     main_app.show()

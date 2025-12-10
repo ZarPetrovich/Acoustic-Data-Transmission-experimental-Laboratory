@@ -16,7 +16,7 @@
 from abc import ABC,abstractmethod
 from typing import Dict
 import numpy as np
-from adtx_lab.src.modules.bit_mapping import BitMapper
+from src.modules.bit_mapping import BitMapper
 
 
 class ModulationScheme(ABC):

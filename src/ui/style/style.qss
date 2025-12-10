@@ -1,0 +1,18 @@
+/*
+    COLOR PALETTE
+    - Backgrounds:
+        - bg-dark: {{bg-dark}}
+        - bg-secondary: {{bg-secondary}}
+        - bg-tertiary: {{bg-tertiary}}
+    - Text:
+        - text-light: {{text-light}}
+        - text-secondary: {{text-secondary}}
+    - Accents:
+        - accent-primary: {{accent-primary}}
+        - accent-secondary: {{accent-secondary}}
+        - accent-success: {{accent-success}}
+        - accent-error: {{accent-error}}
+        - accent-muted: {{accent-muted}}
+*/
+
+

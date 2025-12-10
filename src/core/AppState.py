@@ -1,17 +1,15 @@
 from PySide6.QtCore import QObject, Signal, QTimer, Slot
 import numpy as np
-import sounddevice as sd
 
-
-from adtx_lab.src.constants import PulseShape, PULSE_SHAPE_MAP, BitMappingScheme, ModulationScheme
-from adtx_lab.src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
-from adtx_lab.src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
-from adtx_lab.src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
-from adtx_lab.src.modules.modulation_schemes import AmpShiftKeying
-from adtx_lab.src.modules.symbol_sequencer import SymbolSequencer
-from adtx_lab.src.modules.baseband_modulator import BasebandSignalGenerator
-from adtx_lab.src.modules.iq_modulator import QuadraturModulator
-from adtx_lab.src.modules.audio_player import AudioPlaybackHandler
+from src.constants import PulseShape, PULSE_SHAPE_MAP
+from src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
+from src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
+from src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
+from src.modules.modulation_schemes import AmpShiftKeying
+from src.modules.symbol_sequencer import SymbolSequencer
+from src.modules.baseband_modulator import BasebandSignalGenerator
+from src.modules.iq_modulator import QuadratureModulator
+from src.modules.audio_player import AudioPlaybackHandler
 
 
 class AppState(QObject):
@@ -259,7 +257,7 @@ class AppState(QObject):
             print(f"Invalid carrier frequency value: {carrier_freq}")
             return
 
-        iq_data = QuadraturModulator(carrier_freq).modulate(self.current_baseband_signal)
+        iq_data = QuadratureModulator(carrier_freq).modulate(self.current_baseband_signal)
 
         self.current_bandpass_signal = BandpassSignal (
             name = "Current Bandpass Signal",

@@ -9,7 +9,7 @@ Can also be used to export the data
 from dataclasses import dataclass, field
 from typing import Dict
 import numpy as np
-from adtx_lab.src.constants import PulseShape, ModulationScheme
+from src.constants import PulseShape, ModulationScheme
 
 # ===========================================================
 #  Dataclass Container

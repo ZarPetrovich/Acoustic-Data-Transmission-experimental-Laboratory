@@ -6,9 +6,9 @@ from scipy import signal
 
 import pyqtgraph as pg
 from PySide6.QtCore import Qt
-from adtx_lab.src.ui.plot_widgets import PlotWidget
-from adtx_lab.src.dataclasses.dataclass_models import PulseSignal, ModSchemeLUT, BasebandSignal
-from adtx_lab.src.constants import PulseShape
+from src.ui.plot_widgets import PlotWidget
+from src.dataclasses.dataclass_models import PulseSignal, ModSchemeLUT, BasebandSignal
+from src.constants import PulseShape
 
 
 

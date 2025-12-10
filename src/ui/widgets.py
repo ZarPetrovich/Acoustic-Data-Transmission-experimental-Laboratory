@@ -7,8 +7,8 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression
 from PySide6.QtGui import QFont, QRegularExpressionValidator
-from adtx_lab.src.ui.plot_widgets import PlotWidget
-from adtx_lab.src.constants import PulseShape
+from src.ui.plot_widgets import PlotWidget
+from src.constants import PulseShape
 
 
 # ===========================================================
@@ -133,9 +133,10 @@ class ControlWidget(QWidget):
         self.vbox.addWidget(group)
 
     def _init_enter_bitstream(self):
-        group = QGroupBox("3. Baseline Signal")
+        group = QGroupBox("3. Bitstream")
         layout = QVBoxLayout(group)
 
+        # region ---- LINE EDIT ENTRY FOR BITSTREAM ----
         layout.addWidget(QLabel("Enter Bitsequence: "))
         self.entry_bitstream = QLineEdit()
         self.entry_bitstream.setPlaceholderText("Please Enter Bitsequence")
@@ -143,29 +144,34 @@ class ControlWidget(QWidget):
         regex = QRegularExpression("^[01]+$")
         bit_validator = QRegularExpressionValidator(regex, self)
         self.entry_bitstream.setValidator(bit_validator)
+        # endregion
 
-        # Import Data Button
-        self.btn_import_data = QPushButton("Import Data (.bin)")
+        # ---- IMPORT DATA ----
+        self.btn_import_data = QPushButton("Import Bitstream (.bin)")
         layout.addWidget(self.btn_import_data)
         self.btn_import_data.clicked.connect(self._open_import_dialog)
 
-        self.slot_bg = QButtonGroup(self)
+        # region ---- SAVE CONF LOGIC  ----
+        # self.slot_bg = QButtonGroup(self)
 
-        h_lay = QHBoxLayout()
-        for i in range(1, 5):
-            rb = QRadioButton(f"Slot {i}")
-            self.slot_bg.addButton(rb, i-1) # ID 0-3
-            h_lay.addWidget(rb)
-        self.slot_bg.buttons()[0].setChecked(True)
-        layout.addLayout(h_lay)
+        # h_lay = QHBoxLayout()
+        # for i in range(1, 5):
+        #     rb = QRadioButton(f"Slot {i}")
+        #     self.slot_bg.addButton(rb, i-1) # ID 0-3
+        #     h_lay.addWidget(rb)
+        # self.slot_bg.buttons()[0].setChecked(True)
+        # layout.addLayout(h_lay)
 
-        btn_save = QPushButton("Store Active Signal")
-        btn_save.clicked.connect(lambda: self.sig_save_requested.emit(self.slot_bg.checkedId()))
-        layout.addWidget(btn_save)
+        # btn_save = QPushButton("Store Active Signal")
+        # btn_save.clicked.connect(lambda: self.sig_save_requested.emit(self.slot_bg.checkedId()))
+        # layout.addWidget(btn_save)
+        # endregion
 
-        # # ---- SIGNAL EMITTER ----
+        # ---- SIGNAL EMITTER ----
+
         self.entry_bitstream.textChanged.connect(self._emit_bitstream_from_entry)
-        self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
+
+        # self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
 
         self.vbox.addWidget(group)
 

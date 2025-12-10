@@ -2,7 +2,7 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget)
-from adtx_lab.src.ui.style.color_pallete import LIGHT_THEME_RGB
+from src.ui.style.color_pallete import LIGHT_THEME_RGB
 
 
 
