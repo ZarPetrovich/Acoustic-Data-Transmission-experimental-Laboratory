@@ -16,3 +16,14 @@
 */
 
 
+QWidget {
+    /* Set a large size for testing */
+    background-color: {{bg-dark}};
+    font-size: 12pt;
+    color: {{text-light}};
+
+}
+
+QPushButton {
+    background-color: {{accent-primary}};
+}

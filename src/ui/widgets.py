@@ -32,9 +32,12 @@ class ControlWidget(QWidget):
     sig_mod_changed = Signal(dict)          # Emits {mod_scheme, mapping}
     sig_bit_stream_changed = Signal(dict)      # Emits {bit_sequence}
     sig_carrier_freq_changed = Signal(dict) # Emits {carrie_freq}
+    sig_clear_plots = Signal()              # Emits when clear button is pressed
 
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
+
+
 
 
     def __init__(self, parent=None):
@@ -63,6 +66,9 @@ class ControlWidget(QWidget):
 
     def _init_pulse_group(self):
         group = QGroupBox("1. Pulse Shaping")
+
+        # ---- Set Font Size ----
+        self._style_groupbox_title(group)
         layout = QVBoxLayout(group)
 
         # Pulse Type
@@ -90,7 +96,7 @@ class ControlWidget(QWidget):
         rolloff_layout = QHBoxLayout()
         rolloff_layout.addWidget(QLabel("Roll-off (α):"))
         self.slider_roll = QSlider(Qt.Orientation.Horizontal)
-        self.slider_roll.setRange(0, 100)
+        self.slider_roll.setRange(1, 100)
         self.slider_roll.setValue(50)
         self.lbl_roll = QLabel("0.50")
         rolloff_layout.addWidget(self.slider_roll)
@@ -109,6 +115,8 @@ class ControlWidget(QWidget):
 
     def _init_constellation_group(self):
         group = QGroupBox("2. Constellation")
+        # ---- Set Font Size ----
+        self._style_groupbox_title(group)
         layout = QVBoxLayout(group)
 
         # Radio Buttons
@@ -134,6 +142,8 @@ class ControlWidget(QWidget):
 
     def _init_enter_bitstream(self):
         group = QGroupBox("3. Bitstream")
+        # ---- Set Font Size ----
+        self._style_groupbox_title(group)
         layout = QVBoxLayout(group)
 
         # region ---- LINE EDIT ENTRY FOR BITSTREAM ----
@@ -150,6 +160,11 @@ class ControlWidget(QWidget):
         self.btn_import_data = QPushButton("Import Bitstream (.bin)")
         layout.addWidget(self.btn_import_data)
         self.btn_import_data.clicked.connect(self._open_import_dialog)
+
+        # ---- CLEAR PLOTS BUTTON ----
+        self.btn_clear_plots = QPushButton("Clear Plots")
+        layout.addWidget(self.btn_clear_plots)
+        self.btn_clear_plots.clicked.connect(self.sig_clear_plots.emit)
 
         # region ---- SAVE CONF LOGIC  ----
         # self.slot_bg = QButtonGroup(self)
@@ -177,6 +192,8 @@ class ControlWidget(QWidget):
 
     def _init_iq_group(self):
         group = QGroupBox("4. IQ Modulator")
+        # ---- Set Font Size ----
+        self._style_groupbox_title(group)
         layout = QVBoxLayout(group)
         layout.addWidget(QLabel("Carrier Frequency:"))
 
@@ -201,7 +218,7 @@ class ControlWidget(QWidget):
 
     # --- Internal Emitters  ---
     def _emit_pulse(self):
-        val_roll_off = self.slider_roll.value() / 100.0
+        val_roll_off = self.slider_roll.value() / 100
         val_span = self.slider_span.value()
         self.lbl_span.setText(f"{val_span}")
         self.lbl_roll.setText(f"{val_roll_off:.2f}")
@@ -262,6 +279,17 @@ class ControlWidget(QWidget):
             except Exception as e:
                 print(f"Could not read or process file: {e}")
 
+    #------------------------------------------------------------
+    # +++++ Font Size Group Box Widget +++++
+    #------------------------------------------------------------
+    def _style_groupbox_title(self, group: QGroupBox, font_size: int = 16):
+        """Apply consistent title font styling to a QGroupBox."""
+        font = group.font()
+        font.setPointSize(font_size)
+        font.setBold(True)
+        font.setFamily("Segoe UI")
+        group.setFont(font)
+
 
 #------------------------------------------------------------
 # +++++ Matrix Widget +++++
@@ -310,6 +338,11 @@ class MetaDataWidget(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         self.group = QGroupBox("5. Selected Baseline Parameters")
+        # ---- Set Font Size ----
+        font = self.group.font()
+        font.setPointSize(16)
+        self.group.setFont(font)
+
         layout.addWidget(self.group)
 
         form = QFormLayout(self.group)
@@ -345,6 +378,11 @@ class MediaPlayerWidget(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         group = QGroupBox("6. Media Player")
+        # ---- Set Font Size ----
+        font = group.font()
+        font.setPointSize(16)
+        group.setFont(font)
+
         layout.addWidget(group)
 
         vbox = QVBoxLayout(group)
@@ -369,6 +407,9 @@ class MediaPlayerWidget(QWidget):
 class FooterWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.status_bar = parent.statusBar()
+
         # Assuming simple footer for layout purposes
         layout = QHBoxLayout(self)
         layout.addStretch()

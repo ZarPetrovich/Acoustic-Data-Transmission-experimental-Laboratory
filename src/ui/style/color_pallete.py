@@ -1,13 +1,13 @@
 from matplotlib.colors import to_rgb
 
 LIGHT_THEME_HEX = {
-    "bg-dark": "#5C6D5D",
-    "bg-secondary": "#71706E",
+    "bg-dark": "#252323",
+    "bg-secondary": "#030202",
     "bg-tertiary": "#F5F5F0",
-    "text-light": "#F5F5F0",
+    "text-light": "#f5f1ed",
     "text-secondary": "#E5E4E2",
-    "accent-primary": "#DCC0C0",
-    "accent-secondary": "#E8D5E0",
+    "accent-primary": "#4b4e58",
+    "accent-secondary": "#d4d3d5",
     "accent-success": "#D4A574",
     "accent-error": "#C67B5C",
     "accent-muted": "#2C2C2C",

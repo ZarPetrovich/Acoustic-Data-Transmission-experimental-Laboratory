@@ -230,10 +230,10 @@ class PeriodogrammPlotStrategy(PlotStrategy):
 
         index_x = f[Pxx_den_idx_max]
 
-        x_window_size = 150
+        x_window_size = 30
         widget.plot_widget.setXRange(index_x - x_window_size, index_x + x_window_size)
 
-        y_max = np.max(Pxx_den) * 1.2
+        y_max = np.max(Pxx_den) * 1.5
         widget.plot_widget.setYRange(0, y_max, padding=0)
 
         widget.plot_data(f,Pxx_den, color = 'b', name=signal_model.name)
@@ -250,3 +250,6 @@ class PlotManager:
     def update_plot(self, signal_model):
         if self.strategy:
             self.strategy.plot(self.widget, signal_model)
+
+    def clear_plot(self):
+        self.widget.plot_widget.clear()

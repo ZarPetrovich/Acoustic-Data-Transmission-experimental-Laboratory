@@ -58,6 +58,7 @@ class AppState(QObject):
 
         self.app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
 
+
     def _init_default_pulse(self):
 
         init_two_ask = RectanglePulse(self.sym_rate, self.fs, self.span, roll_off = None)
@@ -77,6 +78,7 @@ class AppState(QObject):
         self.pulse_signal_changed.emit(self.current_pulse_signal)
         return self.current_pulse_signal
 
+
     def _init_default_mod_scheme(self):
 
         mapper = BinaryMapper()
@@ -91,10 +93,10 @@ class AppState(QObject):
             mapper = "Binary",
             mod_scheme="2-ASK",
         )
-        print("INIT MOD SCHEM LUT")
-        self.modulation_lut_changed.emit(self.current_mod_scheme)
 
+        self.modulation_lut_changed.emit(self.current_mod_scheme)
         return self.current_mod_scheme
+
 
     def on_pulse_update(self, partial_data):
         pulse_type = partial_data.get("pulse_type")
@@ -144,6 +146,7 @@ class AppState(QObject):
         except:
             pass
 
+
     def on_mod_update(self, partial_data):
 
         sel_mod_scheme = partial_data.get("mod_scheme")
@@ -181,6 +184,7 @@ class AppState(QObject):
         if hasattr(self, 'current_bitstream'):
             self.update_symbol_stream()
 
+
     def on_bitseq_update(self, partial_data):
         bit_stream_str = partial_data.get("bit_seq")
 
@@ -204,6 +208,7 @@ class AppState(QObject):
         # Trigger the update chain
         self.update_symbol_stream()
 
+
     def update_symbol_stream(self):
         """Generates a new symbol stream and triggers a baseband signal update."""
 
@@ -222,6 +227,7 @@ class AppState(QObject):
 
         # Automatically update the baseband signal after the symbol stream is updated
         self.update_baseband_signal()
+
 
     def update_baseband_signal(self):
         """Generates a new baseband signal."""
@@ -244,6 +250,7 @@ class AppState(QObject):
         )
 
         self.baseband_signal_changed.emit(self.current_baseband_signal)
+
 
     def on_carrier_freq_update(self, partial_data):
 
@@ -268,6 +275,7 @@ class AppState(QObject):
             carrier_freq = carrier_freq
         )
         self.bandpass_signal_changed.emit(self.current_bandpass_signal)
+
 
     def play_audio(self):
         """

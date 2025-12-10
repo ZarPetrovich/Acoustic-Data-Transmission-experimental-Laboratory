@@ -25,14 +25,14 @@ class MainGUILogic(QMainWindow):
     def __init__(self, initial_values):
         super().__init__()
         self.setWindowTitle(f"ADTX Labor - Main FS: {initial_values['fs']} Hz | Sym Rate: {initial_values['sym_rate']} sps")
-        self.resize(1200, 800)
+        self.resize(1400, 900)
 
         # --- 1. Initialize UI Elements First ---
         self.ctrl_widget = ControlWidget()
         self.matrix_widget = MatrixWidget()
         self.meta_widget = MetaDataWidget()
         self.media_widget = MediaPlayerWidget()
-        self.footer = FooterWidget()
+        self.footer = FooterWidget(self)
 
         self._setup_ui()
 
@@ -99,6 +99,7 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
         self.ctrl_widget.sig_save_requested.connect(self._on_save_slot)
         self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
+        self.ctrl_widget.sig_clear_plots.connect(self._clear_bitstream_plot)
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
@@ -148,7 +149,12 @@ class MainGUILogic(QMainWindow):
         # We can remove the explicit --no-intro flag now, as argparse handles it
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-
+    @Slot()
+    def _clear_bitstream_plot(self):
+        self.baseband_plotter.clear_plot()
+        self.bb_fft_plotter.clear_plot()
+        self.bandpass_plotter.clear_plot()
+        self.bp_fft_plotter.clear_plot()
 #------------------------------------------------------------
 # +++++ Stylesheet loader (if needed) +++++
 #------------------------------------------------------------
@@ -204,6 +210,7 @@ def main():
     # Load and apply the stylesheet with the color palette
     qss_path = get_resource_path("src/ui/style/style.qss")
     stylesheet = load_stylesheet_with_palette(qss_path, LIGHT_THEME_HEX)
+    app.setStyleSheet(stylesheet)
 
     main_app = MainGUILogic(initial_values=initial_values)
     main_app.show()

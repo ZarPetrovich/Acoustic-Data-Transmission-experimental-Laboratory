@@ -5,8 +5,6 @@ from PySide6.QtWidgets import (
 from src.ui.style.color_pallete import LIGHT_THEME_RGB
 
 
-
-
 class PlotWidget(QWidget):
     def __init__(self, title="Signal Plot", parent = None):
 
