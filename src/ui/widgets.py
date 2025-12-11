@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
     QPushButton, QGroupBox, QSlider, QComboBox, QRadioButton,
     QButtonGroup, QGridLayout, QFormLayout, QScrollArea, QFrame, QAbstractButton,
-    QPushButton, QLineEdit,QFileDialog
+    QPushButton, QLineEdit,QFileDialog, QStackedLayout
 )
 
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression, QFileInfo
@@ -147,63 +147,95 @@ class ControlWidget(QWidget):
 
     def _init_enter_bitstream(self):
         self.group_bitstream = QGroupBox("3. Bitstream")
-        # ---- Set Font Size ----
         self._style_groupbox_title(self.group_bitstream)
-        self.layout_bitstream = QVBoxLayout(self.group_bitstream)
 
-        self.lbl_bitstream_source = QLabel("Source: Manual Entry (Active)")
-        self.lbl_bitstream_source.setStyleSheet("font-weight: bold; color: green;")
-        self.layout_bitstream.addWidget(self.lbl_bitstream_source)
+        # *** 1. Use QStackedLayout for state management ***
+        self.main_vbox = QVBoxLayout(self.group_bitstream)
+        self.stacked_widget = QWidget() # A QWidget to hold the stack
+        self.stacked_layout = QStackedLayout(self.stacked_widget)
 
-        # region ---- LINE EDIT ENTRY FOR BITSTREAM ----
-        self.layout_bitstream.addWidget(QLabel("Add Bitstream manually ( 1 | 0 ): "))
+        # Create the two state widgets
+        self._create_manual_entry_widget()
+        self._create_imported_file_widget()
+
+        # Add the stacked widget to the group box's main layout
+        self.main_vbox.addWidget(self.stacked_widget)
+
+        # Add the global 'Clear Output Plots' button below the stack
+        self.btn_clear_plots = QPushButton("Clear Output Plots")
+        self.main_vbox.addWidget(self.btn_clear_plots)
+
+        # Initial state is Manual Entry (index 0)
+        self.stacked_layout.setCurrentIndex(0)
+
+        # Connect the global button
+        self.btn_clear_plots.clicked.connect(self.sig_clear_plots.emit) # Keep this one
+
+        self.vbox.addWidget(self.group_bitstream)
+
+    def _create_manual_entry_widget(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Status Label (Always shows 'Manual' in this view)
+        self.lbl_manual_source = QLabel("Source: Manual Entry (Active)")
+        self.lbl_manual_source.setStyleSheet("font-weight: bold; color: green;")
+        layout.addWidget(self.lbl_manual_source)
+
+        # Manual Entry Line Edit
+        layout.addWidget(QLabel("Add Bitstream manually ( 1 | 0 ): "))
         self.entry_bitstream = QLineEdit()
-        self.entry_bitstream.setPlaceholderText("Please Enter Bitstream")
-        self.layout_bitstream.addWidget(self.entry_bitstream)
-        regex = QRegularExpression("^[01]+$")
-        bit_validator = QRegularExpressionValidator(regex, self)
-        self.entry_bitstream.setValidator(bit_validator)
-        # endregion
+        # ... (Validator, Placeholder setup remains the same) ...
+        layout.addWidget(self.entry_bitstream)
 
-        # ---- IMPORT DATA ----
-        #layout.addWidget(QLabel("Or Import File --> "))
-
+        # Import Button
         import_h = QHBoxLayout()
         import_h.addWidget(QLabel("Or Import File"))
         self.btn_import_data = QPushButton("Import Bitstream (.bin)")
-
         import_h.addWidget(self.btn_import_data)
+        layout.addLayout(import_h)
 
-        self.layout_bitstream.addLayout(import_h)
+        # Add to stack
+        self.stacked_layout.addWidget(widget)
 
-        self.btn_clear_plots = QPushButton("Clear Bitstream")
-        self.layout_bitstream.addWidget(self.btn_clear_plots)
-        # region ---- SAVE CONF LOGIC  ----
-        # self.slot_bg = QButtonGroup(self)
-
-        # h_lay = QHBoxLayout()
-        # for i in range(1, 5):
-        #     rb = QRadioButton(f"Slot {i}")
-        #     self.slot_bg.addButton(rb, i-1) # ID 0-3
-        #     h_lay.addWidget(rb)
-        # self.slot_bg.buttons()[0].setChecked(True)
-        # layout.addLayout(h_lay)
-
-        # btn_save = QPushButton("Store Active Signal")
-        # btn_save.clicked.connect(lambda: self.sig_save_requested.emit(self.slot_bg.checkedId()))
-        # layout.addWidget(btn_save)
-        # endregion
-
-        # ---- SIGNAL EMITTER ----
-        # Use debounced timer to avoid processing on every keystroke
+        # Connections for this view
         self.entry_bitstream.textChanged.connect(self._on_bitstream_text_changed)
         self.btn_import_data.clicked.connect(self._open_import_dialog)
 
-        self.btn_clear_plots.clicked.connect(self.sig_clear_plots.emit)
+    def _create_imported_file_widget(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
 
-        # self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
+        # File Info Label
+        self.lbl_file_info = QLabel("Source: File") # Will be updated dynamically
+        self.lbl_file_info.setStyleSheet("font-weight: bold; color: darkorange;")
+        layout.addWidget(self.lbl_file_info)
 
-        self.vbox.addWidget(self.group_bitstream)
+        # Value labels
+        form_layout = QFormLayout()
+        self.lbl_filename = QLabel("N/A")
+        self.lbl_bit_length = QLabel("N/A")
+        form_layout.addRow("Filename:", self.lbl_filename)
+        form_layout.addRow("Length:", self.lbl_bit_length)
+        layout.addLayout(form_layout)
+
+        # Action Buttons
+        h_buttons = QHBoxLayout()
+        self.btn_view_data = QPushButton("View Full Data")
+        self.btn_revert_manual = QPushButton("Revert to Manual Entry")
+        h_buttons.addWidget(self.btn_view_data)
+        h_buttons.addWidget(self.btn_revert_manual)
+        layout.addLayout(h_buttons)
+
+        # Add to stack
+        self.stacked_layout.addWidget(widget)
+
+        # Connections for this view
+        self.btn_view_data.clicked.connect(self._on_view_data_clicked)
+        self.btn_revert_manual.clicked.connect(self._on_revert_to_manual)
+
+        # Store bit sequence internally for viewing
+        self._current_bit_sequence = ""
 
     def _init_iq_group(self):
         group = QGroupBox("4. IQ Modulator")
@@ -295,42 +327,58 @@ class ControlWidget(QWidget):
         # Optionally: self.layout_bitstream.addLayout(hbox) if you want to show this in the UI
 
     def _open_import_dialog(self):
-
+        # 1. Re-add File Dialog and Reading Logic
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Baseline Data", "", "Binary Files (*.bin)")
 
-        if file_path:
-            try:
-                with open(file_path, 'r') as f:
-                    raw_data = f.read()
+        if not file_path:
+            return
 
-                clean_bit_sequence = "".join(raw_data.split())
+        try:
+            with open(file_path, 'r') as f:
+                raw_data = f.read()
 
-                regex = QRegularExpression("^[01]+$")
-                if not regex.match(clean_bit_sequence).hasMatch():
-                     print("Imported file contains invalid characters after cleaning. ""Only '0' and '1' are allowed.")
-                     return
+            clean_bit_sequence = "".join(raw_data.split())
 
-                # 3. MVVM INTEGRATION (UI & Signal)
+            regex = QRegularExpression("^[01]+$")
+            bit_validator = QRegularExpressionValidator(regex, self)
+            if not regex.match(clean_bit_sequence).hasMatch():
+                 # Handle invalid characters gracefully, e.g., show an error dialog
+                 print("Imported file contains invalid characters after cleaning. Only '0' and '1' are allowed.")
+                 return
 
-                self.sig_bit_stream_changed.emit({
-                    "bit_seq": clean_bit_sequence
-                    })
+            # 2. Update internal state and emit signal (Your existing logic)
+            self._current_bit_sequence = clean_bit_sequence
+            self.sig_bit_stream_changed.emit({"bit_seq": clean_bit_sequence})
 
-                # ---- Change UI  ----
-                file_name = QFileInfo(file_path).fileName()
+            # 3. Update the File Imported View (Your existing logic)
+            file_name = QFileInfo(file_path).fileName()
+            self.lbl_file_info.setText("Source: File Imported")
+            self.lbl_filename.setText(file_name)
+            self.lbl_bit_length.setText(f"{len(clean_bit_sequence)} bits")
 
-                self.lbl_bitstream_source.setText(
-                    f"Source: {file_name} ({len(clean_bit_sequence)} bits)"
-                )
+            # 4. Switch the UI View (Your existing logic)
+            self.stacked_layout.setCurrentIndex(1) # Switch to File Imported View
 
-                self._show_imported_bitstream_dialog(clean_bit_sequence)
-                self.entry_bitstream.setEnabled(False)
-                self.entry_bitstream.setText("Data loaded from file, clear to edit manually.")
+        except FileNotFoundError:
+            print("File not found.")
+        except Exception as e:
+            print(f"Could not read or process file: {e}")
 
-            except FileNotFoundError:
-                print("File not found.")
-            except Exception as e:
-                print(f"Could not read or process file: {e}")
+    def _on_revert_to_manual(self):
+        """Action to switch back to manual entry mode."""
+        # 1. Clear internal state and the line edit
+        self._current_bit_sequence = ""
+        self.entry_bitstream.clear() # Clears the data
+
+        # 2. Emit an empty signal (or the new content of the entry box)
+        self._emit_bitstream_from_entry() # Emits the new (empty) sequence
+
+        # 3. Switch the UI View
+        self.stacked_layout.setCurrentIndex(0) # Switch to Manual Entry View
+
+    def _on_view_data_clicked(self):
+        """Triggers the dialog using the internally stored sequence."""
+        self._show_imported_bitstream_dialog(self._current_bit_sequence)
 
     def clear_bitstream_entry(self):
         self.entry_bitstream.clear()
@@ -347,6 +395,7 @@ class ControlWidget(QWidget):
         font.setBold(True)
         font.setFamily("Segoe UI")
         group.setFont(font)
+
 
 
 #------------------------------------------------------------
