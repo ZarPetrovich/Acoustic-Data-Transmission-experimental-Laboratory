@@ -5,10 +5,11 @@ from PySide6.QtWidgets import (
     QPushButton, QLineEdit,QFileDialog
 )
 
-from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression
+from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression, QFileInfo
 from PySide6.QtGui import QFont, QRegularExpressionValidator
 from src.ui.plot_widgets import PlotWidget
 from src.constants import PulseShape
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
 
 
 # ===========================================================
@@ -38,10 +39,14 @@ class ControlWidget(QWidget):
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
 
-
-
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # Debounce timer for bitstream text entry
+        self.bitstream_debounce_timer = QTimer(self)
+        self.bitstream_debounce_timer.setSingleShot(True)
+        self.bitstream_debounce_timer.setInterval(300)  # 300ms delay
+        self.bitstream_debounce_timer.timeout.connect(self._emit_bitstream_from_entry)
 
         # Scroll Area setup
         main_layout = QVBoxLayout(self)
@@ -141,31 +146,38 @@ class ControlWidget(QWidget):
         self.vbox.addWidget(group)
 
     def _init_enter_bitstream(self):
-        group = QGroupBox("3. Bitstream")
+        self.group_bitstream = QGroupBox("3. Bitstream")
         # ---- Set Font Size ----
-        self._style_groupbox_title(group)
-        layout = QVBoxLayout(group)
+        self._style_groupbox_title(self.group_bitstream)
+        self.layout_bitstream = QVBoxLayout(self.group_bitstream)
+
+        self.lbl_bitstream_source = QLabel("Source: Manual Entry (Active)")
+        self.lbl_bitstream_source.setStyleSheet("font-weight: bold; color: green;")
+        self.layout_bitstream.addWidget(self.lbl_bitstream_source)
 
         # region ---- LINE EDIT ENTRY FOR BITSTREAM ----
-        layout.addWidget(QLabel("Enter Bitsequence: "))
+        self.layout_bitstream.addWidget(QLabel("Add Bitstream manually ( 1 | 0 ): "))
         self.entry_bitstream = QLineEdit()
-        self.entry_bitstream.setPlaceholderText("Please Enter Bitsequence")
-        layout.addWidget(self.entry_bitstream)
+        self.entry_bitstream.setPlaceholderText("Please Enter Bitstream")
+        self.layout_bitstream.addWidget(self.entry_bitstream)
         regex = QRegularExpression("^[01]+$")
         bit_validator = QRegularExpressionValidator(regex, self)
         self.entry_bitstream.setValidator(bit_validator)
         # endregion
 
         # ---- IMPORT DATA ----
+        #layout.addWidget(QLabel("Or Import File --> "))
+
+        import_h = QHBoxLayout()
+        import_h.addWidget(QLabel("Or Import File"))
         self.btn_import_data = QPushButton("Import Bitstream (.bin)")
-        layout.addWidget(self.btn_import_data)
-        self.btn_import_data.clicked.connect(self._open_import_dialog)
 
-        # ---- CLEAR PLOTS BUTTON ----
-        self.btn_clear_plots = QPushButton("Clear Plots")
-        layout.addWidget(self.btn_clear_plots)
-        self.btn_clear_plots.clicked.connect(self.sig_clear_plots.emit)
+        import_h.addWidget(self.btn_import_data)
 
+        self.layout_bitstream.addLayout(import_h)
+
+        self.btn_clear_plots = QPushButton("Clear Bitstream")
+        self.layout_bitstream.addWidget(self.btn_clear_plots)
         # region ---- SAVE CONF LOGIC  ----
         # self.slot_bg = QButtonGroup(self)
 
@@ -183,12 +195,15 @@ class ControlWidget(QWidget):
         # endregion
 
         # ---- SIGNAL EMITTER ----
+        # Use debounced timer to avoid processing on every keystroke
+        self.entry_bitstream.textChanged.connect(self._on_bitstream_text_changed)
+        self.btn_import_data.clicked.connect(self._open_import_dialog)
 
-        self.entry_bitstream.textChanged.connect(self._emit_bitstream_from_entry)
+        self.btn_clear_plots.clicked.connect(self.sig_clear_plots.emit)
 
         # self.slot_bg.idClicked.connect(self.sig_slot_selection_changed.emit)
 
-        self.vbox.addWidget(group)
+        self.vbox.addWidget(self.group_bitstream)
 
     def _init_iq_group(self):
         group = QGroupBox("4. IQ Modulator")
@@ -234,7 +249,13 @@ class ControlWidget(QWidget):
             "bit_mapping": self.map_combo.currentText()
         })
 
+    def _on_bitstream_text_changed(self):
+        """Restart the debounce timer on each text change."""
+        self.bitstream_debounce_timer.stop()
+        self.bitstream_debounce_timer.start()
+
     def _emit_bitstream_from_entry(self):
+        """Emit the bitstream signal after debounce delay."""
         self.sig_bit_stream_changed.emit({
             "bit_seq": self.entry_bitstream.text()
         })
@@ -249,6 +270,29 @@ class ControlWidget(QWidget):
 
     def set_pulse_shape_map(self, map_pulse_shape):
         self.pulse_combo.addItems([shape.name for shape in PulseShape])  # Use enum names
+
+    def _show_imported_bitstream_dialog(self, bit_sequence: str):
+        """Show info and a dialog to display the imported bitstream."""
+
+        class BitstreamDialog(QDialog):
+            def __init__(self, bit_sequence, parent=None):
+                super().__init__(parent)
+                self.setWindowTitle("Imported Bitstream")
+                vbox = QVBoxLayout(self)
+                text = QTextEdit()
+                text.setReadOnly(True)
+                text.setText(bit_sequence)
+                vbox.addWidget(text)
+                btn_close = QPushButton("Close")
+                btn_close.clicked.connect(self.accept)
+                vbox.addWidget(btn_close)
+                self.resize(400, 300)
+
+        dialog = BitstreamDialog(bit_sequence, self)
+        dialog.exec()
+
+
+        # Optionally: self.layout_bitstream.addLayout(hbox) if you want to show this in the UI
 
     def _open_import_dialog(self):
 
@@ -268,16 +312,30 @@ class ControlWidget(QWidget):
 
                 # 3. MVVM INTEGRATION (UI & Signal)
 
-                self.entry_bitstream.hide()
-
                 self.sig_bit_stream_changed.emit({
                     "bit_seq": clean_bit_sequence
                     })
+
+                # ---- Change UI  ----
+                file_name = QFileInfo(file_path).fileName()
+
+                self.lbl_bitstream_source.setText(
+                    f"Source: {file_name} ({len(clean_bit_sequence)} bits)"
+                )
+
+                self._show_imported_bitstream_dialog(clean_bit_sequence)
+                self.entry_bitstream.setEnabled(False)
+                self.entry_bitstream.setText("Data loaded from file, clear to edit manually.")
 
             except FileNotFoundError:
                 print("File not found.")
             except Exception as e:
                 print(f"Could not read or process file: {e}")
+
+    def clear_bitstream_entry(self):
+        self.entry_bitstream.clear()
+        self.entry_bitstream.show()
+        self.entry_bitstream.setEnabled(True)
 
     #------------------------------------------------------------
     # +++++ Font Size Group Box Widget +++++

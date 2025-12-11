@@ -1,29 +1,45 @@
-/*
-    COLOR PALETTE
-    - Backgrounds:
-        - bg-dark: {{bg-dark}}
-        - bg-secondary: {{bg-secondary}}
-        - bg-tertiary: {{bg-tertiary}}
-    - Text:
-        - text-light: {{text-light}}
-        - text-secondary: {{text-secondary}}
-    - Accents:
-        - accent-primary: {{accent-primary}}
-        - accent-secondary: {{accent-secondary}}
-        - accent-success: {{accent-success}}
-        - accent-error: {{accent-error}}
-        - accent-muted: {{accent-muted}}
-*/
 
 
 QWidget {
     /* Set a large size for testing */
     background-color: {{bg-dark}};
-    font-size: 12pt;
+    font-size: 11pt;
     color: {{text-light}};
 
 }
 
 QPushButton {
-    background-color: {{accent-primary}};
+    background-color: {{push-button-bckg}};
+    border: 3px solid {{push-button-border}};
+    height: 24px;
+    min-width: 10 px
+}
+
+QPushButton:hover {
+    background-color: {{push-button-hover}};
+    border: 3px solid {{push-button-hover}};
+}
+
+/* Styling the appearance of the Indicator box/circle itself */
+QRadioButton::indicator {
+    /* Base style for the indicator circle/box */
+    background-color: {{grp-btn-bckg}};
+    border-radius: 8px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid {{grp-btn-border}};
+}
+
+/* 2. When CHECKED (The final look) */
+QRadioButton::indicator:checked {
+    /* Outline color when checked */
+    background-color: {{grp-btn-checked}}; /* Fills the background */
+    /* You would typically use background-image to place a white dot inside
+       if the indicator is filled with a color */
+}
+
+
+QLineEdit::hover {
+    background: {{push-button-bckg}};
+
 }

@@ -1,16 +1,23 @@
 from matplotlib.colors import to_rgb
 
 LIGHT_THEME_HEX = {
-    "bg-dark": "#252323",
-    "bg-secondary": "#030202",
-    "bg-tertiary": "#F5F5F0",
-    "text-light": "#f5f1ed",
-    "text-secondary": "#E5E4E2",
-    "accent-primary": "#4b4e58",
-    "accent-secondary": "#d4d3d5",
-    "accent-success": "#D4A574",
-    "accent-error": "#C67B5C",
-    "accent-muted": "#2C2C2C",
+    "bg-dark": "#0E0E10",
+    "bg-secondary": "#19191D", # New: Added for subtle visual layers
+
+    "text-light": "#E0E0E0",
+    "text-secondary": "#9B9B9B",
+
+    "push-button-bckg": "#3A3A3A",
+    "push-button-border": "#3A3A3A",
+    "push-button-hover": "#878787",
+
+    "grp-btn-bckg": "#0E0E10",
+    "grp-btn-checked": "#E0E0E0",
+    "grp-btn-border": "#E0E0E0",
+
+    "logging-success": "#6a9d74",
+    "logging-error": "#d85368",
+    "logging-muted": "#f6e997",
 }
 
 # Convert HEX to RGB

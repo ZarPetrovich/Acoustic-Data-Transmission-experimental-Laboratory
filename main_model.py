@@ -132,6 +132,7 @@ class MainGUILogic(QMainWindow):
     def _on_baseband_update(self, baseband_container):
         self.baseband_plotter.update_plot(baseband_container)
         self.bb_fft_plotter.update_plot(baseband_container)
+
     @Slot(int)
     def _on_save_slot(self, slot_idx):
         self.app_state.on_save_slot(slot_idx)
@@ -155,6 +156,8 @@ class MainGUILogic(QMainWindow):
         self.bb_fft_plotter.clear_plot()
         self.bandpass_plotter.clear_plot()
         self.bp_fft_plotter.clear_plot()
+        self.ctrl_widget.clear_bitstream_entry()
+
 #------------------------------------------------------------
 # +++++ Stylesheet loader (if needed) +++++
 #------------------------------------------------------------
@@ -198,8 +201,14 @@ def main():
 
     initial_values = {"fs": args.fs, "sym_rate": args.sym_rate, "span": args.span}
 
+    # Load and apply the stylesheet with the color palette
+    qss_path = get_resource_path("src/ui/style/style.qss")
+    stylesheet = load_stylesheet_with_palette(qss_path, LIGHT_THEME_HEX)
+
+
     if not args.no_intro:
         intro_dialog = IntroDialog(initial_values=initial_values)
+        intro_dialog.setStyleSheet(stylesheet)
         if intro_dialog.exec():
             updated_values = intro_dialog.get_values()
             # Ensure 'span' is preserved if not explicitly updated
@@ -210,6 +219,7 @@ def main():
     # Load and apply the stylesheet with the color palette
     qss_path = get_resource_path("src/ui/style/style.qss")
     stylesheet = load_stylesheet_with_palette(qss_path, LIGHT_THEME_HEX)
+
     app.setStyleSheet(stylesheet)
 
     main_app = MainGUILogic(initial_values=initial_values)

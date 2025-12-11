@@ -226,7 +226,7 @@ class AppState(QObject):
         )
 
         # Automatically update the baseband signal after the symbol stream is updated
-        self.update_baseband_signal()
+        #self.update_baseband_signal()
 
 
     def update_baseband_signal(self):
