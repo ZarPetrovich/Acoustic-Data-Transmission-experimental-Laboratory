@@ -45,7 +45,7 @@ class ControlWidget(QWidget):
         # Debounce timer for bitstream text entry
         self.bitstream_debounce_timer = QTimer(self)
         self.bitstream_debounce_timer.setSingleShot(True)
-        self.bitstream_debounce_timer.setInterval(300)  # 300ms delay
+        self.bitstream_debounce_timer.setInterval(100)  # 300ms delay
         self.bitstream_debounce_timer.timeout.connect(self._emit_bitstream_from_entry)
 
         # Scroll Area setup
@@ -185,7 +185,9 @@ class ControlWidget(QWidget):
         # Manual Entry Line Edit
         layout.addWidget(QLabel("Add Bitstream manually ( 1 | 0 ): "))
         self.entry_bitstream = QLineEdit()
-        # ... (Validator, Placeholder setup remains the same) ...
+        regex = QRegularExpression("^[01]+$")
+        bit_validator = QRegularExpressionValidator(regex, self)
+        self.entry_bitstream.setValidator(bit_validator)
         layout.addWidget(self.entry_bitstream)
 
         # Import Button
@@ -395,7 +397,6 @@ class ControlWidget(QWidget):
         font.setBold(True)
         font.setFamily("Segoe UI")
         group.setFont(font)
-
 
 
 #------------------------------------------------------------

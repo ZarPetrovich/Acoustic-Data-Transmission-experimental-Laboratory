@@ -18,28 +18,46 @@ class BasebandSignalGenerator:
         self.samples_per_symbol = self.fs // self.sym_rate
         self.span = pulse_signal_container.span
 
+    # def generate_baseband_signal(self, symbol_stream: SymbolStream) -> np.ndarray:
+    #     """
+    #     Creates the baseband signal by adding scaled and shifted pulses.
+    #     This avoids a large convolution.
+    #     The Baseband Signal is also Complex to support M-PSK/QA Modulations.
+
+    #     Args:
+    #         symbol_stream (Symbol Data Container): The Dataclass Object containing the mapped symbols.
+    #     Returns:
+    #         BasebandData: The generated baseband signal wrapped in a data container.
+    #     """
+    #     symbols = symbol_stream.data
+    #     num_sym = len(symbols)
+
+    #     output_len = (num_sym - 1) * self.samples_per_symbol + self.pulse_len
+
+    #     baseband = np.zeros(output_len, dtype=complex)
+
+    #     for i, symbol in enumerate(symbols):
+    #         start_index = i * self.samples_per_symbol
+    #         baseband[start_index : start_index + self.pulse_len] += self.pulse_data * symbol
+    #     return baseband
     def generate_baseband_signal(self, symbol_stream: SymbolStream) -> np.ndarray:
-        """
-        Creates the baseband signal by adding scaled and shifted pulses.
-        This avoids a large convolution.
-        The Baseband Signal is also Complex to support M-PSK/QA Modulations.
 
-        Args:
-            symbol_stream (Symbol Data Container): The Dataclass Object containing the mapped symbols.
-        Returns:
-            BasebandData: The generated baseband signal wrapped in a data container.
-        """
         symbols = symbol_stream.data
-        num_sym = len(symbols)
-
-        output_len = (num_sym - 1) * self.samples_per_symbol + self.pulse_len
-
-        baseband = np.zeros(output_len, dtype=complex)
-
-        for i, symbol in enumerate(symbols):
-            start_index = i * self.samples_per_symbol
-            baseband[start_index : start_index + self.pulse_len] += self.pulse_data * symbol
+        # 1. Upsample the symbol stream to match the sample rate.
+        num_symbols = len(symbols)
+        # Calculate the required length for the impulse stream
+        # (num_symbols - 1) * self.samples_per_symbol + 1
+        impulse_stream_len = (num_symbols - 1) * self.samples_per_symbol + 1
+        impulse_stream = np.zeros(impulse_stream_len, dtype=complex)
+        # Place the complex symbol values at the correct symbol intervals
+        # The slice [::self.samples_per_symbol] targets indices 0, S, 2S, 3S, ...
+        impulse_stream[::self.samples_per_symbol] = symbols
+        # 2. Convolve the upsampled symbol stream with the pulse shape.
+        baseband = np.convolve(impulse_stream, self.pulse_data)
         return baseband
+
+
+
 
     def generate_iteration_breakdown(self, symbol_stream: SymbolStream):
         """

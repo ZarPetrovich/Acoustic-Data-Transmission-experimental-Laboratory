@@ -1,5 +1,6 @@
 from PySide6.QtCore import QObject, Signal, QTimer, Slot
 import numpy as np
+from scipy.io import wavfile
 
 from src.constants import PulseShape, PULSE_SHAPE_MAP
 from src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
@@ -226,7 +227,7 @@ class AppState(QObject):
         )
 
         # Automatically update the baseband signal after the symbol stream is updated
-        #self.update_baseband_signal()
+        self.update_baseband_signal()
 
 
     def update_baseband_signal(self):
@@ -292,6 +293,23 @@ class AppState(QObject):
 
     def on_save_slot(self, slot_idx):
         self.saved_configs[slot_idx] = self.current_baseband_signal
+
+    def export_wav(self, filename: str):
+        """
+        Exports the current bandpass signal to a
+        WAV file.
+        """
+        if hasattr(self, 'current_bandpass_signal') and self.current_bandpass_signal.data is not None:
+            audio_data = self.current_bandpass_signal.data
+            # Normalize audio data to the range of int16
+            audio_data_normalized = audio_data / np.max(np.abs(audio_data)) * 32767
+            audio_data_int16 = audio_data_normalized.astype(np.int16)
+            wavfile.write(f"{filename}", self.fs, audio_data_int16)
+            self.playback_status_changed.emit("Bandpass signal exported successfully.")
+        else:
+            self.playback_status_changed.emit("Error: No signal generated to export.")
+            print("No bandpass signal available to export.")
+
 
     @Slot()
     def on_play_btn_pressed(self):
