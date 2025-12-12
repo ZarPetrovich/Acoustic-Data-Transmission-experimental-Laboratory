@@ -105,6 +105,7 @@ class MainGUILogic(QMainWindow):
 
         self.media_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
         self.media_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
+        self.media_widget.sig_export_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
         self.app_state.sig_app_config_changed.connect(self._on_app_config_update)

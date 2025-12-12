@@ -2,6 +2,7 @@ from PySide6.QtCore import QObject, Signal, QTimer, Slot
 import numpy as np
 from scipy.io import wavfile
 import time
+from pathlib import Path
 from functools import wraps
 
 from src.constants import PulseShape, PULSE_SHAPE_MAP
@@ -13,6 +14,7 @@ from src.modules.symbol_sequencer import SymbolSequencer
 from src.modules.baseband_modulator import BasebandSignalGenerator
 from src.modules.iq_modulator import QuadratureModulator
 from src.modules.audio_player import AudioPlaybackHandler
+from src.modules.helper_functions import export_wav
 
 
 def profile_method(method):
@@ -323,5 +325,33 @@ class AppState(QObject):
             del self.current_baseband_signal
         if hasattr(self, 'current_bandpass_signal'):
             del self.current_bandpass_signal
+
+    @Slot()
+    def on_export_path_changed(self, path):
+        """ Slot to be connected to the UI's export path change. """
+        if not hasattr(self, 'current_bandpass_signal') or self.current_bandpass_signal.data is None:
+                print("Error: No bandpass signal available to save.")
+                return
+
+        try:
+            p = Path(path)
+
+            if p.suffix.lower() != ".wav":
+                p = p.with_suffix(".wav")
+
+            file_name = p.name
+
+            file_path = str(p.parent.resolve())
+
+            export_wav(self.current_bandpass_signal, file_name, file_path)
+
+        except Exception as e:
+            print(f"Error during WAV file export: {e}")
+
+
+
+
+
+
 
 # TODO Old Objects may orphaned

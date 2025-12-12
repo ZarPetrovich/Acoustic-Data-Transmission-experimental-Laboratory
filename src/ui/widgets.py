@@ -344,7 +344,6 @@ class ControlWidget(QWidget):
         dialog = BitstreamDialog(bit_sequence, self)
         dialog.exec()
 
-
         # Optionally: self.layout_bitstream.addLayout(hbox) if you want to show this in the UI
 
     def _open_import_dialog(self):
@@ -500,11 +499,14 @@ class MediaPlayerWidget(QWidget):
     # ---- Signals for main Gui Controller ----
     sig_play_button_pressed = Signal()
     sig_stop_button_pressed = Signal()
+    sig_export_path = Signal(str)
 
     def __init__(self, parent=None):
+
         super().__init__(parent)
         layout = QVBoxLayout(self)
         group = QGroupBox("6. Media Player")
+
         # ---- Set Font Size ----
         font = group.font()
         font.setPointSize(16)
@@ -512,21 +514,68 @@ class MediaPlayerWidget(QWidget):
 
         layout.addWidget(group)
 
-        vbox = QVBoxLayout(group)
-        self.info_lbl = QLabel("Playback Status: Idle")
-        vbox.addWidget(self.info_lbl)
+        mediaply_box = QHBoxLayout(group) # MAIN H BOX 1/3 PLAY STOP 2/3 Space 3/3 Export
 
-        hbox = QHBoxLayout()
+
+        # ---- PLAY/STOP BUTTON ----
+        player_vbox = QVBoxLayout()
+
+        self.info_lbl = QLabel("Playback Status: Idle")
+        player_vbox.addWidget(self.info_lbl)
+
         self.btn_play = QPushButton("Play")
-        hbox.addWidget(self.btn_play)
+        player_vbox.addWidget(self.btn_play)
+
         self.btn_stop = QPushButton("Stop")
-        hbox.addWidget(self.btn_stop)
-        vbox.addLayout(hbox)
+        player_vbox.addWidget(self.btn_stop)
+
+        player_vbox.addStretch(1)
+
+
+        # ---- EXPORT VBOX  ----
+        export_vbox = QVBoxLayout()
+        file_path_hbox = QHBoxLayout()
+        export_vbox.addWidget(QLabel("Export Bandpass Signal to .wav File"))
+        self.path_line_edit =QLineEdit()
+        self.btn_browse_path = QPushButton("Browse")
+
+        file_path_hbox.addWidget(self.path_line_edit)
+        file_path_hbox.addWidget(self.btn_browse_path)
+
+        export_vbox.addLayout(file_path_hbox)
+
+
+        self.btn_export = QPushButton("Export WAV File")
+        export_vbox.addWidget(self.btn_export)
+        # export_vbox.addWidget(self.btn_browse_path)
+
+        export_vbox.addStretch(1)
+
+        mediaply_box.addLayout(player_vbox, 1)
+        mediaply_box.addStretch(1)
+        mediaply_box.addLayout(export_vbox, 1)
+
+
 
         # ---- Internal Emitters ----
 
         self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
         self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
+        self.btn_browse_path.clicked.connect(self._open_export_dialog)
+        self.btn_export.clicked.connect(self._emit_export_path)
+
+    def _open_export_dialog(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Bandpass Signal", "", "WAV Files (*.wav)")
+
+        if file_path:
+            self.path_line_edit.setText(file_path)
+
+    def _emit_export_path(self):
+        path = self.path_line_edit.text()
+        if path:
+            self.sig_export_path.emit(path)
+
+
 
 #------------------------------------------------------------
 # +++++ Footer Widget +++++
