@@ -12,7 +12,7 @@ from PySide6.QtWidgets import(
 from src.constants import AVAILABLE_FS, DEFAULT_FS, DEFAULT_SYM_RATE
 
 
-
+# TODO Maybe Nesting somewhere
 
 class IntroDialog(QDialog):
 

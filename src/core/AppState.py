@@ -18,16 +18,16 @@ class AppState(QObject):
     Manages the application's state and business logic.
     """
     # Signals to notify the GUI of state changes
-    app_config_changed = Signal(dict)
-    pulse_signal_changed = Signal(PulseSignal)
-    modulation_lut_changed = Signal(ModSchemeLUT)
-    baseband_signal_changed = Signal(BasebandSignal)
-    bandpass_signal_changed = Signal(BandpassSignal)
+    sig_app_config_changed = Signal(dict)
+    sig_pulse_changed = Signal(PulseSignal)
+    sig_mod_lut_changed = Signal(ModSchemeLUT)
+    sig_baseband_changed = Signal(BasebandSignal)
+    sig_bandpass_changed = Signal(BandpassSignal)
 
 
-    playback_status_changed = Signal(str)
-    start_audio_playback = Signal()
-    stop_audio_playback = Signal()
+    sig_playback_status_changed = Signal(str)
+    sig_start_audio_playback = Signal()
+    sig_stop_audio_playback = Signal()
 
     def __init__(self, initial_values):
         super().__init__()
@@ -57,7 +57,7 @@ class AppState(QObject):
         self.current_baseband_signal: BasebandSignal
         self.current_bandpass_signal: BandpassSignal
 
-        self.app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
+        self.sig_app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
 
 
     def _init_default_pulse(self):
@@ -76,7 +76,7 @@ class AppState(QObject):
             span=self.span
         )
 
-        self.pulse_signal_changed.emit(self.current_pulse_signal)
+        self.sig_pulse_changed.emit(self.current_pulse_signal)
         return self.current_pulse_signal
 
 
@@ -95,7 +95,7 @@ class AppState(QObject):
             mod_scheme="2-ASK",
         )
 
-        self.modulation_lut_changed.emit(self.current_mod_scheme)
+        self.sig_mod_lut_changed.emit(self.current_mod_scheme)
         return self.current_mod_scheme
 
 
@@ -139,7 +139,7 @@ class AppState(QObject):
         )
 
         # Emit signal to notify GUI
-        self.pulse_signal_changed.emit(self.current_pulse_signal)
+        self.sig_pulse_changed.emit(self.current_pulse_signal)
 
         try:
             if isinstance(self.current_symbol_stream, SymbolStream):
@@ -180,7 +180,7 @@ class AppState(QObject):
             mod_scheme=sel_mod_scheme,
         )
 
-        self.modulation_lut_changed.emit(self.current_mod_scheme)
+        self.sig_mod_lut_changed.emit(self.current_mod_scheme)
 
         if hasattr(self, 'current_bitstream'):
             self.update_symbol_stream()
@@ -198,7 +198,7 @@ class AppState(QObject):
             bit_stream_arr = np.array([int(char) for char in bit_stream_str], dtype=np.int8)
         except (ValueError, TypeError):
             # Handle cases where the string is not valid for conversion
-            print(f"Invalid characters in bit sequence: {bit_stream_str}")
+            print(f"Invalid characters in bit sequence: {bit_stream_str}") # TODO CREATE A LOGGING HANDLER
             return
 
         self.current_bitstream = BitStream(
@@ -250,7 +250,7 @@ class AppState(QObject):
             symbol_stream = self.current_symbol_stream
         )
 
-        self.baseband_signal_changed.emit(self.current_baseband_signal)
+        self.sig_baseband_changed.emit(self.current_baseband_signal)
 
 
     def on_carrier_freq_update(self, partial_data):
@@ -275,7 +275,7 @@ class AppState(QObject):
             baseband_signal = self.current_baseband_signal,
             carrier_freq = carrier_freq
         )
-        self.bandpass_signal_changed.emit(self.current_bandpass_signal)
+        self.sig_bandpass_changed.emit(self.current_bandpass_signal)
 
 
     def play_audio(self):
@@ -288,28 +288,11 @@ class AppState(QObject):
             audio_data = np.real(self.current_bandpass_signal.data)
             self.audio_handler.play(audio_data, self.fs)
         else:
-            self.playback_status_changed.emit("Error: No signal generated to play.")
-            print("No bandpass signal available to play.")
+            self.sig_playback_status_changed.emit("Error: No signal generated to play.")
+        # TODO UI Feedbacks please not in AppState
 
     def on_save_slot(self, slot_idx):
         self.saved_configs[slot_idx] = self.current_baseband_signal
-
-    def export_wav(self, filename: str):
-        """
-        Exports the current bandpass signal to a
-        WAV file.
-        """
-        if hasattr(self, 'current_bandpass_signal') and self.current_bandpass_signal.data is not None:
-            audio_data = self.current_bandpass_signal.data
-            # Normalize audio data to the range of int16
-            audio_data_normalized = audio_data / np.max(np.abs(audio_data)) * 32767
-            audio_data_int16 = audio_data_normalized.astype(np.int16)
-            wavfile.write(f"{filename}", self.fs, audio_data_int16)
-            self.playback_status_changed.emit("Bandpass signal exported successfully.")
-        else:
-            self.playback_status_changed.emit("Error: No signal generated to export.")
-            print("No bandpass signal available to export.")
-
 
     @Slot()
     def on_play_btn_pressed(self):
@@ -321,15 +304,3 @@ class AppState(QObject):
         """ Slot to be connected to the UI's stop button. """
         self.audio_handler.stop()
 
-    # --- Audio Handler Feedback Slots ---
-    @Slot()
-    def _on_playback_started(self):
-        self.playback_status_changed.emit("Status: Playing...")
-
-    @Slot()
-    def _on_playback_finished(self):
-        self.playback_status_changed.emit("Status: Idle")
-
-    @Slot(str)
-    def _on_playback_error(self, error_message):
-        self.playback_status_changed.emit(f"Error: {error_message}")

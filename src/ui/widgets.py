@@ -339,7 +339,7 @@ class ControlWidget(QWidget):
             with open(file_path, 'r') as f:
                 raw_data = f.read()
 
-            clean_bit_sequence = "".join(raw_data.split())
+            clean_bit_sequence = "".join(raw_data.split()) # TODO Create FileService Seperation of Concern
 
             regex = QRegularExpression("^[01]+$")
             bit_validator = QRegularExpressionValidator(regex, self)

@@ -107,11 +107,11 @@ class MainGUILogic(QMainWindow):
         self.media_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
 
         # # ---- Connect app_state signals to GUI update slots ----
-        self.app_state.app_config_changed.connect(self._on_app_config_update)
-        self.app_state.pulse_signal_changed.connect(self._on_pulse_update)
-        self.app_state.modulation_lut_changed.connect(self._on_mod_scheme_lut_update)
-        self.app_state.baseband_signal_changed.connect(self._on_baseband_update)
-        self.app_state.bandpass_signal_changed.connect(self._on_bandpass_update)
+        self.app_state.sig_app_config_changed.connect(self._on_app_config_update)
+        self.app_state.sig_pulse_changed.connect(self._on_pulse_update)
+        self.app_state.sig_mod_lut_changed.connect(self._on_mod_scheme_lut_update)
+        self.app_state.sig_baseband_changed.connect(self._on_baseband_update)
+        self.app_state.sig_bandpass_changed.connect(self._on_bandpass_update)
 
         # # ---- Footer ----
         self.footer.btn_restart.clicked.connect(self.restart_application)
@@ -216,12 +216,7 @@ def main():
         else:
             sys.exit()  # ! Exit if the user cancels the dialog
 
-    # Load and apply the stylesheet with the color palette
-    qss_path = get_resource_path("src/ui/style/style.qss")
-    stylesheet = load_stylesheet_with_palette(qss_path, LIGHT_THEME_HEX)
-
     app.setStyleSheet(stylesheet)
-
     main_app = MainGUILogic(initial_values=initial_values)
     main_app.show()
     sys.exit(app.exec())
