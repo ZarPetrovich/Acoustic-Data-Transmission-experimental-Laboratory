@@ -5,6 +5,7 @@ main.py
 old
 audio_exports
 test.py
+export
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
