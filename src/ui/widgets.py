@@ -45,8 +45,14 @@ class ControlWidget(QWidget):
         # Debounce timer for bitstream text entry
         self.bitstream_debounce_timer = QTimer(self)
         self.bitstream_debounce_timer.setSingleShot(True)
-        self.bitstream_debounce_timer.setInterval(100)  # 300ms delay
+        self.bitstream_debounce_timer.setInterval(200)  # 200ms delay
         self.bitstream_debounce_timer.timeout.connect(self._emit_bitstream_from_entry)
+
+        # Debounce timer for pulse shape sliders
+        self.pulse_debounce_timer = QTimer(self)
+        self.pulse_debounce_timer.setSingleShot(True)
+        self.pulse_debounce_timer.setInterval(150)  # 150ms delay
+        self.pulse_debounce_timer.timeout.connect(self._emit_pulse)
 
         # Scroll Area setup
         main_layout = QVBoxLayout(self)
@@ -111,10 +117,12 @@ class ControlWidget(QWidget):
         layout.addLayout(sliders_layout)
         self.vbox.addWidget(group)
 
+        # TODO Deactivate Roll OFF for specific Pulses
+
         # Internal Connections
-        self.pulse_combo.currentTextChanged.connect(self._emit_pulse)
-        self.slider_span.valueChanged.connect(self._emit_pulse)
-        self.slider_roll.valueChanged.connect(self._emit_pulse)
+        self.pulse_combo.currentTextChanged.connect(self._emit_pulse)  # ComboBox: immediate
+        self.slider_span.valueChanged.connect(self._on_pulse_slider_changed)
+        self.slider_roll.valueChanged.connect(self._on_pulse_slider_changed)
 
         self.vbox.addWidget(group)
 
@@ -161,8 +169,8 @@ class ControlWidget(QWidget):
         # Add the stacked widget to the group box's main layout
         self.main_vbox.addWidget(self.stacked_widget)
 
-        # Add the global 'Clear Output Plots' button below the stack
-        self.btn_clear_plots = QPushButton("Clear Output Plots")
+        # Add the global 'Clear All Signals' button below the stack
+        self.btn_clear_plots = QPushButton("Clear All Signals & Data")
         self.main_vbox.addWidget(self.btn_clear_plots)
 
         # Initial state is Manual Entry (index 0)
@@ -266,11 +274,22 @@ class ControlWidget(QWidget):
         self.btn_modulate.clicked.connect(self._emit_carrier_freq)
 
     # --- Internal Emitters  ---
-    def _emit_pulse(self):
+    def _on_pulse_slider_changed(self):
+        """Update labels immediately but debounce the signal emission."""
+        # Update labels for instant visual feedback
         val_roll_off = self.slider_roll.value() / 100
         val_span = self.slider_span.value()
         self.lbl_span.setText(f"{val_span}")
         self.lbl_roll.setText(f"{val_roll_off:.2f}")
+
+        # Restart debounce timer
+        self.pulse_debounce_timer.stop()
+        self.pulse_debounce_timer.start()
+
+    def _emit_pulse(self):
+        """Emit pulse signal after debounce delay."""
+        val_roll_off = self.slider_roll.value() / 100
+        val_span = self.slider_span.value()
         self.sig_pulse_changed.emit({
             "pulse_type": PulseShape[self.pulse_combo.currentText()],  # Emit enum value
             "span": val_span,

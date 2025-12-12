@@ -1,6 +1,8 @@
 from PySide6.QtCore import QObject, Signal, QTimer, Slot
 import numpy as np
 from scipy.io import wavfile
+import time
+from functools import wraps
 
 from src.constants import PulseShape, PULSE_SHAPE_MAP
 from src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
@@ -11,6 +13,18 @@ from src.modules.symbol_sequencer import SymbolSequencer
 from src.modules.baseband_modulator import BasebandSignalGenerator
 from src.modules.iq_modulator import QuadratureModulator
 from src.modules.audio_player import AudioPlaybackHandler
+
+
+def profile_method(method):
+    """Decorator to time method execution and print results"""
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        start = time.perf_counter()
+        result = method(self, *args, **kwargs)
+        elapsed = (time.perf_counter() - start) * 1000
+        print(f"⏱️  {method.__name__}: {elapsed:.2f}ms")
+        return result
+    return wrapper
 
 
 class AppState(QObject):
@@ -37,17 +51,11 @@ class AppState(QObject):
         self.span = initial_values.get("span")
 
         self.audio_handler = AudioPlaybackHandler()
-        # Connect audio handler feedback signals to AppState slots
-        self.audio_handler.playback_started.connect(self._on_playback_started)
-        self.audio_handler.playback_finished.connect(self._on_playback_finished)
-        self.audio_handler.playback_error.connect(self._on_playback_error)
+        # self.audio_handler.playback_started.connect(self._on_playback_started)
+        # self.audio_handler.playback_finished.connect(self._on_playback_finished)
+        # self.audio_handler.playback_error.connect(self._on_playback_error)
 
         self.map_pulse_shape = PULSE_SHAPE_MAP # TODO Maybe move into INIT VALUE somehow
-
-        # TODO Implement Save Slot Logic
-        self.saved_configs = [None] * 4  #  4 Empty slots
-        self.selected_slot_index = 0
-
 
         # Initialize current Interactive Signals
         self.current_pulse_signal: PulseSignal = self._init_default_pulse()
@@ -186,6 +194,7 @@ class AppState(QObject):
             self.update_symbol_stream()
 
 
+    @profile_method
     def on_bitseq_update(self, partial_data):
         bit_stream_str = partial_data.get("bit_seq")
 
@@ -210,6 +219,7 @@ class AppState(QObject):
         self.update_symbol_stream()
 
 
+    @profile_method
     def update_symbol_stream(self):
         """Generates a new symbol stream and triggers a baseband signal update."""
 
@@ -230,6 +240,7 @@ class AppState(QObject):
         self.update_baseband_signal()
 
 
+    @profile_method
     def update_baseband_signal(self):
         """Generates a new baseband signal."""
         if not hasattr(self, 'current_symbol_stream') or not hasattr(self, 'current_pulse_signal'):
@@ -253,6 +264,7 @@ class AppState(QObject):
         self.sig_baseband_changed.emit(self.current_baseband_signal)
 
 
+    @profile_method
     def on_carrier_freq_update(self, partial_data):
 
         carrier_freq = partial_data.get("carrier_freq")
@@ -278,6 +290,7 @@ class AppState(QObject):
         self.sig_bandpass_changed.emit(self.current_bandpass_signal)
 
 
+    @profile_method
     def play_audio(self):
         """
         Plays the real part of the current bandpass signal if it exists.
@@ -291,16 +304,24 @@ class AppState(QObject):
             self.sig_playback_status_changed.emit("Error: No signal generated to play.")
         # TODO UI Feedbacks please not in AppState
 
-    def on_save_slot(self, slot_idx):
-        self.saved_configs[slot_idx] = self.current_baseband_signal
 
     @Slot()
     def on_play_btn_pressed(self):
         """ Slot to be connected to the UI's play button. """
         self.play_audio()
 
+
     @Slot()
     def on_stop_signal_pressed(self):
         """ Slot to be connected to the UI's stop button. """
         self.audio_handler.stop()
 
+    def clear_signals(self):
+        """Clear baseband and bandpass signal data to free memory and prevent orphaned objects."""
+        # Delete the actual data objects
+        if hasattr(self, 'current_baseband_signal'):
+            del self.current_baseband_signal
+        if hasattr(self, 'current_bandpass_signal'):
+            del self.current_bandpass_signal
+
+# TODO Old Objects may orphaned

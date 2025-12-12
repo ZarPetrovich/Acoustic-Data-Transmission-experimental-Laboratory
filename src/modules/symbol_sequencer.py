@@ -24,14 +24,11 @@ class SymbolSequencer:
 
         sym_idx_array = [] # Hold Mapped IDX from binary --> Integer loop Calculation
 
-        # The Loop Converts each chunk of bits into its corresponding symbol index for LUT Dictionary
-        # for eg. 01 --> 1 | 11 --> 3 | 10 --> 2 | 110 --> 5
-        for chunks in chunk_array:
-            index = chunks.dot(1 << np.arange(bits_per_symbol)[::-1])
-            sym_idx_array.append(index)
+        powers = 2 ** np.arange(bits_per_symbol - 1, -1, -1)
+        sym_idx_array = chunk_array @ powers
 
         # Map Indices to Symbols using the Look-Up Table and Index from the loop
-        symbol_sequence = np.array([self.mod_scheme_lut[idx] for idx in sym_idx_array], dtype=object)
+        symbol_sequence = np.array([self.mod_scheme_lut[idx] for idx in sym_idx_array], dtype=object) # TODO pre-compute LUT as np.array for direct indexing
 
         return symbol_sequence
 

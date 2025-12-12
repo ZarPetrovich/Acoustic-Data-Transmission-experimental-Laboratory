@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.signal import fftconvolve
 from src.dataclasses.dataclass_models import SymbolStream, PulseSignal
 
 
@@ -53,7 +54,7 @@ class BasebandSignalGenerator:
         # The slice [::self.samples_per_symbol] targets indices 0, S, 2S, 3S, ...
         impulse_stream[::self.samples_per_symbol] = symbols
         # 2. Convolve the upsampled symbol stream with the pulse shape.
-        baseband = np.convolve(impulse_stream, self.pulse_data)
+        baseband = fftconvolve(impulse_stream, self.pulse_data)
         return baseband
 
 

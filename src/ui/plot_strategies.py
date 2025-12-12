@@ -11,6 +11,32 @@ from src.dataclasses.dataclass_models import PulseSignal, ModSchemeLUT, Baseband
 from src.constants import PulseShape
 
 
+def downsample_for_plot(x_data, y_data, max_points=10000):
+    """
+    Intelligently downsample data for plotting to improve performance.
+    Uses decimation for long signals while preserving visual appearance.
+
+    Args:
+        x_data: Time or frequency array
+        y_data: Signal data (can be complex)
+        max_points: Maximum number of points to plot (default 10k)
+
+    Returns:
+        Downsampled (x_data, y_data) tuple
+    """
+    if len(x_data) <= max_points:
+        return x_data, y_data
+
+    # Calculate decimation factor
+    decimation_factor = len(x_data) // max_points
+
+    # Decimate both arrays
+    x_downsampled = x_data[::decimation_factor]
+    y_downsampled = y_data[::decimation_factor]
+
+    return x_downsampled, y_downsampled
+
+
 
 
 class PlotStrategy(ABC):
@@ -37,8 +63,11 @@ class PulsePlotStrategy(PlotStrategy):
         # UPDATE UNIT LABEL TO MS
         widget.plot_widget.setLabel('bottom', 'Time', units='ms')
 
+        # Downsample for performance
+        time_ds, data_ds = downsample_for_plot(timevector_ms, signal_model.data, max_points=5000)
+
         # Plot with MS time vector
-        widget.plot_data(timevector_ms, signal_model.data, color='b', name=signal_model.name)
+        widget.plot_data(time_ds, data_ds, color='b', name=signal_model.name)
 
 
 class ConstellationPlotStrategy(PlotStrategy):
@@ -158,8 +187,12 @@ class BasebandPlotStrategy(PlotStrategy):
 
         widget.plot_widget.setTitle(f"Baseband Signal: {signal_model.name}")
 
-        widget.plot_data(timevector, real_component, color = 'b', name=signal_model.name)
-        widget.plot_data(timevector, img_component, color = 'r', name=signal_model.name + " Imaginary",clear=False)
+        # Downsample for performance
+        time_ds, real_ds = downsample_for_plot(timevector, real_component, max_points=10000)
+        _, imag_ds = downsample_for_plot(timevector, img_component, max_points=10000)
+
+        widget.plot_data(time_ds, real_ds, color = 'b', name=signal_model.name)
+        widget.plot_data(time_ds, imag_ds, color = 'r', name=signal_model.name + " Imaginary",clear=False)
 
 class BandpassPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
@@ -176,10 +209,14 @@ class BandpassPlotStrategy(PlotStrategy):
         widget.plot_widget.setLabel('bottom', 'Time', units='s')
         widget.plot_widget.setLabel('left', 'Amplitude', units='V')
 
-        widget.plot_widget.setTitle(f"Baseband Signal: {signal_model.name}")
+        widget.plot_widget.setTitle(f"Bandpass Signal: {signal_model.name}")
 
-        widget.plot_data(timevector, real_component, color = 'b', name=signal_model.name)
-        widget.plot_data(timevector, img_component, color = 'r', name=signal_model.name + " Imaginary",clear=False)
+        # Downsample for performance
+        time_ds, real_ds = downsample_for_plot(timevector, real_component, max_points=10000)
+        _, imag_ds = downsample_for_plot(timevector, img_component, max_points=10000)
+
+        widget.plot_data(time_ds, real_ds, color = 'b', name=signal_model.name)
+        widget.plot_data(time_ds, imag_ds, color = 'r', name=signal_model.name + " Imaginary",clear=False)
 
 class FFTPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):

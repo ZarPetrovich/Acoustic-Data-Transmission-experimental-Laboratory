@@ -1,4 +1,5 @@
 import sys, os, argparse
+import time
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStatusBar
 from PySide6.QtCore import Slot
 
@@ -97,7 +98,6 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
         self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
         self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
-        self.ctrl_widget.sig_save_requested.connect(self._on_save_slot)
         self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
         self.ctrl_widget.sig_clear_plots.connect(self._clear_bitstream_plot)
 
@@ -130,18 +130,19 @@ class MainGUILogic(QMainWindow):
 
     @Slot(BasebandSignal)
     def _on_baseband_update(self, baseband_container):
+        start = time.perf_counter()
         self.baseband_plotter.update_plot(baseband_container)
         self.bb_fft_plotter.update_plot(baseband_container)
-
-    @Slot(int)
-    def _on_save_slot(self, slot_idx):
-        self.app_state.on_save_slot(slot_idx)
-        self.statusBar().showMessage(f"Configuration saved to Slot {slot_idx + 1}", 3000)
+        elapsed = (time.perf_counter() - start) * 1000
+        print(f"🎨 Baseband plots: {elapsed:.2f}ms")
 
     @Slot(BandpassSignal)
     def _on_bandpass_update(self, bandpass_container):
+        start = time.perf_counter()
         self.bandpass_plotter.update_plot(bandpass_container)
         self.bp_fft_plotter.update_plot(bandpass_container)
+        elapsed = (time.perf_counter() - start) * 1000
+        print(f"🎨 Bandpass plots: {elapsed:.2f}ms")
 
     @Slot()
     def restart_application(self):
@@ -152,11 +153,19 @@ class MainGUILogic(QMainWindow):
 
     @Slot()
     def _clear_bitstream_plot(self):
+        # Clear visual plots
         self.baseband_plotter.clear_plot()
         self.bb_fft_plotter.clear_plot()
         self.bandpass_plotter.clear_plot()
         self.bp_fft_plotter.clear_plot()
+
+        # Clear underlying data to prevent memory leaks
+        self.app_state.clear_signals()
+
+        # Clear bitstream entry
         self.ctrl_widget.clear_bitstream_entry()
+
+        self.statusBar().showMessage("All signals and data cleared", 3000)
 
 #------------------------------------------------------------
 # +++++ Stylesheet loader (if needed) +++++
