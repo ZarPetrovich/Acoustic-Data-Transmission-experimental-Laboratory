@@ -194,6 +194,7 @@ class BasebandPlotStrategy(PlotStrategy):
         widget.plot_data(time_ds, real_ds, color = 'b', name=signal_model.name)
         widget.plot_data(time_ds, imag_ds, color = 'r', name=signal_model.name + " Imaginary",clear=False)
 
+
 class BandpassPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
 
@@ -217,6 +218,7 @@ class BandpassPlotStrategy(PlotStrategy):
 
         widget.plot_data(time_ds, real_ds, color = 'b', name=signal_model.name)
         widget.plot_data(time_ds, imag_ds, color = 'r', name=signal_model.name + " Imaginary",clear=False)
+
 
 class FFTPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
@@ -249,12 +251,13 @@ class FFTPlotStrategy(PlotStrategy):
 
         widget.plot_data(xf,yf.real[:num_samples // 2], color = 'b', name=signal_model.name)
 
+
 class PeriodogrammPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
 
         widget.plot_widget.clear()
 
-        f, Pxx_den = signal.periodogram(signal_model.data, signal_model.fs, scaling='spectrum')
+        f, Pxx_den = signal.periodogram(signal_model.data, signal_model.fs, scaling='density')
 
         widget.plot_widget.setLabel('bottom', 'Frequency ', units='Hz')
         widget.plot_widget.setLabel('left', 'Power/Frequency', units='V**2/Hz')
@@ -275,33 +278,67 @@ class PeriodogrammPlotStrategy(PlotStrategy):
 
         widget.plot_data(f,Pxx_den, color = 'b', name=signal_model.name)
 
+
 class SpectogramPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
+        NPERSEG = 256
+        OVERLAP = NPERSEG // 2
+        WINDOW_TYPE = 'hann'
+        # 0. Type check/data preparation (Essential for robust code)
+        data = np.real(signal_model.data)
+        fs = signal_model.fs
+
+        if fs <= 0 or len(data) == 0:
+            widget.plot_widget.clear()
+            widget.plot_widget.setTitle("Error: Invalid Sampling Rate or Empty Signal")
+            return
 
         widget.plot_widget.clear()
 
-        f, t, Sxx = signal.spectrogram(np.real(signal_model.data), signal_model.fs)
+        # 1. Compute the Spectrogram (Frequency, Time, Power Spectral Density)
+        # We use the built-in convenience function for simplicity and robustness.
+        f, t, Sxx = signal.spectrogram(
+            data,
+            fs=fs,
+            window=WINDOW_TYPE,
+            nperseg=NPERSEG,
+            noverlap=OVERLAP,
+            scaling='density'  # Use Power Spectral Density
+        )
 
-        widget.plot_widget.setLabel('bottom', 'Time ', units='s')
-        widget.plot_widget.setLabel('left', 'Frequency', units='Hz')
-        widget.plot_widget.setTitle(f"Spectrogram")
+        # 2. Convert Power Spectral Density (Sxx) to dB scale (10 * log10(Sxx))
+        # Add a small offset (1e-10) to avoid log(0) for truly zero values.
+        # Transpose the array to ensure frequency (vertical) and time (horizontal)
+        # axes match the pyqtgraph ImageItem orientation.
+        spectrogram_db = 10 * np.log10(Sxx.T + 1e-10)
 
+        # 3. Create the ImageItem and load the data
         img = pg.ImageItem()
-        img.setImage(10 * np.log10(Sxx + 1e-10))  # Convert to dB scale
+        img.setImage(spectrogram_db)
 
-        # Set the position and scale of the image
+        # 4. Set the position and scale of the image
+        # This step is critical for aligning the spectrogram data matrix (spectrogram_db)
+        # with the axes coordinates (t and f).
+        time_span = t[-1] - t[0]
+        freq_span = f[-1] - f[0]
 
-        img.setRect(QRectF(t[0], f[0], t[-1] - t[0], f[-1] - f[0]))
+        img.setRect(QRectF(
+            t[0],     # x_min (start time)
+            f[0],     # y_min (start frequency)
+            time_span, # x_span (total duration)
+            freq_span  # y_span (total frequency range)
+        ))
 
+        # 5. Add the image to the plot
         widget.plot_widget.addItem(img)
 
+        # 6. Configure Axes and Title
+        widget.plot_widget.setLabel('bottom', 'Time ', units='s')
+        widget.plot_widget.setLabel('left', 'Frequency', units='Hz')
+        widget.plot_widget.setTitle(f"Spectrogram (Nseg={256}, {WINDOW_TYPE.upper()} Window)")
 
-
-
-
-
-
-
+        # Optional: Auto-range the view to fit the spectrogram
+        widget.plot_widget.getViewBox().autoRange()
 
 
 

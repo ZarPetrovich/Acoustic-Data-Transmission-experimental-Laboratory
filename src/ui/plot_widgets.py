@@ -65,4 +65,4 @@ class SpectrumContainerWidget(QWidget):
         self.tab_widget.addTab(self.plot_fft, "FFT")
 
         # 3. Set tabs to West position (sideways)
-        self.tab_widget.setTabPosition(QTabWidget.TabPosition.West)
+        self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)

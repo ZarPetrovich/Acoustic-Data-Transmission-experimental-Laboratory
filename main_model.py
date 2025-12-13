@@ -47,14 +47,24 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
-        self.bb_fft_plotter = PlotManager(self.matrix_widget.plot_bb_fft)
-        self.bb_fft_plotter.set_strategy(SpectogramPlotStrategy())
+        # self.bb_fft_plotter = PlotManager(self.matrix_widget.plot_bb_fft)
+        # self.bb_fft_plotter.set_strategy(SpectogramPlotStrategy())
+
+        # Baseband Spectrums (NEW: Three Plotters)
+        self.bb_spectrogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_spectrogram)
+        self.bb_spectrogram_plotter.set_strategy(SpectogramPlotStrategy())
+
+        self.bb_periodogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_periodogram)
+        self.bb_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
 
         self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
         self.bandpass_plotter.set_strategy(BandpassPlotStrategy())
 
-        self.bp_fft_plotter = PlotManager(self.matrix_widget.plot_bp_fft)
-        self.bp_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
+        self.bb_fft_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_fft)
+        self.bb_fft_plotter.set_strategy(FFTPlotStrategy())
+
+        # self.bp_fft_plotter = PlotManager(self.matrix_widget.plot_bp_fft)
+        # self.bp_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
 
 
         # --- 3. Initialize AppState (which may emit signals) ---
@@ -134,6 +144,8 @@ class MainGUILogic(QMainWindow):
         start = time.perf_counter()
         self.baseband_plotter.update_plot(baseband_container)
         self.bb_fft_plotter.update_plot(baseband_container)
+        self.bb_spectrogram_plotter.update_plot(baseband_container)
+        self.bb_periodogram_plotter.update_plot(baseband_container)
         elapsed = (time.perf_counter() - start) * 1000
         print(f"🎨 Baseband plots: {elapsed:.2f}ms")
 
@@ -234,3 +246,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# TODO Implement all Spectogram and FFT option
