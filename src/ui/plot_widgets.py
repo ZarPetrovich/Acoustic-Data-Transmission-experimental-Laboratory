@@ -66,3 +66,21 @@ class SpectrumContainerWidget(QWidget):
 
         # 3. Set tabs to West position (sideways)
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)
+
+class PulseContainerWidget(QWidget):
+
+    def __init__(self, title_prefix="Pulse Signal", parent = None):
+
+        super().__init__(parent)
+
+        self.layout = QVBoxLayout(self)
+        self.tab_widget = QTabWidget()
+        self.layout.addWidget(self.tab_widget)
+
+        self.plot_time = PlotWidget(title=f"{title_prefix}: Time Domain")
+        self.plot_fft = PlotWidget(title=f"{title_prefix}: FFT")
+
+        self.tab_widget.addTab(self.plot_time, "Time Domain")
+        self.tab_widget.addTab(self.plot_fft, "FFT")
+
+        self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)

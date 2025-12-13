@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.fft import fft, fftfreq
+from scipy.fft import fft, fftfreq, fftshift
 from scipy import signal
 
 import pyqtgraph as pg
@@ -230,8 +230,16 @@ class FFTPlotStrategy(PlotStrategy):
 
         num_samples = len(signal_model.data)
 
-        yf = fft(signal_model.data, norm="ortho")
-        xf = fftfreq(num_samples, 1 / signal_model.fs)[:num_samples // 2]
+        yf = fft(signal_model.data)
+        xf = fftfreq(num_samples, 1 / signal_model.fs)
+        xf = fftshift(xf)
+
+        y_plot = fftshift(yf)
+        y_plot = np.abs(y_plot)
+
+        #power_spectrum = (y_plot / num_samples) ** 2
+
+        y_plot_dB = 20 * np.log10(y_plot / num_samples + 1e-10)
 
         widget.plot_widget.setLabel('bottom', 'Frequency ', units='Hz')
         widget.plot_widget.setLabel('left', 'Amplitude')
@@ -240,7 +248,7 @@ class FFTPlotStrategy(PlotStrategy):
 
         # find Sample where y is highest to plot that range on x Axis
 
-        yf_idx_max = np.argmax(np.abs(yf))
+        yf_idx_max = np.argmax(np.abs(y_plot))
 
         index_x = xf[yf_idx_max]
 
@@ -249,7 +257,7 @@ class FFTPlotStrategy(PlotStrategy):
         widget.plot_widget.setXRange(x_range_idx_bottom, x_range_idx_above)
         # widget.plot_widget.setYRange(0, 20, padding=0)
 
-        widget.plot_data(xf,yf.real[:num_samples // 2], color = 'b', name=signal_model.name)
+        widget.plot_data(xf, y_plot_dB, color = 'b', name=signal_model.name)
 
 
 class PeriodogrammPlotStrategy(PlotStrategy):
@@ -257,7 +265,7 @@ class PeriodogrammPlotStrategy(PlotStrategy):
 
         widget.plot_widget.clear()
 
-        f, Pxx_den = signal.periodogram(signal_model.data, signal_model.fs, scaling='density')
+        f, Pxx_den = signal.periodogram(signal_model.data, signal_model.fs, scaling='density', return_onesided=True)
 
         widget.plot_widget.setLabel('bottom', 'Frequency ', units='Hz')
         widget.plot_widget.setLabel('left', 'Power/Frequency', units='V**2/Hz')
@@ -326,7 +334,7 @@ class SpectogramPlotStrategy(PlotStrategy):
             t[0],     # x_min (start time)
             f[0],     # y_min (start frequency)
             time_span, # x_span (total duration)
-            freq_span  # y_span (total frequency range)
+            freq_span * 0.00001  # y_span (total frequency range)
         ))
 
         # 5. Add the image to the plot

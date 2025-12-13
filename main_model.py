@@ -14,7 +14,8 @@ from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, Baseband
 from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
 from src.ui.plot_strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
-    BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy, PeriodogrammPlotStrategy, SpectogramPlotStrategy)
+    BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy,
+    PeriodogrammPlotStrategy, SpectogramPlotStrategy)
 
 from src.ui.style.color_pallete import LIGHT_THEME_HEX
 
@@ -38,31 +39,42 @@ class MainGUILogic(QMainWindow):
         self._setup_ui()
 
         # --- 2. Init Plotters ---
-        self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
-        self.pulse_plotter.set_strategy(PulsePlotStrategy())
+        # self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
+        # self.pulse_plotter.set_strategy(PulsePlotStrategy())
+
+        self.pulse_time_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_time)
+        self.pulse_time_plotter.set_strategy(PulsePlotStrategy())
+
+        self.pulse_fft_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_fft)
+        self.pulse_fft_plotter.set_strategy(FFTPlotStrategy())
 
         self.const_plotter = PlotManager(self.matrix_widget.plot_const)
         self.const_plotter.set_strategy(ConstellationPlotStrategy())
 
+        # Time Baseband Plotter
         self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
+
+        # Old single Plot without Tab View
         # self.bb_fft_plotter = PlotManager(self.matrix_widget.plot_bb_fft)
         # self.bb_fft_plotter.set_strategy(SpectogramPlotStrategy())
 
-        # Baseband Spectrums (NEW: Three Plotters)
+        # Baseband Spectrums
         self.bb_spectrogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_spectrogram)
         self.bb_spectrogram_plotter.set_strategy(SpectogramPlotStrategy())
 
         self.bb_periodogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_periodogram)
         self.bb_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
 
-        self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
-        self.bandpass_plotter.set_strategy(BandpassPlotStrategy())
-
         self.bb_fft_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_fft)
         self.bb_fft_plotter.set_strategy(FFTPlotStrategy())
 
+        # Time Bandpass Plotter
+        self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
+        self.bandpass_plotter.set_strategy(BandpassPlotStrategy())
+
+        # Old single Plot without Tab View
         # self.bp_fft_plotter = PlotManager(self.matrix_widget.plot_bp_fft)
         # self.bp_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
 
@@ -133,7 +145,8 @@ class MainGUILogic(QMainWindow):
 
     @Slot(PulseSignal)
     def _on_pulse_update(self, pulse_container):
-        self.pulse_plotter.update_plot(pulse_container)
+        self.pulse_time_plotter.update_plot(pulse_container)
+        self.pulse_fft_plotter.update_plot(pulse_container)
 
     @Slot(ModSchemeLUT)
     def _on_mod_scheme_lut_update(self, mod_scheme_container):

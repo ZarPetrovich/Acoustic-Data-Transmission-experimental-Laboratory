@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression, QFileInfo
 from PySide6.QtGui import QFont, QRegularExpressionValidator
-from src.ui.plot_widgets import PlotWidget, SpectrumContainerWidget
+from src.ui.plot_widgets import PlotWidget, SpectrumContainerWidget, PulseContainerWidget
 from src.constants import PulseShape
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
 
@@ -428,7 +428,8 @@ class MatrixWidget(QWidget):
         layout = QGridLayout(self)
 
         # +++ Pulse Plot Widget +++
-        self.plot_pulse = PlotWidget(title="Pulse Shape (Time)")
+        # self.plot_pulse = PlotWidget(title="Pulse Shape (Time)")
+        self.plot_pulse = PulseContainerWidget(title_prefix = "Pulse Shape")
 
         # 2. Constellation Plot (Scatter)
         self.plot_const = PlotWidget(title="Constellation (I/Q)")
