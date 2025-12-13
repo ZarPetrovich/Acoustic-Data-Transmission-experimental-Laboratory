@@ -265,27 +265,47 @@ class PeriodogrammPlotStrategy(PlotStrategy):
 
         widget.plot_widget.clear()
 
-        f, Pxx_den = signal.periodogram(signal_model.data, signal_model.fs, scaling='density', return_onesided=True)
+
+        T_pulse = 1.0 / signal_model.sym_rate # Assuming symbol_rate is available
+
+        # --- KEY CORRECTION: Use a large nfft for high frequency resolution ---
+        nfft_size = 32768
+
+        # 1. Calculate the Periodogram (One-sided, high-res)
+        f, Pxx_den = signal.periodogram(signal_model.data,
+                                        signal_model.fs,
+                                        scaling='density',
+                                        return_onesided=True,
+                                        nfft=nfft_size)
+
+        # 2. Convert PSD to dB/Hz (10 * log10(Power))
         Pxx_den_dB = 10 * np.log10(Pxx_den + 1e-10)
 
-        widget.plot_widget.setLabel('bottom', 'Frequency ', units='Hz')
-        widget.plot_widget.setLabel('left', 'Power/Frequency', units='V**2/Hz')
+        # 3. Calculate Normalized Frequency (fT) for X-axis
+        f_normalized = f * T_pulse
 
-        widget.plot_widget.setTitle(f"Periodogram Spectrum")
-
-        # find Sample where y is highest to plot that range on x Axis
-
+        # --- X-Range Centering ---
+        # Find peak on the linear scale (Pxx_den)
         Pxx_den_idx_max = np.argmax(Pxx_den)
+        index_x_normalized = f_normalized[Pxx_den_idx_max]
 
-        index_x = f[Pxx_den_idx_max]
+        # Since it's a normalized plot, set the range to show the first few lobes
+        x_range_bottom = 0
+        x_range_top = 2.5 # Extends to 2.5 times the symbol rate
 
-        x_window_size = 30
-        widget.plot_widget.setXRange(index_x - x_window_size, index_x + x_window_size)
+        widget.plot_widget.setXRange(x_range_bottom, x_range_top)
 
-        # y_max = np.max(Pxx_den) * 1.5
-        # widget.plot_widget.setYRange(0, y_max, padding=0)
+        # --- Labels and Title ---
+        widget.plot_widget.setLabel('bottom', 'Normalized Frequency ', units='fT')
 
-        widget.plot_data(f,Pxx_den_dB, color = 'b', name=signal_model.name)
+        # *** Correct Label for dB plot ***
+        widget.plot_widget.setLabel('left', 'Power Spectral Density', units='dB/Hz')
+
+        widget.plot_widget.setTitle(f"High-Resolution Periodogram Spectrum")
+
+        # --- Plotting ---
+        widget.plot_data(f_normalized, Pxx_den_dB, color = 'b', name=signal_model.name)
+
 
 
 class SpectogramPlotStrategy(PlotStrategy):

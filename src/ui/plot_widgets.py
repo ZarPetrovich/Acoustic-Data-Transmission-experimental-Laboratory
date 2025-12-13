@@ -79,8 +79,10 @@ class PulseContainerWidget(QWidget):
 
         self.plot_time = PlotWidget(title=f"{title_prefix}: Time Domain")
         self.plot_fft = PlotWidget(title=f"{title_prefix}: FFT")
+        self.plot_periodogramm = PlotWidget(title=f"{title_prefix}: Periodogram")
 
         self.tab_widget.addTab(self.plot_time, "Time Domain")
         self.tab_widget.addTab(self.plot_fft, "FFT")
+        self.tab_widget.addTab(self.plot_periodogramm, "Periodogram")
 
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)

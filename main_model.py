@@ -48,6 +48,9 @@ class MainGUILogic(QMainWindow):
         self.pulse_fft_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_fft)
         self.pulse_fft_plotter.set_strategy(FFTPlotStrategy())
 
+        self.pulse_periodogram_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_periodogramm)
+        self.pulse_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
+
         self.const_plotter = PlotManager(self.matrix_widget.plot_const)
         self.const_plotter.set_strategy(ConstellationPlotStrategy())
 
@@ -147,6 +150,7 @@ class MainGUILogic(QMainWindow):
     def _on_pulse_update(self, pulse_container):
         self.pulse_time_plotter.update_plot(pulse_container)
         self.pulse_fft_plotter.update_plot(pulse_container)
+        self.pulse_periodogram_plotter.update_plot(pulse_container)
 
     @Slot(ModSchemeLUT)
     def _on_mod_scheme_lut_update(self, mod_scheme_container):
