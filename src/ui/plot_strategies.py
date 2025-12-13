@@ -266,6 +266,7 @@ class PeriodogrammPlotStrategy(PlotStrategy):
         widget.plot_widget.clear()
 
         f, Pxx_den = signal.periodogram(signal_model.data, signal_model.fs, scaling='density', return_onesided=True)
+        Pxx_den_dB = 10 * np.log10(Pxx_den + 1e-10)
 
         widget.plot_widget.setLabel('bottom', 'Frequency ', units='Hz')
         widget.plot_widget.setLabel('left', 'Power/Frequency', units='V**2/Hz')
@@ -281,10 +282,10 @@ class PeriodogrammPlotStrategy(PlotStrategy):
         x_window_size = 30
         widget.plot_widget.setXRange(index_x - x_window_size, index_x + x_window_size)
 
-        y_max = np.max(Pxx_den) * 1.5
-        widget.plot_widget.setYRange(0, y_max, padding=0)
+        # y_max = np.max(Pxx_den) * 1.5
+        # widget.plot_widget.setYRange(0, y_max, padding=0)
 
-        widget.plot_data(f,Pxx_den, color = 'b', name=signal_model.name)
+        widget.plot_data(f,Pxx_den_dB, color = 'b', name=signal_model.name)
 
 
 class SpectogramPlotStrategy(PlotStrategy):
