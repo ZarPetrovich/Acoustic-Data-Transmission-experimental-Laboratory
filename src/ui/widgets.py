@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression, QFileInfo
 from PySide6.QtGui import QFont, QRegularExpressionValidator
-from src.ui.plot_widgets import PlotWidget
+from src.ui.plot_widgets import PlotWidget, SpectrumContainerWidget
 from src.constants import PulseShape
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
 
@@ -440,21 +440,23 @@ class MatrixWidget(QWidget):
         self.plot_baseband = PlotWidget(title="Baseband (Time) - Pending")
 
         # 4. Baseband FFT (Placeholder)
-        self.plot_bb_fft = PlotWidget(title="Spectrum - Pending")
-
+        #self.plot_bb_fft = PlotWidget(title="Spectrum - Pending")
+        self.bb_spectrum_container = SpectrumContainerWidget(title_prefix="Baseband Spectrum")
         # 5. Bandpass
         self.plot_bandpass  = PlotWidget(title="Bandpass (Time) - Pending")
 
         # 6. Bandpass FFT
-        self.plot_bp_fft = PlotWidget(title ="Bandpass Spectrum")
-
+        #self.plot_bp_fft = PlotWidget(title ="Bandpass Spectrum")
+        self.bp_spectrum_container = SpectrumContainerWidget(title_prefix="Bandpass Spectrum")
 
         layout.addWidget(self.plot_pulse, 0, 0)
         layout.addWidget(self.plot_const, 0, 1)
         layout.addWidget(self.plot_baseband, 1, 0)
-        layout.addWidget(self.plot_bb_fft, 1, 1)
+        #layout.addWidget(self.plot_bb_fft, 1, 1)
+        layout.addWidget(self.bb_spectrum_container,1,1)
         layout.addWidget(self.plot_bandpass,2,0)
-        layout.addWidget(self.plot_bp_fft,2,1)
+        #layout.addWidget(self.plot_bp_fft,2,1)
+        layout.addWidget(self.bp_spectrum_container,2,1)
 
 #------------------------------------------------------------
 # +++++ Meta Data Widget +++++
