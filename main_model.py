@@ -14,7 +14,7 @@ from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, Baseband
 from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
 from src.ui.plot_strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
-    BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy, PeriodogrammPlotStrategy)
+    BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy, PeriodogrammPlotStrategy, SpectogramPlotStrategy)
 
 from src.ui.style.color_pallete import LIGHT_THEME_HEX
 
@@ -48,7 +48,7 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
         self.bb_fft_plotter = PlotManager(self.matrix_widget.plot_bb_fft)
-        self.bb_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
+        self.bb_fft_plotter.set_strategy(SpectogramPlotStrategy())
 
         self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
         self.bandpass_plotter.set_strategy(BandpassPlotStrategy())

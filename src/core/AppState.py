@@ -355,3 +355,5 @@ class AppState(QObject):
 
 
 # TODO Old Objects may orphaned
+# TODO DOwnsampling Signal Processing for better Performance
+

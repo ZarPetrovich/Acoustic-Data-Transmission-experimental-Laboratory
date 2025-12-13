@@ -5,7 +5,7 @@ from scipy.fft import fft, fftfreq
 from scipy import signal
 
 import pyqtgraph as pg
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,QRectF
 from src.ui.plot_widgets import PlotWidget
 from src.dataclasses.dataclass_models import PulseSignal, ModSchemeLUT, BasebandSignal
 from src.constants import PulseShape
@@ -274,6 +274,35 @@ class PeriodogrammPlotStrategy(PlotStrategy):
         widget.plot_widget.setYRange(0, y_max, padding=0)
 
         widget.plot_data(f,Pxx_den, color = 'b', name=signal_model.name)
+
+class SpectogramPlotStrategy(PlotStrategy):
+    def plot(self, widget: PlotWidget, signal_model):
+
+        widget.plot_widget.clear()
+
+        f, t, Sxx = signal.spectrogram(np.real(signal_model.data), signal_model.fs)
+
+        widget.plot_widget.setLabel('bottom', 'Time ', units='s')
+        widget.plot_widget.setLabel('left', 'Frequency', units='Hz')
+        widget.plot_widget.setTitle(f"Spectrogram")
+
+        img = pg.ImageItem()
+        img.setImage(10 * np.log10(Sxx + 1e-10))  # Convert to dB scale
+
+        # Set the position and scale of the image
+
+        img.setRect(QRectF(t[0], f[0], t[-1] - t[0], f[-1] - f[0]))
+
+        widget.plot_widget.addItem(img)
+
+
+
+
+
+
+
+
+
 
 
 class PlotManager:
