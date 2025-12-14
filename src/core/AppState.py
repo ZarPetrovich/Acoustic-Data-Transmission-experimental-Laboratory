@@ -9,7 +9,7 @@ from src.constants import PulseShape, PULSE_SHAPE_MAP
 from src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
 from src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
 from src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
-from src.modules.modulation_schemes import AmpShiftKeying
+from src.modules.modulation_schemes import AmpShiftKeying, PhaseShiftKeying
 from src.modules.symbol_sequencer import SymbolSequencer
 from src.modules.baseband_modulator import BasebandSignalGenerator
 from src.modules.iq_modulator import QuadratureModulator
@@ -17,16 +17,16 @@ from src.modules.audio_player import AudioPlaybackHandler
 from src.modules.helper_functions import export_wav
 
 
-def profile_method(method):
-    """Decorator to time method execution and print results"""
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        start = time.perf_counter()
-        result = method(self, *args, **kwargs)
-        elapsed = (time.perf_counter() - start) * 1000
-        print(f"⏱️  {method.__name__}: {elapsed:.2f}ms")
-        return result
-    return wrapper
+# def profile_method(method):
+#     """Decorator to time method execution and print results"""
+#     @wraps(method)
+#     def wrapper(self, *args, **kwargs):
+#         start = time.perf_counter()
+#         result = method(self, *args, **kwargs)
+#         elapsed = (time.perf_counter() - start) * 1000
+#         print(f"⏱️  {method.__name__}: {elapsed:.2f}ms")
+#         return result
+#     return wrapper
 
 
 class AppState(QObject):
@@ -178,6 +178,12 @@ class AppState(QObject):
             lut_data = AmpShiftKeying(4, mapper=mapper).codebook
         elif sel_mod_scheme == "8-ASK":
             lut_data = AmpShiftKeying(8, mapper=mapper).codebook
+        elif sel_mod_scheme =="2-PSK":
+            lut_data = PhaseShiftKeying(2, mapper=mapper).codebook
+        elif sel_mod_scheme =="4-PSK":
+            lut_data = PhaseShiftKeying(4, mapper=mapper).codebook
+        elif sel_mod_scheme =="8-PSK":
+            lut_data = PhaseShiftKeying(8, mapper=mapper).codebook
         else:
             raise ValueError(f"Unsupported modulation scheme: {sel_mod_scheme}")
 
@@ -196,7 +202,7 @@ class AppState(QObject):
             self.update_symbol_stream()
 
 
-    @profile_method
+    #@profile_method
     def on_bitseq_update(self, partial_data):
         bit_stream_str = partial_data.get("bit_seq")
 
@@ -221,7 +227,7 @@ class AppState(QObject):
         self.update_symbol_stream()
 
 
-    @profile_method
+    #@profile_method
     def update_symbol_stream(self):
         """Generates a new symbol stream and triggers a baseband signal update."""
 
@@ -242,7 +248,7 @@ class AppState(QObject):
         self.update_baseband_signal()
 
 
-    @profile_method
+    #@profile_method
     def update_baseband_signal(self):
         """Generates a new baseband signal."""
         if not hasattr(self, 'current_symbol_stream') or not hasattr(self, 'current_pulse_signal'):
@@ -266,7 +272,7 @@ class AppState(QObject):
         self.sig_baseband_changed.emit(self.current_baseband_signal)
 
 
-    @profile_method
+    #@profile_method
     def on_carrier_freq_update(self, partial_data):
 
         carrier_freq = partial_data.get("carrier_freq")
@@ -292,7 +298,7 @@ class AppState(QObject):
         self.sig_bandpass_changed.emit(self.current_bandpass_signal)
 
 
-    @profile_method
+    #@profile_method
     def play_audio(self):
         """
         Plays the real part of the current bandpass signal if it exists.
@@ -350,10 +356,5 @@ class AppState(QObject):
 
 
 
-
-
-
-
-# TODO Old Objects may orphaned
 # TODO DOwnsampling Signal Processing for better Performance
 

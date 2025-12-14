@@ -34,61 +34,80 @@ class ModulationScheme(ABC):
 
 
 class AmpShiftKeying(ModulationScheme):
-
-
-    _ask_amplitude_levels: Dict[int, np.ndarray] = {
-        # The base un-ordered/un-coded amplitude levels
-        # (These are always arranged in increasing amplitude)
-        2: np.array([0, 1]),                       # OOK (0, A)
-        4: np.array([-3, -1, 1, 3]),
-        8: np.array([-7, -5, -3, -1, 1, 3, 5, 7]),
-
-    }
-    _ask_bit_book: Dict[int,np.ndarray] = {
-        2: np.array([0,1]),
-        4: np.array([[0,0],[0,1],[1,1],[1,0]])
-    }
+    """
+    Revised Amplitude Shift Keying modulator.
+    Uses an algorithmic approach to generate symmetric, odd-integer amplitude levels.
+    """
 
     def _generate_lut(self) -> Dict[int, complex]:
         """
-        Generates the complex, power-normalized symbol look-up book
-        based on the injected mapping strategy.
+        Generates the complex, power-normalized symbol look-up table.
         """
-        if self.cardinality not in self._ask_amplitude_levels:
-            raise ValueError(f"Unsupported cardinality for ASK: {self.cardinality}")
+        M = self.cardinality
+        k = self.k
 
-        # 1. Get the base amplitude levels (Binary Index order)
-        amplitude_levels = self._ask_amplitude_levels[self.cardinality]
+        if not (M > 0 and (M & (M - 1) == 0)):
+             raise ValueError(f"Cardinality M={M} must be a power of 2.")
 
-        # 2. Get the Mapping Indices from the Strategy
-        # If GrayMapper is used, map = [0, 1, 3, 2] for 4-ASK.
-        # If BinaryMapper is used, map = [0, 1, 2, 3] for 4-ASK.
-        map_indices = self.mapper.get_indices(self.k)
+        amplitude_levels = np.arange(-M + 1, M, 2)
 
-        # 3. Apply the Mapping and Normalization
-        # Rearrange the base amplitudes according to the map
+        map_indices = self.mapper.get_indices(k)
+
         coded_real_symbols = amplitude_levels[map_indices]
 
-        # Normalization
+        # Normalization (Crucial for consistent BER performance comparison)
+        # Power = Mean of |symbol|^2
         power = np.mean(amplitude_levels ** 2)
-        normalization_factor = np.sqrt(power)
+        normalization_factor = np.sqrt(power) # Amplitude scaling factor
+
         normalized_real_symbols = coded_real_symbols / normalization_factor
 
         # 4. Create the Final Dictionary Look-up Book
         # The value is the Complex Symbol (I + j0)
         complex_codebook = normalized_real_symbols + 0.0j
 
-        # Create a dictionary mapping the input binary index (0, 1, ...)
-        # to the complex symbol.
-        look_up_book = {i: complex_codebook[i] for i in range(self.cardinality)}
+        look_up_book = {i: complex_codebook[i] for i in range(M)}
 
         return look_up_book
 
     def __init__(self, cardinality: int, mapper: BitMapper):
         super().__init__(cardinality, mapper)
-        # Generate the Gray-coded look-up table upon initialization
         self.codebook = self._generate_lut()
-        self.k = int(np.log2(cardinality))  # Store k separately for later use
 
 
+
+class PhaseShiftKeying(ModulationScheme):
+
+
+    def _generate_lut(self) -> Dict[int, complex]:
+        """
+        Generates the complex, power-normalized symbol look-up book
+        based on the injected mapping strategy.
+        """
+        M = self.cardinality
+        k = self.k
+
+        if not (M > 0 and (M & (M - 1) == 0)):
+             raise ValueError(f"Cardinality M={M} must be a power of 2.")
+
+        # 1. Generate the Base Phase Angles for M-PSK
+        base_phase_angles = np.array([2 * np.pi * i / M for i in range(M)])
+
+        # 2. Get the Mapping Indices from the Injected Mapper Strategy
+        map_indices = self.mapper.get_indices(k)
+
+        # 3. Apply the Mapping to get Coded Phase Angles
+        coded_phase_angles = base_phase_angles[map_indices]
+
+        # 4. Convert Phase Angles to Complex Symbols (Unit Circle)
+        complex_codebook = np.exp(1j * coded_phase_angles)
+
+        # 5. Create the Final Dictionary Look-up Book
+        look_up_book = {i: complex_codebook[i] for i in range(M)}
+
+        return look_up_book
+
+    def __init__(self, cardinality: int, mapper: BitMapper):
+        super().__init__(cardinality, mapper)
+        self.codebook = self._generate_lut()
 

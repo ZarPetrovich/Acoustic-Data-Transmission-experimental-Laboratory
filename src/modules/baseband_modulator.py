@@ -41,18 +41,21 @@ class BasebandSignalGenerator:
     #         start_index = i * self.samples_per_symbol
     #         baseband[start_index : start_index + self.pulse_len] += self.pulse_data * symbol
     #     return baseband
+
     def generate_baseband_signal(self, symbol_stream: SymbolStream) -> np.ndarray:
 
         symbols = symbol_stream.data
-        # 1. Upsample the symbol stream to match the sample rate.
         num_symbols = len(symbols)
+
         # Calculate the required length for the impulse stream
         # (num_symbols - 1) * self.samples_per_symbol + 1
         impulse_stream_len = (num_symbols - 1) * self.samples_per_symbol + 1
         impulse_stream = np.zeros(impulse_stream_len, dtype=complex)
+
         # Place the complex symbol values at the correct symbol intervals
         # The slice [::self.samples_per_symbol] targets indices 0, S, 2S, 3S, ...
         impulse_stream[::self.samples_per_symbol] = symbols
+
         # 2. Convolve the upsampled symbol stream with the pulse shape.
         baseband = fftconvolve(impulse_stream, self.pulse_data)
         return baseband

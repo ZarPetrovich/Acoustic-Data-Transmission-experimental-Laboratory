@@ -134,13 +134,20 @@ class ControlWidget(QWidget):
 
         # Radio Buttons
         self.modulation_bg = QButtonGroup(self)
-        h_rad = QHBoxLayout()
+        hbox_ask_radio_btn = QHBoxLayout()
         for txt in ["2-ASK", "4-ASK", "8-ASK"]:
-            rb = QRadioButton(txt)
-            self.modulation_bg.addButton(rb)
-            h_rad.addWidget(rb)
+            rb_ask = QRadioButton(txt)
+            self.modulation_bg.addButton(rb_ask)
+            hbox_ask_radio_btn.addWidget(rb_ask)
         self.modulation_bg.buttons()[0].setChecked(True)
-        layout.addLayout(h_rad)
+        layout.addLayout(hbox_ask_radio_btn)
+
+        hbox_psk_radio_btn = QHBoxLayout()
+        for txt in ["2-PSK", "4-PSK", "8-PSK"]:
+            rb_psk = QRadioButton(txt)
+            self.modulation_bg.addButton(rb_psk)
+            hbox_psk_radio_btn.addWidget(rb_psk)
+        layout.addLayout(hbox_psk_radio_btn)
 
         self.map_combo = QComboBox()
         self.map_combo.addItems(["Gray", "Binary"])

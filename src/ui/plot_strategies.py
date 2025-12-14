@@ -307,14 +307,17 @@ class PeriodogrammPlotStrategy(PlotStrategy):
         widget.plot_data(f_normalized, Pxx_den_dB, color = 'b', name=signal_model.name)
 
 
-
 class SpectogramPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
         NPERSEG = 256
         OVERLAP = NPERSEG // 2
         WINDOW_TYPE = 'hann'
         # 0. Type check/data preparation (Essential for robust code)
-        data = np.real(signal_model.data)
+        if signal_model.data is np.iscomplexobj:
+            data = np.real(signal_model.data)
+        else:
+            data = signal_model.data
+
         fs = signal_model.fs
 
         if fs <= 0 or len(data) == 0:
@@ -385,3 +388,7 @@ class PlotManager:
 
     def clear_plot(self):
         self.widget.plot_widget.clear()
+
+
+
+# TODO Handle Complex Data in Plotstrategies

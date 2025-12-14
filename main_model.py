@@ -42,6 +42,7 @@ class MainGUILogic(QMainWindow):
         # self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
         # self.pulse_plotter.set_strategy(PulsePlotStrategy())
 
+        # ---- Init Pulse Tab View Plot Manager ----
         self.pulse_time_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_time)
         self.pulse_time_plotter.set_strategy(PulsePlotStrategy())
 
@@ -54,16 +55,12 @@ class MainGUILogic(QMainWindow):
         self.const_plotter = PlotManager(self.matrix_widget.plot_const)
         self.const_plotter.set_strategy(ConstellationPlotStrategy())
 
-        # Time Baseband Plotter
+        # ---- Init Time Plot Baseband ----
         self.baseband_plotter = PlotManager(self.matrix_widget.plot_baseband)
         self.baseband_plotter.set_strategy(BasebandPlotStrategy())
 
 
-        # Old single Plot without Tab View
-        # self.bb_fft_plotter = PlotManager(self.matrix_widget.plot_bb_fft)
-        # self.bb_fft_plotter.set_strategy(SpectogramPlotStrategy())
-
-        # Baseband Spectrums
+        # ---- Init Baseband Spectrums ----
         self.bb_spectrogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_spectrogram)
         self.bb_spectrogram_plotter.set_strategy(SpectogramPlotStrategy())
 
@@ -73,13 +70,19 @@ class MainGUILogic(QMainWindow):
         self.bb_fft_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_fft)
         self.bb_fft_plotter.set_strategy(FFTPlotStrategy())
 
-        # Time Bandpass Plotter
+        # ---- Init Time Bandpass Plotter ----
         self.bandpass_plotter = PlotManager(self.matrix_widget.plot_bandpass)
         self.bandpass_plotter.set_strategy(BandpassPlotStrategy())
 
-        # Old single Plot without Tab View
-        # self.bp_fft_plotter = PlotManager(self.matrix_widget.plot_bp_fft)
-        # self.bp_fft_plotter.set_strategy(PeriodogrammPlotStrategy())
+        # ---- Init Bandpass Spectrums ----
+        self.bp_spectrogram_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_spectrogram)
+        self.bp_spectrogram_plotter.set_strategy(SpectogramPlotStrategy())
+
+        self.bp_periodogram_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_periodogram)
+        self.bp_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
+
+        self.bp_fft_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_fft)
+        self.bp_fft_plotter.set_strategy(FFTPlotStrategy())
 
 
         # --- 3. Initialize AppState (which may emit signals) ---
@@ -158,21 +161,21 @@ class MainGUILogic(QMainWindow):
 
     @Slot(BasebandSignal)
     def _on_baseband_update(self, baseband_container):
-        start = time.perf_counter()
+        #start = time.perf_counter()
         self.baseband_plotter.update_plot(baseband_container)
         self.bb_fft_plotter.update_plot(baseband_container)
         self.bb_spectrogram_plotter.update_plot(baseband_container)
         self.bb_periodogram_plotter.update_plot(baseband_container)
-        elapsed = (time.perf_counter() - start) * 1000
-        print(f"🎨 Baseband plots: {elapsed:.2f}ms")
+        # elapsed = (time.perf_counter() - start) * 1000
+        # print(f"🎨 Baseband plots: {elapsed:.2f}ms")
 
     @Slot(BandpassSignal)
     def _on_bandpass_update(self, bandpass_container):
-        start = time.perf_counter()
+        # start = time.perf_counter()
         self.bandpass_plotter.update_plot(bandpass_container)
         self.bp_fft_plotter.update_plot(bandpass_container)
-        elapsed = (time.perf_counter() - start) * 1000
-        print(f"🎨 Bandpass plots: {elapsed:.2f}ms")
+        # elapsed = (time.perf_counter() - start) * 1000
+        # print(f"🎨 Bandpass plots: {elapsed:.2f}ms")
 
     @Slot()
     def restart_application(self):
@@ -185,8 +188,12 @@ class MainGUILogic(QMainWindow):
     def _clear_bitstream_plot(self):
         # Clear visual plots
         self.baseband_plotter.clear_plot()
+        self.bb_spectrogram_plotter.clear_plot()
+        self.bb_periodogram_plotter.clear_plot()
         self.bb_fft_plotter.clear_plot()
         self.bandpass_plotter.clear_plot()
+        self.bp_spectrogram_plotter.clear_plot()
+        self.bp_periodogram_plotter.clear_plot()
         self.bp_fft_plotter.clear_plot()
 
         # Clear underlying data to prevent memory leaks
@@ -195,7 +202,6 @@ class MainGUILogic(QMainWindow):
         # Clear bitstream entry
         self.ctrl_widget.clear_bitstream_entry()
 
-        self.statusBar().showMessage("All signals and data cleared", 3000)
 
 #------------------------------------------------------------
 # +++++ Stylesheet loader (if needed) +++++
