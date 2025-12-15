@@ -1,180 +1,1 @@
-Vorwort
-Die Informations- und Kommunikationstechnik hat in den letzten Jahrzehnten enorm an
-Bedeutunggewonnen.Besonders Internet und Mobilfunk haben von den Fortschritten der
-Digitaltechnik profitiert. Das Handy ist inzwischen zum Multifunktionsterminal (Smart
-phone) geworden mobiles Telefon, Internet-Zugang,Zahlungsmittel, universelle Fern
-bedienung und viele integrierte Funktionalitäten mehr (wieDigitalkamera, Terminplaner,
-Navigationshilfen undSpiele) leisten heutzutagemoderneEndgeräte. Mobilität,Multifunk
-tionalität und universelle Kompatibilität sind wichtigeSchlagworte, die für den Erfolg mit
-verantwortlich sind.
-Die technische Revolution im Bereich des Mobilfunksektors kann man gut anhand
-der Datenrate verdeutlichen: Während Anfang der neunziger Jahre Datenraten von etwa
-Ü9kbit/s(ineiner Bandbreite von 200kHz) unterstützt wurden, sind nur zwanzig Jahre
-später Datenraten von etwa Ü99Mbit/sundmehr(ineiner Bandbreite von 20MHz) Reali
-tät. Der nächste Quantensprung mitDatenratenvonbiszuÜ99Gbit/s(ineiner Bandbreite
-von etwa 2GHz) ist biszumEndedieses Jahrzehnts zumindest imNahbereich zu erwar
-ten, ungeachtet der unzähligen Innovationen und Möglichkeiten, dieunsderMobilfunk
-beschert hat und bescheren wird. Interessant ist indiesem Zusammenhang, dass dieer
-reichbare Datenrate bezogen auf 1HzBandbreite im betrachteten Zeitraum von 30 Jahren
-pro Jahrzehnt etwa um den Faktor zehn gestiegen ist. Ähnliche empirische Gesetzmäßig
-keiten kennt man beispielsweise bezüglich der Komplexität integrierter Schaltkreise, der
-Rechenleistung von Digitalrechnern und der Speicherdichte (Mooresches Gesetz) eine
-Sättigungist bislang nicht erkennbar. Es ist zu erwarten, dass dieFortschritte der mobilen
-Informations- und KommunikationstechnikAlltag und Berufswelt noch nachhaltiger ver
-ändern werden, als dies bisher geschehen ist. Drahtlose Informations- und Kommunikati
-onssysteme werden beispielsweise inderhäuslichen Umgebung (Smart Home), am Ar
-beitsplatz (Smart Office), inöffentlichen Einrichtungen, in Produktionsstätten (Smart
-Fab) und im Transportwesen (Smart Car) Einzug halten, aber auch invielen anderen
-Anwendungsbereichen. Der Bedarf an drahtloser Kommunikation deckt somit neben den
-klassischenAnwendungsfeldernwie Rundfunk,Satellitenkommunikation undMobilfunk
-telefonieviele weitere Gebiete ab.
-In diesem Lehrbuch werden Grundlagen der digitalen Informationsübertragung ver
-mittelt. Nach Einschätzung des Autors steht der Vermittlung von Grundlagenwissen
-V
-VI
-Vorwort
-eine große, vermutlich steigende Bedeutung zu. Aktuelle Forschungsgebiete wieMehran
-tennensysteme (MIMO-Systeme), Mehrnutzerkommunikation und Netzwerkcodierung
-basieren auf informationstheoretischen Ansätzen, aber auch auf Kenntnissen der Co
-dierungstheorie, der Übertragungstechnik und der Schätzverfahren. Im Vordergrund
-dieses Lehrbuchs stehen leistungsfähige drahtlose Übertragungstechniken unter besonde
-rer Berücksichtigung des Mobilfunks. Diemeisten Prinzipien und Verfahren sind aber
-auch in anderen Bereichen der digitalen Übertragungstechnik und verwandten Gebieten
-anwendbar. Das Buch entstand aus dem Wunsch, Grundlagen der digitalen Informations
-übertragungineiner verständlichen Form möglichst umfassend darzustellen, auch unter
-WürdigungneuerVerfahren.Durch Querverweisewird ein Zusammenhangzwischenden
-Teilbereichen Informationstheorie, Kanalcodierung,Übertragungstechniksowie grundle
-genden Konzepten der Mobilfunkkommunikation hergestellt. Der Leser wird somit indie
-Lage versetzt, die wesentlichen Facetten der digitalen Informationsübertragungganzheit
-lich zu erfassen.
-Jegliche digitale Informationsübertragung kann ineine software-orientierte Basisband
-Signalverarbeitung sowieeine physikalisch-orientierte Übertragungseinrichtung separiert
-werden. DieÜbertragung selbst geschieht über einFunkfeld (Mobilfunk, Satelliten
-kommunikation, Rundfunk), optisch (Lichtwellenleiter, Infrarot, Freiraum), akustisch
-(Unterwasserkommunikation)oderübereinKabel.Dieses Buch ist der Basisband-Signal
-verarbeitunggewidmet. DieSchnittstelle zur physikalisch-orientierten Übertragungsein
-richtung bildet der Digital-Analog-Wandler (im Sender) bzw. der Analog-Digital-Wandler
-(imEmpfänger). Die physikalisch-orientierte Übertragungseinrichtung umfasst somit
-sämtliche hochfrequenten Bauelemente (wieLeistungsverstärker imSenderundrauschar
-mer Verstärker imEmpfänger, Oszillatoren, Antennen, usw.). Effekte der physikalischen
-Übertragungsstrecke einschließlich der hochfrequenten Bauelemente können anhandvon
-Kanalmodellen im Basisband berücksichtigtwerden.
-Die Basisband-Signalverarbeitunggeschieht, wiebereits erwähnt, software-orientiert.
-Folglich sind sämtliche Basisband-Verfahren letztlich Algorithmen.Technologische Fort
-schritte der letzten Jahrzehnte führten zu einer rasch wachsenden Integrationsdichte in
-der digitalen Mikroelektronikundeiner damit verbundenen Leistungssteigerung digitaler
-Schaltungen. Gleichzeitig wird der Bedarf an bandbreiteneffizienten und gleichzeitig leis
-tungseffizienten Übertragungsverfahren stetig größer, beispielsweise um eine hohe örtliche
-Teilnehmerdichte kostengünstig bereitstellen zukönnen.Deshalbwird es immer wichtiger,
-die informationstheoretischen Grenzen zu kennen und technisch umzusetzen.
-DasGebietder Informationsübertragungistdurch vieleInnovationengeprägt, dieauch
-inderGrundlagenausbildung angemessen berücksichtigt werden sollten. In der zweiten
-Auflagewurdennicht nur Details verbessert, sonderninsbesondere viele aktuelle Themen
-integriert. Dieses Lehrbuch ist in fünf abgeschlossene Teile gegliedert. DieTeile bauen ein
-ander auf, können aber auch einzeln erarbeitet werden.
-Teil I behandelt Grundlagen der angewandten Informationstheorie. Das Gebiet der
-Informations- und Codierungstheorie wurde 1948 ineiner bahnbrechenden Arbeitvon
-Claude E.Shannonetabliert. Seitdem hat sich speziell dieCodierung voneiner reintheore
-Vorwort
-VII
-tischen Disziplinzueiner ausgedehnten anwendungsbezogenen Wissenschaft entwickelt.
-Nahezu alle fortschrittlichen digitalen Übertragungssysteme nutzen dieMöglichkeiten
-der Codierung, sei es zur Datenkompression (Quellencodierung), zur Datenverschlüs
-selung/Datensicherheit (Kryptographie) oder zur Fehlererkennung und Fehlerkorrek
-tur (Kanalcodierung). Als Beispiele seien der Mobilfunk, das Internet, Datenmodems,
-dieSatellitenkommunikation, der digitale Rundfunk und digitale Speichermedien ge
-nannt. In Teil I werden alle drei Teilgebiete, d.h. Quellencodierung, Kryptographie
-und Kanalcodierung, sowie die gemeinsame Quellen- und Kanalcodierung und die
-Mehrnutzer-Informationstheoriebehandelt.DiePraxiszeigt, dass bei der Entwicklung
-von digitalen Übertragungsverfahren eine Kenntnisderfundamentalen Schranken der In
-formationsübertragungimmer wichtiger wird (Theorycomesfirst).Dashierzu benötigte
-Grundwissen wird inTeilIvermittelt. In der zweiten Auflage wurde das aktuelle Thema
-der Mehrnutzer-Informationstheorieumweitere Kanalmodelle erweitert: Den Relaykanal,
-den Interferenzkanal und den Duplexkanal. Die bestehenden Abschnitte zum Vielfach
-zugriffskanal und zum Rundfunkkanal wurden ergänzt. Neu berücksichtigt wurde das
-aufstrebende Thema der Netzwerkcodierung,wobei bewusst auf unnötigen mathemati
-schen Ballast zugunsten einer verständlichen Darstellung verzichtet wird. Das Kapitel zur
-verlustlosen Quellencodierung wurde um das Thema Algebraische Codierung ergänzt.
-Der Abschnitt zur Rate-Distortion-Theoriewurdeerweitert.
-Teil II behandelt Grundlagen der Kanalcodierung. Während dieInformationstheorie
-bezüglich der Kanalcodierung mitZufallscodes zum Beweis zentraler Kommunikations
-sätze auskommt, werden inTeil IIanwendungsorientierte Kanalcodes und Verfahren zu
-deren Decodierung behandelt. Es werden Blockcodes, Faltungscodes und verkettete Co
-dierverfahren vorgestellt. Zu den neueren Techniken zählen Turbo-Codes und Blockcodes
-mit dünn besetzter Generatormatrix (LDPC-Codes), sowieDecodierverfahren mitZu
-verlässigkeitsinformation am Ein- und Ausgang des Decodierers. Ohne Kanalcodierung
-wäre eine robuste Informationsübertragung nicht möglich. In der zweiten Auflagewurden
-insbesondere iterative Decodierverfahren undzugehörige Analysemethodenzum Konver
-genzverhalten verketteter Codes vertiefend behandelt. Das aktuelle Thema der graphenba
-sierten Decodierung wurde ebenso wiedie ExtrinsicInformation Transfer (EXIT)-Chart
-Technikerweitert. Zudem wurden alternative AnalysemethodenwiedasVarianceTransfer
-(VT) Chart, dieDensity Evolution und das Information Processing Characteristic(IPC)
-Chart aufgenommen. Ferner wurde der Abschnitt zu LDPC-Codes signifikant erweitert,
-wobei auch ratenlose Codes berücksichtigtwurden.
-Teil III ist Digitalen Modulations- und Übertragungsverfahren gewidmet. Digita
-le Übertragungssysteme besitzen typischerweise eine höhere Leistungseffizienz und eine
-höhere Bandbreiteneffizienz imVergleich zu analogen Übertragungssystemen, wobei die
-Leistungseffizienz das benötigte Signal/Rauschleistungsverhältnis(indB)beigegebenem
-Gütekriterium und die Bandbreiteneffizienz (inbit/s/Hz) dieerreichbare Datenrate (in
-bit/s) bezogen auf diebenötigte Bandbreite (inHz) ist. Ferner bieten digitale Übertra
-gungssysteme eine bessere subjektive Qualität und weisen eine höhere Flexibilität auf.
-Beispielsweise können per Software-Defined Radio verschiedene Standards auf nur ei
-VIII
-Vorwort
-ner Hardware-Plattform integriert werden. Daten können indigitalen Speichermedien
-beliebig langesicher aufbewahrt werden. Letztendlich sind Multimedia-Dienste, charak
-terisiert durch eine Integration von Sprache, Musik, Bilder, Video, Texten usw., nur digital
-realisierbar. In Teil III werden lineare und nichtlineare digitale Modulationsverfahren,
-Einträger- und Mehrträgerverfahren, kombinierte Modulations- und Kanalcodierver
-fahren, Mehrfachzugriffstechniken und Methoden zur Entzerrung, Kanalschätzung und
-Synchronisation vorgestellt. Aufgrund der Bedeutung der Abtastung und der Analog
-Digital-WandlungwurdedieseThematikinTeilIIIerweitert.Zumeinenwurdedasaktuelle
-T
-hemaCompressedSensingneuaufgenommen.BeiCompressed Sensing,auchCompres
-sive Sensing oder Compressive Samplinggenannt, handelt es sich um eine effiziente Form
-der Unterabtastung,bei der Abtastung und Datenkompression innureinem Schritt ge
-schieht. Im Vergleich zum Nyquist-Shannon-Abtasttheorem kann dieDatenmengeoft
-drastisch reduziert werden, wenn das abzutastende Signal ineiner Domäne (wiez.B. im
-Frequenzbereich) dünn besetzt ist. Der Abschnitt zur Analog-Digital-Wandlung wurde
-ferner um einen Abschnitt zur 1-Bit-Wandlung und einen Abschnitt zur Verbesserung
-der Auflösung durch Überabtastung und Dithering ergänzt. In Teil III wurden außer
-dem interessante und aktuelle Themen wieSuperpositionsmodulation und Orthogonal
-Frequency-Division Multiple Access (OFDM) angemessen ergänzt.
-Teil IV stellt anspruchsvolle Konzepte der Mobilfunkkommunikationvor. Zuden
-Schwerpunkten zählen fortschrittliche Techniken wie Mehrantennensysteme (MIMO
-Systeme) undSpace-Time-Codes, Verfahren zur Mehrnutzerdetektion und Interferenzun
-terdrückung, sowie Methoden der senderseitigen Vorcodierung und der Strahlformung
-(Beamforming),aberauchGrundlagenhinsichtlich derKanalmodellierung,einschließlich
-der MIMO-Kanalmodellierung. Inderzweiten AuflagewurdenBeiträge zu Mehranten
-nensystemen undBeamformingergänztunddie ThemenUltrabreitband-Kommunikation
-und Ultrabreitband-Ortung sowie Software-Defined RadioundKogntives Radioneuauf
-genommen.
-Teil V stellt diefür einVerständniswichtigsten Grundlagender Wahrscheinlichkeitsrech
-nung, Grundlagen der Matrizenrechnung sowie Grundlagen der Signal- und Systemtheorie
-in Form von Anhängen bereit. Einweiterer Anhangist Simulationswerkzeugen und deren
-Prinzipien gewidmet, weil aufgrund der Komplexität anspruchsvoller Übertragungsver
-fahren Computersimulationen einwichtiger Schritt auf dem Weg vom Entwurf über die
-Optimierung bishinzurRealisierung sind.
-Dieses Grundlagenbuch entstand auf der Basis von Lehrveranstaltungen zu den
-T
-hemen Angewandte Informationstheorie, Kanalcodierung, Digitale Modulations
-verfahren und Mobilfunkkommunikation, die anverschiedenen Universitäten und
-Hochschulen in Bachelor-, Master- und Diplomstudiengängen sowie in außeruniversitär
-en Fortbildungsveranstaltungen angeboten wurden bzw. werden.
-Das Buch richtet sich an Studierende der ElektrotechnikundInformationstechnik, der
-InformatikundderPhysiksowie an alle Ingenieure, Informatiker und Physiker aus Indus
-trie, Forschungseinrichtungen und Behörden, diedieGrundlagen der modernenInforma
-Vorwort
-IX
-tionstechnik kennenlernen oder ihr Wissen auf diesem Gebiet auffrischen und ergänzen
-möchten.
-MeinDankeschöngilt allen Kollegen und Lesern für diekonstruktiven Hinweise, die
-zu einer Verbesserung der zweiten Auflagebeigetragen haben, meinen Wissenschaftlichen
-Mitarbeiterinnen und Mitarbeitern Rebecca Adam, Gilbert Forkel, Christopher Knievel,
-MeelisNõmmundKathrinSchmeink für diekonstruktive Durchsicht der vorliegenden
-Auflage,TorgeRabschfürLaTeX-spezifischeHilfestellungensowieHerrnReinhardDapper
-undseinTeamfür die professionelle Betreuung seitens des Springer-Vieweg-Verlags. Mein
-besonderer Dank gilt wiebei der Erstauflagemeiner Frau Sabah für ihre Unterstützung
-und Geduld.
-Kitzeberg, im Herbst 2012
-Peter Adam Höher
+01001101 01100001 01101110 01100011 01101000 01101101 01100001 01101100 00100000 01101001 01110011 01110100 00100000 01100101 01110011 00100000 01101110 01101111 01110100 01110111 01100101 01101110 01100100 01101001 01100111 00100000 01101111 01100100 01100101 01110010 00100000 01111010 01110101 01101101 01101001 01101110 01100100 01100101 01110011 01110100 00100000 01110110 01101111 01110010 01110100 01100101 01101001 01101100 01101000 01100001 01100110 01110100 00101100 00100000 01100100 01101001 01100101 00100000 01000001 01100010 01110100 01100001 01110011 01110100 01110010 01100001 01110100 01100101 00100000 01100100 01100101 01110010 00100000 01100100 01101001 01100111 01101001 01110100 01100001 01101100 01100101 01101110 00100000 01010011 01101001 01100111 01101110 01100001 01101100 01100101 00100000 00001010 01101110 01100001 01100011 01101000 01110100 01110010 11100100 01100111 01101100 01101001 01100011 01101000 00100000 01111010 01110101 00100000 01110110 01100101 01110010 11100100 01101110 01100100 01100101 01110010 01101110 00101110 00100000 01000010 01100101 01101001 01110011 01110000 01101001 01100101 01101100 01110011 01110111 01100101 01101001 01110011 01100101 00101100 00100000 01110111 01100101 01101001 01101100 00100000 01010011 01101001 01100111 01101110 01100001 01101100 01100101 00100000 01100001 01110101 01110011 00100000 01110110 01100101 01110010 01110011 01100011 01101000 01101001 01100101 01100100 01100101 01101110 01100101 01101110 00100000 01010001 01110101 01100101 01101100 01101100 01100101 01101110 00100000 01111010 01110101 01110011 01100001 01101101 01101101 01100101 01101110 00001010 01100111 01100101 01100110 11111100 01101000 01110010 01110100 00100000 01110111 01100101 01110010 01100100 01100101 01101110 00100000 01110011 01101111 01101100 01101100 01100101 01101110 00100000 01101111 01100100 01100101 01110010 00100000 01100100 01100001 01100100 01110101 01110010 01100011 01101000 00100000 01100100 01100101 01110010 00100000 01000001 01110101 01100110 01110111 01100001 01101110 01100100 00100000 01110111 01100101 01110011 01100101 01101110 01110100 01101100 01101001 01100011 01101000 00100000 01110010 01100101 01100100 01110101 01111010 01101001 01100101 01110010 01110100 00100000 01110111 01101001 01110010 01100100 00101110 00100000 01010011 01111001 01110011 01110100 01100101 01101101 01100101 00101100 00100000 01100100 01101001 01100101 00100000 01110110 01100101 01110010 00001010 01110011 01100011 01101000 01101001 01100101 01100100 01100101 01101110 01100101 00100000 01000001 01100010 01110100 01100001 01110011 01110100 01110010 01100001 01110100 01100101 01101110 00100000 01110110 01100101 01110010 01110111 01100101 01101110 01100100 01100101 01101110 00101100 00100000 01110111 01100101 01110010 01100100 01100101 01101110 00100000 01001101 01100101 01101000 01110010 01110010 01100001 01110100 01100101 01101110 01110011 01111001 01110011 01110100 01100101 01101101 01100101 00100000 01100111 01100101 01101110 01100001 01101110 01101110 01110100 00101110 00100000 01000100 01101001 01100101 00100000 01100100 01101001 01100111 01101001 01110100 01100001 01101100 01100101 00100000 01010011 01101001 01100111 01101110 01100001 01101100 01110110 01100101 01110010 00001010 01100001 01110010 01100010 01100101 01101001 01110100 01110101 01101110 01100111 00100000 01110011 01110100 01100101 01101100 01101100 01110100 00100000 01111010 01110101 00100000 01101001 01101000 01110010 01100101 01110010 00100000 01010010 01100101 01100001 01101100 01101001 01110011 01101001 01100101 01110010 01110101 01101110 01100111 00100000 01111010 01110111 01100101 01101001 00100000 01010011 01111001 01110011 01110100 01100101 01101101 01100101 00100000 01111010 01110101 01110010 00100000 01010110 01100101 01110010 01100110 11111100 01100111 01110101 01101110 01100111 00101110 00100000 01000010 01100101 01101001 01100100 01100101 00100000 01110111 01100101 01110010 01100100 01100101 01101110 00100000 01101001 01101110 00100000 01100100 01100101 01101110 00100000 00001010 01100110 01101111 01101100 01100111 01100101 01101110 01100100 01100101 01101110 00100000 01010101 01101110 01110100 01100101 01110010 01100001 01100010 01110011 01100011 01101000 01101110 01101001 01110100 01110100 01100101 01101110 00100000 01110110 01101111 01110010 01100111 01100101 01110011 01110100 01100101 01101100 01101100 01110100 00101110 00100000 01000001 01101100 01110011 00100000 01110111 01101001 01100011 01101000 01110100 01101001 01100111 01100101 01110011 00100000 01000010 01100101 01101001 01110011 01110000 01101001 01100101 01101100 00100000 01110111 01101001 01110010 01100100 00100000 01100100 01101001 01100101 00100000 01000101 01110010 01101000 11110110 01101000 01110101 01101110 01100111 00100000 01100100 01100101 01110010 00100000 01000001 01100010 01110100 01100001 01110011 01110100 00001010 01110010 01100001 01110100 01100101 00100000 01111010 01110101 01110010 00100000 01010110 01101111 01110010 01100010 01100101 01110010 01100101 01101001 01110100 01110101 01101110 01100111 00100000 01100100 01100101 01110010 00100000 01000100 00101111 01000001 00101101 01010101 01101101 01110011 01100101 01110100 01111010 01110101 01101110 01100111 00100000 01100010 01100101 01101000 01100001 01101110 01100100 01100101 01101100 01110100 00101110
