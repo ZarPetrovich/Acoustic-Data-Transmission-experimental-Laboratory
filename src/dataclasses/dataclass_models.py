@@ -39,7 +39,7 @@ class ModSchemeLUT(DataContainer):
     look_up_table: Dict[int, complex]
     cardinality: int
     mapper: str
-    mod_scheme: ModulationScheme
+    mod_scheme: str
 
 @dataclass
 class StreamContainer(DataContainer):
@@ -74,7 +74,7 @@ class SignalContainer(DataContainer):
 @dataclass
 class PulseSignal(SignalContainer):
     """Data Container for created Pulses"""
-    shape: PulseShape
+    shape: str
     span: int = None
     roll_off: float = None
 

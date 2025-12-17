@@ -38,10 +38,7 @@ class MainGUILogic(QMainWindow):
 
         self._setup_ui()
 
-        # --- 2. Init Plotters ---
-        # self.pulse_plotter = PlotManager(self.matrix_widget.plot_pulse)
-        # self.pulse_plotter.set_strategy(PulsePlotStrategy())
-
+        # region Init PLOTS
         # ---- Init Pulse Tab View Plot Manager ----
         self.pulse_time_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_time)
         self.pulse_time_plotter.set_strategy(PulsePlotStrategy())
@@ -83,16 +80,14 @@ class MainGUILogic(QMainWindow):
 
         self.bp_fft_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_fft)
         self.bp_fft_plotter.set_strategy(FFTPlotStrategy())
-
+        # endregion
 
         # --- 3. Initialize AppState (which may emit signals) ---
         self.app_state = AppState(initial_values)
 
         self._setup_connections()
-        # --- 4. Setup Connections ---
 
         # --- 5. Manually trigger initial UI updates ---
-        self._on_app_config_update({"map_pulse_shape": self.app_state.map_pulse_shape})
         self._on_pulse_update(self.app_state.current_pulse_signal)
         self._on_mod_scheme_lut_update(self.app_state.current_mod_scheme)
 
@@ -136,7 +131,6 @@ class MainGUILogic(QMainWindow):
         self.media_widget.sig_export_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
-        self.app_state.sig_app_config_changed.connect(self._on_app_config_update)
         self.app_state.sig_pulse_changed.connect(self._on_pulse_update)
         self.app_state.sig_mod_lut_changed.connect(self._on_mod_scheme_lut_update)
         self.app_state.sig_baseband_changed.connect(self._on_baseband_update)
@@ -144,10 +138,6 @@ class MainGUILogic(QMainWindow):
 
         # # ---- Footer ----
         self.footer.btn_restart.clicked.connect(self.restart_application)
-
-    @Slot(dict)
-    def _on_app_config_update(self, config):
-        self.ctrl_widget.set_pulse_shape_map(config["map_pulse_shape"])
 
     @Slot(PulseSignal)
     def _on_pulse_update(self, pulse_container):

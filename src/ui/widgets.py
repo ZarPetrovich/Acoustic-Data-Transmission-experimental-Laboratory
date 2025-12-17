@@ -88,7 +88,7 @@ class ControlWidget(QWidget):
         self.pulse_combo = QComboBox()
         pulse_type_layout.addWidget(self.pulse_combo)
         layout.addLayout(pulse_type_layout)
-
+        self.set_pulse_shape_map()
         # Span and Roll-off
         sliders_layout = QVBoxLayout()
 
@@ -328,7 +328,8 @@ class ControlWidget(QWidget):
             "carrier_freq": carrier_freq
         })
 
-    def set_pulse_shape_map(self, map_pulse_shape):
+    def set_pulse_shape_map(self):
+        self.pulse_combo.clear()
         self.pulse_combo.addItems([shape.name for shape in PulseShape])  # Use enum names
 
     def _show_imported_bitstream_dialog(self, bit_sequence: str):

@@ -5,16 +5,16 @@ import time
 from pathlib import Path
 from functools import wraps
 
-from src.constants import PulseShape, PULSE_SHAPE_MAP
+from src.constants import PulseShape, MOD_SCHEME_MAP
 from src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
 from src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
 from src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from src.modules.modulation_schemes import AmpShiftKeying, PhaseShiftKeying
 from src.modules.symbol_sequencer import SymbolSequencer
 from src.modules.baseband_modulator import BasebandSignalGenerator
-from src.modules.iq_modulator import QuadratureModulator
+from src.modules.quadrature_modulator import QuadratureModulator
 from src.modules.audio_player import AudioPlaybackHandler
-from src.modules.helper_functions import export_wav
+from src.modules.helper_functions import export_transmitted_signal
 
 
 # def profile_method(method):
@@ -48,7 +48,7 @@ class AppState(QObject):
     def __init__(self, initial_values):
         super().__init__()
 
-        self.fs = initial_values["fs"]
+        self.fs = int(initial_values["fs"])
         self.sym_rate = initial_values["sym_rate"]
         self.span = initial_values.get("span")
 
@@ -57,7 +57,7 @@ class AppState(QObject):
         # self.audio_handler.playback_finished.connect(self._on_playback_finished)
         # self.audio_handler.playback_error.connect(self._on_playback_error)
 
-        self.map_pulse_shape = PULSE_SHAPE_MAP # TODO Maybe move into INIT VALUE somehow
+        self.map_mod_scheme = MOD_SCHEME_MAP
 
         # Initialize current Interactive Signals
         self.current_pulse_signal: PulseSignal = self._init_default_pulse()
@@ -66,9 +66,6 @@ class AppState(QObject):
         self.current_symbol_stream: SymbolStream
         self.current_baseband_signal: BasebandSignal
         self.current_bandpass_signal: BandpassSignal
-
-        self.sig_app_config_changed.emit({"map_pulse_shape": self.map_pulse_shape})
-
 
     def _init_default_pulse(self):
 
@@ -193,7 +190,7 @@ class AppState(QObject):
             look_up_table=lut_data,
             cardinality = int(sel_mod_scheme.split("-")[0]),
             mapper = sel_mapper,
-            mod_scheme=sel_mod_scheme,
+            mod_scheme=sel_mod_scheme
         )
 
         self.sig_mod_lut_changed.emit(self.current_mod_scheme)
@@ -349,7 +346,7 @@ class AppState(QObject):
 
             file_path = str(p.parent.resolve())
 
-            export_wav(self.current_bandpass_signal, file_name, file_path)
+            export_transmitted_signal(self.current_bandpass_signal, file_name, file_path)
 
         except Exception as e:
             print(f"Error during WAV file export: {e}")

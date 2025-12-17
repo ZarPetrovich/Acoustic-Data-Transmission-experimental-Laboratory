@@ -42,7 +42,21 @@ class QuadratureModulator(Modulator):
         return mod_signal
 
 
+class QuadratureDemodulator(Modulator):
 
+    def demodulate(self, bandpass_signal: np.ndarray, fs: int):
+
+        time_vector = np.arange(len(bandpass_signal)) / fs
+
+        carrier_cos = np.cos( 2 * np.pi * time_vector * self.f_carrier)
+        carrier_sin = np.sin( 2 * np.pi * time_vector * self.f_carrier)
+
+        i_component = 2 * bandpass_signal * carrier_cos
+        q_component = -2 * bandpass_signal * carrier_sin
+
+        baseband_signal = i_component + 1j * q_component
+
+        return baseband_signal
 
 
 
