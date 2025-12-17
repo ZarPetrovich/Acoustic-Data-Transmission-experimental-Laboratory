@@ -16,6 +16,8 @@ from src.modules.quadrature_modulator import QuadratureModulator
 from src.modules.audio_player import AudioPlaybackHandler
 from src.modules.helper_functions import export_transmitted_signal
 
+from src.constants import DEFAULT_FS, DEFAULT_SPAN
+
 
 # def profile_method(method):
 #     """Decorator to time method execution and print results"""
@@ -48,9 +50,10 @@ class AppState(QObject):
     def __init__(self, initial_values):
         super().__init__()
 
-        self.fs = int(initial_values["fs"])
+        self.fs = DEFAULT_FS
         self.sym_rate = initial_values["sym_rate"]
-        self.span = initial_values.get("span")
+        self.span = DEFAULT_SPAN
+
 
         self.audio_handler = AudioPlaybackHandler()
         # self.audio_handler.playback_started.connect(self._on_playback_started)

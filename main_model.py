@@ -26,7 +26,7 @@ from src.ui.style.color_pallete import LIGHT_THEME_HEX
 class MainGUILogic(QMainWindow):
     def __init__(self, initial_values):
         super().__init__()
-        self.setWindowTitle(f"ADTX Labor - Main FS: {initial_values['fs']} Hz | Sym Rate: {initial_values['sym_rate']} sps")
+        self.setWindowTitle(f"ADTX Labor Sym Rate: {initial_values['sym_rate']} baud")
         self.resize(1400, 900)
 
         # --- 1. Initialize UI Elements First ---
@@ -227,14 +227,12 @@ def main():
 
     parser = argparse.ArgumentParser(description="ADTx Laboratory")
     parser.add_argument('--no-intro', action='store_true', help='Skip the intro dialog and use default values.')
-    parser.add_argument('--fs', type=int, default=DEFAULT_FS, help='Set the sample rate in Hz.')
     parser.add_argument('--sym-rate', type=int, default=DEFAULT_SYM_RATE, help='Set the symbol rate in sps.')
-    parser.add_argument('--span', type = int, default = DEFAULT_SPAN, help="Set the pulse span as integer.")
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
 
-    initial_values = {"fs": args.fs, "sym_rate": args.sym_rate, "span": args.span}
+    initial_values = {"sym_rate": args.sym_rate}
 
     # Load and apply the stylesheet with the color palette
     qss_path = get_resource_path("src/ui/style/style.qss")
@@ -262,3 +260,5 @@ if __name__ == '__main__':
 
 
 # TODO Implement all Spectogram and FFT option
+# TODO Take Out FS as a user Inputs ; Recreate Intro Dialogue
+# TODO Implement Interpolater
