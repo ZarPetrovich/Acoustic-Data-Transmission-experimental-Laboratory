@@ -14,6 +14,7 @@ Fifth Step: Create the Transmit Signal in Passband
 import numpy as np
 from scipy import signal, fft
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
 import sounddevice as sd
 from icecream import ic
 
@@ -149,7 +150,7 @@ def main():
     bb_internal_fs = BasebandSignal (
         name = "Baseband_Global_FS",
         data = interpolate_bb,
-        fs = INTERNAL_FS,
+        fs = GLOBAL_FS,
         sym_rate = GLOBAL_SYM_RATE,
         pulse = pulse_signal_global_fs,
         symbol_stream = symbol_stream
@@ -206,29 +207,81 @@ def main():
         carrier_freq = carrier_freq
     )
 
-    # Create a figure with 3 vertical subplots, sharing the same X-axis
-    fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+    def plot_interactive_signals(global_sig, interp_sig, poly_sig):
+        fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+        plt.subplots_adjust(bottom=0.25) # Extra room for two sliders
 
-    axes[0].plot(bandpass_global_fs.data, color='#2ca02c', label='Direct 48kHz')
-    axes[0].set_title('Bandpass: Direct Global FS Generation (Reference)', fontweight='bold')
-    axes[0].grid(True, alpha=0.3)
+        # Plot data
+        l0, = axes[0].plot(global_sig.data, color='#2ca02c')
+        l1, = axes[1].plot(interp_sig.data, color='#1f77b4')
+        l2, = axes[2].plot(poly_sig.data, color='#d62728')
 
-    axes[1].plot(bp_interpolated_fs.data, color='#1f77b4', label='Standard FIR Interp')
-    axes[1].set_title('Bandpass: Standard FIR Interpolation (Linear Approach)', fontweight='bold')
-    axes[1].grid(True, alpha=0.3)
+        titles = ['Direct Global FS', 'Standard FIR Interp', 'Polyphase Interp']
+        for ax, title in zip(axes, titles):
+            ax.set_title(title, fontweight='bold')
+            ax.grid(True, alpha=0.3)
 
-    axes[2].plot(bp_poly_fs.data, color='#d62728', label='Polyphase Interp')
-    axes[2].set_title('Bandpass: Polyphase Interpolation', fontweight='bold')
-    axes[2].set_xlabel('Sample Index')
-    axes[2].grid(True, alpha=0.3)
+        total_samples = len(global_sig.data)
 
-    # Add a general Y-axis label to the middle plot
-    fig.text(0.04, 0.5, 'Amplitude', va='center', rotation='vertical', fontsize=12)
+        # --- Slider Configuration ---
+        ax_pos = plt.axes([0.2, 0.1, 0.6, 0.03])    # Position (Scroll)
+        ax_zoom = plt.axes([0.2, 0.05, 0.6, 0.03])   # Width (Zoom)
 
-    # Global formatting
-    plt.tight_layout()
+        s_pos = Slider(ax_pos, 'Scroll', 0, total_samples, valinit=total_samples//2)
+        s_zoom = Slider(ax_zoom, 'Zoom', 100, total_samples, valinit=total_samples)
+
+        def update(val):
+            width = s_zoom.val
+            pos = s_pos.val
+
+            # Calculate window limits
+            left = max(0, pos - width // 2)
+            right = min(total_samples, pos + width // 2)
+
+            axes[0].set_xlim(left, right)
+            fig.canvas.draw_idle()
+
+        s_pos.on_changed(update)
+        s_zoom.on_changed(update)
+
+        plt.show()
+
+    plot_interactive_signals(bandpass_global_fs, bp_interpolated_fs, bp_poly_fs)
+
+    # --- Error Calculation ---
+    # Note: This will only work if lengths are the same.
+    # If they aren't, we pad the shorter one with zeros.
+    def get_error(ref, test):
+        min_len = min(len(ref), len(test))
+        return ref[:min_len] - test[:min_len]
+
+    error_linear = get_error(bandpass_global_fs.data, bp_interpolated_fs.data)
+    error_poly = get_error(bandpass_global_fs.data, bp_poly_fs.data)
+
+    # --- Modern Plotting with Error Tracking ---
+    fig, axes = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
+    plt.subplots_adjust(bottom=0.2)
+
+    # Global Reference
+    axes[0].plot(bandpass_global_fs.data, color='green', label='Reference')
+    axes[0].set_title('Direct Global FS (The Truth)', fontweight='bold')
+
+    # The "Unfixed" Linear Interp (Likely shows frequency mismatch)
+    axes[1].plot(bp_interpolated_fs.data, color='tab:blue', label='Linear')
+    axes[1].set_title('Standard FIR (Linear) - With Frequency/Phase Error', fontweight='bold')
+
+    # The Polyphase Interp (Likely shows Phase/Delay Error)
+    axes[2].plot(bp_poly_fs.data, color='tab:red', label='Polyphase')
+    axes[2].set_title('Polyphase Interp - With Group Delay Error', fontweight='bold')
+
+    # THE ERROR PANEL
+    axes[3].plot(error_linear, color='blue', alpha=0.5, label='Linear Error')
+    axes[3].plot(error_poly, color='red', alpha=0.5, label='Polyphase Error')
+    axes[3].set_title('Residual Error (Reference - Test)', fontweight='bold', color='darkred')
+    axes[3].legend()
+
+    for ax in axes: ax.grid(True, alpha=0.2)
     plt.show()
-
 
 if __name__ == '__main__':
     main()
