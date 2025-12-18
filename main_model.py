@@ -11,7 +11,7 @@ from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 # Application Logic (Processing)
 from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
 
-from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, MediaPlayerWidget, FooterWidget
+from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, FooterWidget
 from src.ui.plot_strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
     BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy,
@@ -27,13 +27,13 @@ class MainGUILogic(QMainWindow):
     def __init__(self, initial_values):
         super().__init__()
         self.setWindowTitle(f"ADTX Labor Sym Rate: {initial_values['sym_rate']} baud")
-        self.resize(1400, 900)
+        self.resize(1600, 900)
 
         # --- 1. Initialize UI Elements First ---
         self.ctrl_widget = ControlWidget()
         self.matrix_widget = MatrixWidget()
-        self.meta_widget = MetaDataWidget()
-        self.media_widget = MediaPlayerWidget()
+        #self.meta_widget = MetaDataWidget()
+        #self.media_widget = MediaPlayerWidget()
         self.footer = FooterWidget(self)
 
         self._setup_ui()
@@ -103,14 +103,14 @@ class MainGUILogic(QMainWindow):
         h_btm = QHBoxLayout()
 
         # Layout Assembly
-        h_top.addWidget(self.ctrl_widget, 33)
-        h_top.addWidget(self.matrix_widget, 66)
+        h_top.addWidget(self.ctrl_widget, 30)
+        h_top.addWidget(self.matrix_widget, 70)
 
-        h_btm.addWidget(self.meta_widget, 33)
-        h_btm.addWidget(self.media_widget, 66)
+        #h_btm.addWidget(self.meta_widget, 33)
+        #h_btm.addWidget(self.media_widget, 66)
 
-        main_vbox.addLayout(h_top, 75)
-        main_vbox.addLayout(h_btm, 25)
+        main_vbox.addLayout(h_top, 100)
+        main_vbox.addLayout(h_btm,0)
         main_vbox.addWidget(self.footer)
 
         # Status Bar
@@ -126,9 +126,9 @@ class MainGUILogic(QMainWindow):
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
-        self.media_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
-        self.media_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
-        self.media_widget.sig_export_path.connect(self.app_state.on_export_path_changed)
+        self.ctrl_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
+        self.ctrl_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
+        self.ctrl_widget.sig_export_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
         self.app_state.sig_pulse_changed.connect(self._on_pulse_update)

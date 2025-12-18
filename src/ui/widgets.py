@@ -38,6 +38,10 @@ class ControlWidget(QWidget):
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
+    # Media Player
+    sig_play_button_pressed = Signal()
+    sig_stop_button_pressed = Signal()
+    sig_export_path = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -70,6 +74,8 @@ class ControlWidget(QWidget):
         self._init_enter_bitstream()
         # 3. IQ Modulator
         self._init_iq_group()
+
+        self._init_media_player()
 
         self.vbox.addStretch()
         scroll.setWidget(content_widget)
@@ -258,6 +264,7 @@ class ControlWidget(QWidget):
         group = QGroupBox("4. IQ Modulator")
         # ---- Set Font Size ----
         self._style_groupbox_title(group)
+
         layout = QVBoxLayout(group)
         layout.addWidget(QLabel("Carrier Frequency:"))
 
@@ -280,7 +287,65 @@ class ControlWidget(QWidget):
 
         self.btn_modulate.clicked.connect(self._emit_carrier_freq)
 
+    def _init_media_player(self):
+        group = QGroupBox("6. Media Player")
+
+        self._style_groupbox_title(group)
+
+        layout = QVBoxLayout(group)
+
+        mediaply_box = QHBoxLayout(group) # MAIN H BOX 1/3 PLAY STOP 2/3 Space 3/3 Export
+
+        # ---- PLAY/STOP BUTTON ----
+        player_vbox = QVBoxLayout()
+
+        self.info_lbl = QLabel("Playback Status: Idle")
+        player_vbox.addWidget(self.info_lbl)
+
+        self.btn_play = QPushButton("Play")
+        player_vbox.addWidget(self.btn_play)
+
+        self.btn_stop = QPushButton("Stop")
+        player_vbox.addWidget(self.btn_stop)
+
+        player_vbox.addStretch(1)
+
+
+        # ---- EXPORT VBOX  ----
+        export_vbox = QVBoxLayout()
+        file_path_hbox = QHBoxLayout()
+        export_vbox.addWidget(QLabel("Export Bandpass Signal to .wav File"))
+        self.path_line_edit =QLineEdit()
+        self.btn_browse_path = QPushButton("Browse")
+
+        file_path_hbox.addWidget(self.path_line_edit)
+        file_path_hbox.addWidget(self.btn_browse_path)
+
+        export_vbox.addLayout(file_path_hbox)
+
+
+        self.btn_export = QPushButton("Export WAV File")
+        export_vbox.addWidget(self.btn_export)
+        # export_vbox.addWidget(self.btn_browse_path)
+
+        export_vbox.addStretch(1)
+
+        mediaply_box.addLayout(player_vbox, 1)
+        mediaply_box.addStretch(1)
+        mediaply_box.addLayout(export_vbox, 1)
+
+        layout.addLayout(mediaply_box)
+
     # --- Internal Emitters  ---
+
+        self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
+        self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
+        self.btn_browse_path.clicked.connect(self._open_export_dialog)
+        self.btn_export.clicked.connect(self._emit_export_path)
+
+        self.vbox.addWidget(group)
+
+
     def _on_pulse_slider_changed(self):
         """Update labels immediately but debounce the signal emission."""
         # Update labels for instant visual feedback
@@ -413,9 +478,21 @@ class ControlWidget(QWidget):
         self.entry_bitstream.show()
         self.entry_bitstream.setEnabled(True)
 
-    #------------------------------------------------------------
-    # +++++ Font Size Group Box Widget +++++
-    #------------------------------------------------------------
+    def _open_export_dialog(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Bandpass Signal", "", "WAV Files (*.wav)")
+
+        if file_path:
+            self.path_line_edit.setText(file_path)
+
+    def _emit_export_path(self):
+        path = self.path_line_edit.text()
+        if path:
+            self.sig_export_path.emit(path)
+
+#------------------------------------------------------------
+# +++++ Font Size Group Box Widget +++++
+#------------------------------------------------------------
+
     def _style_groupbox_title(self, group: QGroupBox, font_size: int = 16):
         """Apply consistent title font styling to a QGroupBox."""
         font = group.font()
@@ -467,6 +544,12 @@ class MatrixWidget(QWidget):
         #layout.addWidget(self.plot_bp_fft,2,1)
         layout.addWidget(self.bp_spectrum_container,2,1)
 
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 1)
+        layout.setRowStretch(0, 26) #
+        layout.setRowStretch(1, 32) #
+        layout.setRowStretch(2, 32) #
+
 #------------------------------------------------------------
 # +++++ Meta Data Widget +++++
 #------------------------------------------------------------
@@ -502,89 +585,89 @@ class MetaDataWidget(QWidget):
         self.lbl_pulse.setText(f"{config.get('pulse_type')} (a={config.get('roll_off')})")
         self.lbl_iq.setText(f"Freq: {config.get('carrier_freq')}, Phase: {config.get('phase_offset')}")
 
-#------------------------------------------------------------
-# +++++ Media Player +++++
-#------------------------------------------------------------
-class MediaPlayerWidget(QWidget):
+# #------------------------------------------------------------
+# # +++++ Media Player +++++
+# #------------------------------------------------------------
+# class MediaPlayerWidget(QWidget):
 
-    # ---- Signals for main Gui Controller ----
-    sig_play_button_pressed = Signal()
-    sig_stop_button_pressed = Signal()
-    sig_export_path = Signal(str)
+#     # ---- Signals for main Gui Controller ----
+#     sig_play_button_pressed = Signal()
+#     sig_stop_button_pressed = Signal()
+#     sig_export_path = Signal(str)
 
-    def __init__(self, parent=None):
+#     def __init__(self, parent=None):
 
-        super().__init__(parent)
-        layout = QVBoxLayout(self)
-        group = QGroupBox("6. Media Player")
+#         super().__init__(parent)
+#         layout = QVBoxLayout(self)
+#         group = QGroupBox("6. Media Player")
 
-        # ---- Set Font Size ----
-        font = group.font()
-        font.setPointSize(16)
-        group.setFont(font)
+#         # ---- Set Font Size ----
+#         font = group.font()
+#         font.setPointSize(16)
+#         group.setFont(font)
 
-        layout.addWidget(group)
+#         layout.addWidget(group)
 
-        mediaply_box = QHBoxLayout(group) # MAIN H BOX 1/3 PLAY STOP 2/3 Space 3/3 Export
-
-
-        # ---- PLAY/STOP BUTTON ----
-        player_vbox = QVBoxLayout()
-
-        self.info_lbl = QLabel("Playback Status: Idle")
-        player_vbox.addWidget(self.info_lbl)
-
-        self.btn_play = QPushButton("Play")
-        player_vbox.addWidget(self.btn_play)
-
-        self.btn_stop = QPushButton("Stop")
-        player_vbox.addWidget(self.btn_stop)
-
-        player_vbox.addStretch(1)
+#         mediaply_box = QHBoxLayout(group) # MAIN H BOX 1/3 PLAY STOP 2/3 Space 3/3 Export
 
 
-        # ---- EXPORT VBOX  ----
-        export_vbox = QVBoxLayout()
-        file_path_hbox = QHBoxLayout()
-        export_vbox.addWidget(QLabel("Export Bandpass Signal to .wav File"))
-        self.path_line_edit =QLineEdit()
-        self.btn_browse_path = QPushButton("Browse")
+#         # ---- PLAY/STOP BUTTON ----
+#         player_vbox = QVBoxLayout()
 
-        file_path_hbox.addWidget(self.path_line_edit)
-        file_path_hbox.addWidget(self.btn_browse_path)
+#         self.info_lbl = QLabel("Playback Status: Idle")
+#         player_vbox.addWidget(self.info_lbl)
 
-        export_vbox.addLayout(file_path_hbox)
+#         self.btn_play = QPushButton("Play")
+#         player_vbox.addWidget(self.btn_play)
 
+#         self.btn_stop = QPushButton("Stop")
+#         player_vbox.addWidget(self.btn_stop)
 
-        self.btn_export = QPushButton("Export WAV File")
-        export_vbox.addWidget(self.btn_export)
-        # export_vbox.addWidget(self.btn_browse_path)
-
-        export_vbox.addStretch(1)
-
-        mediaply_box.addLayout(player_vbox, 1)
-        mediaply_box.addStretch(1)
-        mediaply_box.addLayout(export_vbox, 1)
+#         player_vbox.addStretch(1)
 
 
+#         # ---- EXPORT VBOX  ----
+#         export_vbox = QVBoxLayout()
+#         file_path_hbox = QHBoxLayout()
+#         export_vbox.addWidget(QLabel("Export Bandpass Signal to .wav File"))
+#         self.path_line_edit =QLineEdit()
+#         self.btn_browse_path = QPushButton("Browse")
 
-        # ---- Internal Emitters ----
+#         file_path_hbox.addWidget(self.path_line_edit)
+#         file_path_hbox.addWidget(self.btn_browse_path)
 
-        self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
-        self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
-        self.btn_browse_path.clicked.connect(self._open_export_dialog)
-        self.btn_export.clicked.connect(self._emit_export_path)
+#         export_vbox.addLayout(file_path_hbox)
 
-    def _open_export_dialog(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "Export Bandpass Signal", "", "WAV Files (*.wav)")
 
-        if file_path:
-            self.path_line_edit.setText(file_path)
+#         self.btn_export = QPushButton("Export WAV File")
+#         export_vbox.addWidget(self.btn_export)
+#         # export_vbox.addWidget(self.btn_browse_path)
 
-    def _emit_export_path(self):
-        path = self.path_line_edit.text()
-        if path:
-            self.sig_export_path.emit(path)
+#         export_vbox.addStretch(1)
+
+#         mediaply_box.addLayout(player_vbox, 1)
+#         mediaply_box.addStretch(1)
+#         mediaply_box.addLayout(export_vbox, 1)
+
+
+
+#         # ---- Internal Emitters ----
+
+#         self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
+#         self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
+#         self.btn_browse_path.clicked.connect(self._open_export_dialog)
+#         self.btn_export.clicked.connect(self._emit_export_path)
+
+#     def _open_export_dialog(self):
+#         file_path, _ = QFileDialog.getSaveFileName(self, "Export Bandpass Signal", "", "WAV Files (*.wav)")
+
+#         if file_path:
+#             self.path_line_edit.setText(file_path)
+
+#     def _emit_export_path(self):
+#         path = self.path_line_edit.text()
+#         if path:
+#             self.sig_export_path.emit(path)
 
 
 

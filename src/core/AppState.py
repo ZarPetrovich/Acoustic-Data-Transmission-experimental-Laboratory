@@ -324,6 +324,7 @@ class AppState(QObject):
         """ Slot to be connected to the UI's stop button. """
         self.audio_handler.stop()
 
+
     def clear_signals(self):
         """Clear baseband and bandpass signal data to free memory and prevent orphaned objects."""
         # Delete the actual data objects
@@ -331,6 +332,7 @@ class AppState(QObject):
             del self.current_baseband_signal
         if hasattr(self, 'current_bandpass_signal'):
             del self.current_bandpass_signal
+
 
     @Slot()
     def on_export_path_changed(self, path):
