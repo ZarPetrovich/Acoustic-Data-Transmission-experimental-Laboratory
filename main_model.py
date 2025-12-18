@@ -260,5 +260,4 @@ if __name__ == '__main__':
 
 
 # TODO Implement all Spectogram and FFT option
-# TODO Take Out FS as a user Inputs ; Recreate Intro Dialogue
 # TODO Implement Interpolater

@@ -235,7 +235,7 @@ class AppState(QObject):
             return
 
         # Create Symbol Sequence with Symbol Sequencer Module
-        symbol_stream_data = SymbolSequencer(self.current_mod_scheme).generate(self.current_bitstream.data)
+        symbol_stream_data = SymbolSequencer(self.current_mod_scheme).map_bits_to_symbols(self.current_bitstream.data)
 
         self.current_symbol_stream = SymbolStream(
             name="Current Symbol Stream",

@@ -29,7 +29,8 @@ class QuadratureModulator(Modulator):
 
     def modulate(self, baseband_obj: BasebandSignal):
 
-        time_vector = np.arange(len(baseband_obj.data)) / baseband_obj.fs
+        num_samples = len(baseband_obj.data)
+        time_vector = np.arange(num_samples) / baseband_obj.fs
 
         carrier_cos = np.cos( 2 * np.pi * time_vector * self.f_carrier)
         carrier_sin = np.sin( 2 * np.pi * time_vector * self.f_carrier)
@@ -37,7 +38,7 @@ class QuadratureModulator(Modulator):
         real_bb = np.real(baseband_obj.data)
         q_bb = np.imag(baseband_obj.data)
 
-        mod_signal = np.square(2) * (real_bb * carrier_cos - q_bb * carrier_sin)
+        mod_signal = np.sqrt(2) * (real_bb * carrier_cos - q_bb * carrier_sin)
 
         return mod_signal
 
