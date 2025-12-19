@@ -1,6 +1,7 @@
 from PySide6.QtCore import QObject, Signal, QTimer, Slot
 import numpy as np
 from scipy.io import wavfile
+from scipy import signal
 import time
 from pathlib import Path
 from functools import wraps
@@ -50,10 +51,20 @@ class AppState(QObject):
     def __init__(self, initial_values):
         super().__init__()
 
-        self.fs = DEFAULT_FS
-        self.sym_rate = initial_values["sym_rate"]
-        self.span = DEFAULT_SPAN
+        #------------------------------------------------------------
+        # +++++ INIT PARAMETERS +++++
+        #------------------------------------------------------------
+        self.FS = DEFAULT_FS
+        self.SYM_RATE = initial_values["sym_rate"]
+        self.SPS = self.FS // self.SYM_RATE
 
+        # ---- Default Values for Pulse & Mod Scheme ----
+        self.SPAN = DEFAULT_SPAN
+
+        # ---- Bandlimited Interpolation ----
+        # self.INTERPOLATION_FACTOR = 10
+        # self.INTERNAL_SPS = self.SPS // self.INTERPOLATION_FACTOR
+        # self.INTERNAL_FS = self.FS // self.INTERPOLATION_FACTOR
 
         self.audio_handler = AudioPlaybackHandler()
         # self.audio_handler.playback_started.connect(self._on_playback_started)
@@ -72,7 +83,7 @@ class AppState(QObject):
 
     def _init_default_pulse(self):
 
-        init_two_ask = RectanglePulse(self.sym_rate, self.fs, self.span, roll_off = None)
+        init_two_ask = RectanglePulse(self.SYM_RATE, self.FS, self.SPAN, roll_off = None)
 
         pulse_data = init_two_ask.generate() # generate the actual Data
 
@@ -80,10 +91,10 @@ class AppState(QObject):
         self.current_pulse_signal = PulseSignal(
             name=f"Rectangle Pulse",
             data=pulse_data,
-            fs=self.fs,
-            sym_rate=self.sym_rate,
+            fs=self.FS,
+            sym_rate=self.SYM_RATE,
             shape=PulseShape.RECTANGLE,
-            span=self.span
+            span=self.SPAN
         )
 
         self.sig_pulse_changed.emit(self.current_pulse_signal)
@@ -132,7 +143,7 @@ class AppState(QObject):
 
         # Create Generator Object
         try:
-            generator = generator_cls(self.sym_rate, self.fs, span, roll_off)
+            generator = generator_cls(self.SYM_RATE, self.FS, span, roll_off)
             pulse_data = generator.generate()  # Generate the actual data
         except Exception as e:
             print(f"Failed to generate pulse: {e}")
@@ -142,8 +153,8 @@ class AppState(QObject):
         self.current_pulse_signal = PulseSignal(
             name=f"{pulse_type} Pulse",
             data=pulse_data,
-            fs=self.fs,
-            sym_rate=self.sym_rate,
+            fs=self.FS,
+            sym_rate=self.SYM_RATE,
             shape=pulse_type,
             span=span
         )
@@ -258,13 +269,18 @@ class AppState(QObject):
         baseband_gen_obj = BasebandSignalGenerator(self.current_pulse_signal)
 
         # Generate Baseband Signal
-        bb_data = baseband_gen_obj.generate_baseband_signal(self.current_symbol_stream)
+        #bb_data = baseband_gen_obj.generate_baseband_signal(self.current_symbol_stream)
+
+        bb_data = signal.upfirdn(
+            h = self.current_pulse_signal.data,
+            x = self.current_symbol_stream.data,
+            up= self.SPS)
 
         self.current_baseband_signal = BasebandSignal (
             name = "Current Baseband Signal",
             data = bb_data,
-            fs = self.fs,
-            sym_rate = self.sym_rate,
+            fs = self.FS,
+            sym_rate = self.SYM_RATE,
             pulse = self.current_pulse_signal,
             symbol_stream = self.current_symbol_stream
         )
@@ -285,13 +301,17 @@ class AppState(QObject):
             print(f"Invalid carrier frequency value: {carrier_freq}")
             return
 
+        # ---- INTERPOLATION ----
+
+        #self.current_baseband_signal.data = self.bandlimited_interpolator.upscale(self.current_baseband_signal)
+
         iq_data = QuadratureModulator(carrier_freq).modulate(self.current_baseband_signal)
 
         self.current_bandpass_signal = BandpassSignal (
             name = "Current Bandpass Signal",
             data = iq_data,
-            fs = self.fs,
-            sym_rate = self.sym_rate,
+            fs = self.FS,
+            sym_rate = self.SYM_RATE,
             baseband_signal = self.current_baseband_signal,
             carrier_freq = carrier_freq
         )
@@ -307,7 +327,7 @@ class AppState(QObject):
             # Audio hardware typically plays real-valued signals.
             # We take the real part of the complex bandpass signal.
             audio_data = np.real(self.current_bandpass_signal.data)
-            self.audio_handler.play(audio_data, self.fs)
+            self.audio_handler.play(audio_data, self.FS)
         else:
             self.sig_playback_status_changed.emit("Error: No signal generated to play.")
         # TODO UI Feedbacks please not in AppState

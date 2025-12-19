@@ -52,7 +52,7 @@ INTERNAL_FS = int(GLOBAL_FS / GLOBAL_INTERPOLATION_FACTOR)
 INTERNAL_SPS = INTERNAL_FS // GLOBAL_SYM_RATE
 
 def main():
-
+    # region INIT
     bit_stream = BitStream(
         name = "Bit Stream",
         data = np.array([1])
@@ -78,7 +78,7 @@ def main():
     carrier_freq = 440
 
     iq_modulator = QuadratureModulator(carrier_freq)
-
+    # endregion
     # ===========================================================
     #   GLOBAL FS 48 kHz
     # ===========================================================
@@ -118,7 +118,7 @@ def main():
 
 
     # ===========================================================
-    #   Linear Interpolation
+    #   Bandlimited Interpolation with not splitting the FIR Filter
     # ===========================================================
 
     pulse_shape_gen_internal_fs = RectanglePulse(GLOBAL_SYM_RATE, INTERNAL_FS, GLOBAL_SPAN)
@@ -133,14 +133,24 @@ def main():
         roll_off = None
         )
 
-
     bb_generator_internal_fs = BasebandSignalGenerator(pulse_signal_internal_fs)
-
     bb_internal_fs_data = bb_generator_internal_fs.generate_baseband_signal(symbol_stream)
 
-    fir_imp = signal.firwin(101, 1.0/GLOBAL_INTERPOLATION_FACTOR) * GLOBAL_INTERPOLATION_FACTOR
+    #------------------------------------------------------------
+    # +++++ Apply Filter +++++
+    #------------------------------------------------------------
+
+    taps = 101
+    f_c = 1.0 / GLOBAL_INTERPOLATION_FACTOR
+
+
+    fir_imp = signal.firwin(taps, f_c, window = ('kaiser', 8.0)) * GLOBAL_INTERPOLATION_FACTOR
 
     interpolate_bb = signal.upfirdn(fir_imp, bb_internal_fs_data, up=GLOBAL_INTERPOLATION_FACTOR)
+
+    #------------------------------------------------------------
+    # +++++ Perform Group Delay +++++
+    #------------------------------------------------------------
 
     delay = (len(fir_imp) - 1) // 2
     target_length = len(bb_global_fs.data)
@@ -172,10 +182,10 @@ def main():
     )
 
     # ===========================================================
-    #   Poly Interpolation
+    #   Bandlimited Interpolation with splitting the FIR Filter
     # ===========================================================
 
-    num_taps = 20 * GLOBAL_INTERPOLATION_FACTOR  # More taps for a sharper cutoff
+    num_taps = GLOBAL_INTERPOLATION_FACTOR  # More taps for a sharper cutoff
     poly_filter = signal.firwin(
         num_taps + 1,
         1.0 / GLOBAL_INTERPOLATION_FACTOR,
@@ -207,8 +217,18 @@ def main():
         carrier_freq = carrier_freq
     )
 
+
+
+    def get_error(ref, test):
+        min_len = min(len(ref), len(test))
+        return ref[:min_len] - test[:min_len]
+
+
+    error_linear = get_error(bandpass_global_fs.data, bp_interpolated_fs.data)
+    error_poly = get_error(bandpass_global_fs.data, bp_poly_fs.data)
+
     def plot_interactive_signals(global_sig, interp_sig, poly_sig):
-        fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+        fig, axes = plt.subplots(4, 1, figsize=(12, 10), sharex=True)
         plt.subplots_adjust(bottom=0.25) # Extra room for two sliders
 
         # Plot data
@@ -222,6 +242,12 @@ def main():
             ax.grid(True, alpha=0.3)
 
         total_samples = len(global_sig.data)
+
+        # THE ERROR PANEL
+        axes[3].plot(error_linear, color='blue', alpha=0.5, label='Linear Error')
+        axes[3].plot(error_poly, color='red', alpha=0.5, label='Polyphase Error')
+        axes[3].set_title('Residual Error (Reference - Test)', fontweight='bold', color='darkred')
+        axes[3].legend()
 
         # --- Slider Configuration ---
         ax_pos = plt.axes([0.2, 0.1, 0.6, 0.03])    # Position (Scroll)
@@ -248,39 +274,34 @@ def main():
 
     plot_interactive_signals(bandpass_global_fs, bp_interpolated_fs, bp_poly_fs)
 
-    # --- Error Calculation ---
-    # Note: This will only work if lengths are the same.
-    # If they aren't, we pad the shorter one with zeros.
-    def get_error(ref, test):
-        min_len = min(len(ref), len(test))
-        return ref[:min_len] - test[:min_len]
 
-    error_linear = get_error(bandpass_global_fs.data, bp_interpolated_fs.data)
-    error_poly = get_error(bandpass_global_fs.data, bp_poly_fs.data)
 
-    # --- Modern Plotting with Error Tracking ---
-    fig, axes = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
+    # --- Frequency Analysis Plot ---
+    fig_fft, axes_fft = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
     plt.subplots_adjust(bottom=0.2)
 
-    # Global Reference
-    axes[0].plot(bandpass_global_fs.data, color='green', label='Reference')
-    axes[0].set_title('Direct Global FS (The Truth)', fontweight='bold')
+    def plot_fft(ax, signal, fs, color, label):
+        N = len(signal)
+        freq = np.fft.rfftfreq(N, d=1/fs)
+        spectrum = np.abs(np.fft.rfft(signal))
+        ax.plot(freq, spectrum, color=color, label=label)
+        ax.set_ylabel('Magnitude')
+        ax.legend()
+        ax.grid(True, alpha=0.2)
+        print(f"Max Magnitude Freq: {freq[np.argmax(spectrum)]} Hz")
 
-    # The "Unfixed" Linear Interp (Likely shows frequency mismatch)
-    axes[1].plot(bp_interpolated_fs.data, color='tab:blue', label='Linear')
-    axes[1].set_title('Standard FIR (Linear) - With Frequency/Phase Error', fontweight='bold')
 
-    # The Polyphase Interp (Likely shows Phase/Delay Error)
-    axes[2].plot(bp_poly_fs.data, color='tab:red', label='Polyphase')
-    axes[2].set_title('Polyphase Interp - With Group Delay Error', fontweight='bold')
+    # FFT of signals
 
-    # THE ERROR PANEL
-    axes[3].plot(error_linear, color='blue', alpha=0.5, label='Linear Error')
-    axes[3].plot(error_poly, color='red', alpha=0.5, label='Polyphase Error')
-    axes[3].set_title('Residual Error (Reference - Test)', fontweight='bold', color='darkred')
-    axes[3].legend()
+    plot_fft(axes_fft[0], bandpass_global_fs.data, bandpass_global_fs.fs, 'green', 'Reference')
+    axes_fft[0].set_title('FFT: Direct Global FS', fontweight='bold')
 
-    for ax in axes: ax.grid(True, alpha=0.2)
+    plot_fft(axes_fft[1], bp_interpolated_fs.data, bp_interpolated_fs.fs, 'tab:blue', 'Linear')
+    axes_fft[1].set_title('FFT: Standard FIR (Linear)', fontweight='bold')
+
+    plot_fft(axes_fft[2], bp_poly_fs.data, bp_poly_fs.fs, 'tab:red', 'Polyphase')
+    axes_fft[2].set_title('FFT: Polyphase Interp', fontweight='bold')
+
     plt.show()
 
 if __name__ == '__main__':

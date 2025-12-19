@@ -86,5 +86,7 @@ class BasebandSignalGenerator:
             baseband[start_index:end_index] += self.pulse_data * symbol
             yield (i, start_index, end_index, baseband.copy())
 
+
+
 if __name__ == "__main__":
     None
