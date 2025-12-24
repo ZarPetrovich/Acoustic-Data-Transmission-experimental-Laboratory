@@ -32,7 +32,6 @@ class PlotWidget(QWidget):
         self.current_curve = None
 
 
-
     def plot_data(self, timevector, datavector, color='b', name="Signal", clear=True, stepMode=False):
         if clear:
             self.plot_widget.clear()
@@ -56,15 +55,13 @@ class SpectrumContainerWidget(QWidget):
         self.tab_widget = QTabWidget()
         self.layout.addWidget(self.tab_widget)
 
-        self.plot_periodogram = PlotWidget(title=f"{title_prefix}: Periodogram")
         self.plot_spectrogram = PlotWidget(title=f"{title_prefix}: Spectrogram")
         self.plot_fft = PlotWidget(title=f"{title_prefix}: FFT")
 
-        self.tab_widget.addTab(self.plot_periodogram, "Periodogram")
-        self.tab_widget.addTab(self.plot_spectrogram, "Spectrogram")
         self.tab_widget.addTab(self.plot_fft, "FFT")
+        self.tab_widget.addTab(self.plot_spectrogram, "Spectrogram")
 
-        # 3. Set tabs to West position (sideways)
+
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)
 
 class PulseContainerWidget(QWidget):
@@ -79,10 +76,10 @@ class PulseContainerWidget(QWidget):
 
         self.plot_time = PlotWidget(title=f"{title_prefix}: Time Domain")
         self.plot_fft = PlotWidget(title=f"{title_prefix}: FFT")
-        self.plot_periodogramm = PlotWidget(title=f"{title_prefix}: Periodogram")
+        #self.plot_imp_response = PlotWidget(title=f"{title_prefix}: Impulse Response")
 
         self.tab_widget.addTab(self.plot_time, "Time Domain")
         self.tab_widget.addTab(self.plot_fft, "FFT")
-        self.tab_widget.addTab(self.plot_periodogramm, "Periodogram")
+        #self.tab_widget.addTab(self.plot_imp_response, "Impulse Response")
 
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)

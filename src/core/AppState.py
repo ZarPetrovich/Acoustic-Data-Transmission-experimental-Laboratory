@@ -378,5 +378,7 @@ class AppState(QObject):
 
 
 
-# TODO DOwnsampling Signal Processing for better Performance
+# TODO Reorga Dataclasses for export
+# TODO Frequency Response for Pulse
+# TODO Create Start Chirp?
 

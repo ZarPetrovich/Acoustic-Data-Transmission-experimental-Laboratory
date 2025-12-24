@@ -15,7 +15,7 @@ from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, FooterWi
 from src.ui.plot_strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
     BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy,
-    PeriodogrammPlotStrategy, SpectogramPlotStrategy)
+    PeriodogrammPlotStrategy, SpectogramPlotStrategy,FrequencyResponse)
 
 from src.ui.style.color_pallete import LIGHT_THEME_HEX
 
@@ -46,9 +46,10 @@ class MainGUILogic(QMainWindow):
         self.pulse_fft_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_fft)
         self.pulse_fft_plotter.set_strategy(FFTPlotStrategy())
 
-        self.pulse_periodogram_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_periodogramm)
-        self.pulse_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
+        #self.pulse_periodogram_plotter = PlotManager(self.matrix_widget.plot_pulse.plot_imp_response)
+        #self.pulse_periodogram_plotter.set_strategy(FrequencyResponse())
 
+        # ---- Init Constellation Diagramm ----
         self.const_plotter = PlotManager(self.matrix_widget.plot_const)
         self.const_plotter.set_strategy(ConstellationPlotStrategy())
 
@@ -61,8 +62,8 @@ class MainGUILogic(QMainWindow):
         self.bb_spectrogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_spectrogram)
         self.bb_spectrogram_plotter.set_strategy(SpectogramPlotStrategy())
 
-        self.bb_periodogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_periodogram)
-        self.bb_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
+        #self.bb_periodogram_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_periodogram)
+        #self.bb_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
 
         self.bb_fft_plotter = PlotManager(self.matrix_widget.bb_spectrum_container.plot_fft)
         self.bb_fft_plotter.set_strategy(FFTPlotStrategy())
@@ -75,8 +76,8 @@ class MainGUILogic(QMainWindow):
         self.bp_spectrogram_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_spectrogram)
         self.bp_spectrogram_plotter.set_strategy(SpectogramPlotStrategy())
 
-        self.bp_periodogram_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_periodogram)
-        self.bp_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
+        # self.bp_periodogram_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_periodogram)
+        # self.bp_periodogram_plotter.set_strategy(PeriodogrammPlotStrategy())
 
         self.bp_fft_plotter = PlotManager(self.matrix_widget.bp_spectrum_container.plot_fft)
         self.bp_fft_plotter.set_strategy(FFTPlotStrategy())
@@ -143,7 +144,7 @@ class MainGUILogic(QMainWindow):
     def _on_pulse_update(self, pulse_container):
         self.pulse_time_plotter.update_plot(pulse_container)
         self.pulse_fft_plotter.update_plot(pulse_container)
-        self.pulse_periodogram_plotter.update_plot(pulse_container)
+        #self.pulse_periodogram_plotter.update_plot(pulse_container)
 
     @Slot(ModSchemeLUT)
     def _on_mod_scheme_lut_update(self, mod_scheme_container):
@@ -155,7 +156,7 @@ class MainGUILogic(QMainWindow):
         self.baseband_plotter.update_plot(baseband_container)
         self.bb_fft_plotter.update_plot(baseband_container)
         self.bb_spectrogram_plotter.update_plot(baseband_container)
-        self.bb_periodogram_plotter.update_plot(baseband_container)
+        #self.bb_periodogram_plotter.update_plot(baseband_container)
         # elapsed = (time.perf_counter() - start) * 1000
         # print(f"🎨 Baseband plots: {elapsed:.2f}ms")
 
@@ -179,11 +180,11 @@ class MainGUILogic(QMainWindow):
         # Clear visual plots
         self.baseband_plotter.clear_plot()
         self.bb_spectrogram_plotter.clear_plot()
-        self.bb_periodogram_plotter.clear_plot()
+        #self.bb_periodogram_plotter.clear_plot()
         self.bb_fft_plotter.clear_plot()
         self.bandpass_plotter.clear_plot()
         self.bp_spectrogram_plotter.clear_plot()
-        self.bp_periodogram_plotter.clear_plot()
+        #self.bp_periodogram_plotter.clear_plot()
         self.bp_fft_plotter.clear_plot()
 
         # Clear underlying data to prevent memory leaks

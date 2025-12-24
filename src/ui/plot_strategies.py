@@ -221,43 +221,37 @@ class BandpassPlotStrategy(PlotStrategy):
 
 
 class FFTPlotStrategy(PlotStrategy):
-    def plot(self, widget: PlotWidget, signal_model):
+    def plot(self, widget, signal_model):
+        data = signal_model.data
+        fs = signal_model.fs
 
-        plot_item = widget.plot_widget.getPlotItem()
-        plot_item.getViewBox().disableAutoRange(axis='x')
+        # 1. Performance Guard: Decimate if oversampled (e.g., 48k for 10 Baud)
+        if len(data) > 5000:
+            factor = 100
+            plot_data = signal.decimate(data, factor)
+            plot_fs = fs / factor
+        else:
+            plot_data = data
+            plot_fs = fs
 
+        n = 2**12
+
+        xk_complex = np.fft.fft(plot_data, n=n)
+        xf = np.fft.fftfreq(n, d=1/plot_fs)
+
+        # xk = (1/(fs*N)) * |fft(xn)|^2
+        psd_raw = (1.0 / (plot_fs * n)) * np.abs(xk_complex)**2
+
+        # Double values except for DC and Nyquist
+        psd_raw[1:-1] *= 2
+
+        # Convert to dB: pow2db(xk)
+        psd_db = 10 * np.log10(psd_raw + 1e-12)
+
+        # 4. Final Plotting
         widget.plot_widget.clear()
-
-        num_samples = len(signal_model.data)
-
-        yf = fft(signal_model.data)
-        xf = fftfreq(num_samples, 1 / signal_model.fs)
-        xf = fftshift(xf)
-
-        y_plot = fftshift(yf)
-        y_plot = np.abs(y_plot)
-
-        #power_spectrum = (y_plot / num_samples) ** 2
-
-        y_plot_dB = 20 * np.log10(y_plot / num_samples + 1e-10)
-
-        widget.plot_widget.setLabel('bottom', 'Frequency ', units='Hz')
-        widget.plot_widget.setLabel('left', 'Amplitude')
-
-        widget.plot_widget.setTitle(f"Baseband FFT Spectrum")
-
-        # find Sample where y is highest to plot that range on x Axis
-
-        yf_idx_max = np.argmax(np.abs(y_plot))
-
-        index_x = xf[yf_idx_max]
-
-        x_range_idx_above = int(index_x + 250)
-        x_range_idx_bottom = index_x - 250
-        widget.plot_widget.setXRange(x_range_idx_bottom, x_range_idx_above)
-        # widget.plot_widget.setYRange(0, 20, padding=0)
-
-        widget.plot_data(xf, y_plot_dB, color = 'b', name=signal_model.name)
+        widget.plot_widget.setLabel('left', 'Power Density', units='dB/Hz')
+        widget.plot_data(xf, psd_db, color='b')
 
 
 class PeriodogrammPlotStrategy(PlotStrategy):
@@ -309,9 +303,11 @@ class PeriodogrammPlotStrategy(PlotStrategy):
 
 class SpectogramPlotStrategy(PlotStrategy):
     def plot(self, widget: PlotWidget, signal_model):
+
         NPERSEG = 256
         OVERLAP = NPERSEG // 2
         WINDOW_TYPE = 'hann'
+
         # 0. Type check/data preparation (Essential for robust code)
         if signal_model.data is np.iscomplexobj:
             data = np.real(signal_model.data)
@@ -371,6 +367,26 @@ class SpectogramPlotStrategy(PlotStrategy):
 
         # Optional: Auto-range the view to fit the spectrogram
         widget.plot_widget.getViewBox().autoRange()
+
+class FrequencyResponse(PlotStrategy):
+    def plot(self, widget, signal_model):
+
+        n_fft = 2 ** 8
+        h = np.fft.rfft(signal_model.data, n = n_fft)
+        xf_hz = np.fft.rfftfreq(n_fft, d=1/signal_model.fs)
+
+        mag_db = 20 * np.log10(np.abs(h) + 1e-12)
+
+        # 3. Theoretical Group Delay (Constant for symmetric FIR)
+        # Avoids the 1e19 numerical artifacts
+
+        widget.plot_widget.setTitle(f"FIR Analysis: {signal_model.name}")
+        widget.plot_widget.setLabel('bottom', 'Frequency', units='Hz')
+        widget.plot_widget.setLabel('left', 'Magnitude', units='dB')
+        widget.plot_widget.setXRange(0, signal_model.fs / 2)
+
+        widget.plot_data(xf_hz, mag_db)
+
 
 
 
