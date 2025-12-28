@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
     QPushButton, QGroupBox, QSlider, QComboBox, QRadioButton,
     QButtonGroup, QGridLayout, QFormLayout, QScrollArea, QFrame, QAbstractButton,
-    QPushButton, QLineEdit,QFileDialog, QStackedLayout
+    QPushButton, QLineEdit,QFileDialog, QStackedLayout, QToolButton, QStyle
 )
 
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression, QFileInfo
@@ -275,31 +275,30 @@ class ControlWidget(QWidget):
         self._current_bit_sequence = ""
 
     def _init_iq_group(self):
-        group = QGroupBox("4. IQ Modulator")
-        # ---- Set Font Size ----
-        self._style_groupbox_title(group)
+            group = QGroupBox("4. IQ Modulator")
+            self._style_groupbox_title(group)
 
-        layout = QVBoxLayout(group)
-        layout.addWidget(QLabel("Carrier Frequency:"))
+            layout = QVBoxLayout(group)
+            layout.addWidget(QLabel("Carrier Frequency:"))
 
-        # Radio Buttons
-        self.freq_bg = QButtonGroup(self)
-        h_rad = QHBoxLayout()
-        for txt in ["440 Hz", "4400 Hz", "8800 Hz"]:
-            rb = QRadioButton(txt)
-            self.freq_bg.addButton(rb)
-            h_rad.addWidget(rb)
-        self.freq_bg.buttons()[0].setChecked(True)
-        layout.addLayout(h_rad)
+            # Radio Buttons
+            self.freq_bg = QButtonGroup(self)
+            h_rad = QHBoxLayout()
+            for txt in ["440 Hz", "4400 Hz", "8800 Hz"]:
+                rb = QRadioButton(txt)
+                self.freq_bg.addButton(rb)
+                h_rad.addWidget(rb)
+            self.freq_bg.buttons()[0].setChecked(True)
+            layout.addLayout(h_rad)
 
-        self.btn_modulate = QPushButton("Modulate")
-        layout.addWidget(self.btn_modulate)
+            self.btn_modulate = QPushButton("Modulate")
+            layout.addWidget(self.btn_modulate)
 
-        self.vbox.addWidget(group)
+            self.vbox.addWidget(group)
 
-        # Internal Connections
+            # Internal Connections
 
-        self.btn_modulate.clicked.connect(self._emit_carrier_freq)
+            self.btn_modulate.clicked.connect(self._emit_carrier_freq)
 
     def _init_media_player(self):
         group = QGroupBox("6. Media Player")
