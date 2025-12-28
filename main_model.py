@@ -1,29 +1,36 @@
-import sys, os, argparse
+import sys
+import os
+import argparse
 import time
+
+# --- Third-Party Libraries ---
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStatusBar
 from PySide6.QtCore import Slot
 
-# Local Application/Library Specific Imports
-from src.ui.intro_dialog import IntroDialog
-from src.core.AppState import AppState
+# --- Internal: Constants & Dataclasses ---
 from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
+from src.dataclasses.dataclass_models import (
+    ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
+)
 
-# Application Logic (Processing)
-from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
+# --- Internal: Core Logic ---
+from src.core.AppState import AppState
 
+# --- Internal: UI Components ---
+from src.ui.intro_dialog import IntroDialog
+from src.ui.footer_widget import FooterWidget
 from src.ui.ctrl_widgets.main_controls import ControlWidget
 from src.ui.plots.signal_matrix_view import SignalMatrixView
-from src.ui.footer_widget import FooterWidget
 
-# Ensure the Strategy imports are correct
+# --- Internal: Plotting Strategies ---
 from src.ui.plots.strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
     BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy,
     PeriodogrammPlotStrategy, SpectogramPlotStrategy, FrequencyResponse
 )
 
+# --- Internal: Styling ---
 from src.ui.style.color_pallete import LIGHT_THEME_HEX
-
 # ===========================================================
 #   GUI Constructor Logic
 # ===========================================================
