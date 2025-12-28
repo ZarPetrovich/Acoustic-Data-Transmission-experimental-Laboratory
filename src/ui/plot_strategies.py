@@ -191,8 +191,8 @@ class BasebandPlotStrategy(PlotStrategy):
         time_ds, real_ds = downsample_for_plot(timevector, real_component, max_points=10000)
         _, imag_ds = downsample_for_plot(timevector, img_component, max_points=10000)
 
-        widget.plot_data(time_ds, real_ds, color = 'b', name=signal_model.name)
-        widget.plot_data(time_ds, imag_ds, color = 'r', name=signal_model.name + " Imaginary",clear=False)
+        widget.plot_data(time_ds, real_ds, color='b', name=signal_model.name)
+        widget.plot_data(time_ds, imag_ds, color='r', name=signal_model.name + " Imaginary", clear=False)
 
 
 class BandpassPlotStrategy(PlotStrategy):

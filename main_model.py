@@ -124,12 +124,13 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
         self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
         self.ctrl_widget.sig_clear_plots.connect(self._clear_bitstream_plot)
+        self.ctrl_widget.sig_export_pulse_path.connect(self.app_state.on_export_pulse)
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
         self.ctrl_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
         self.ctrl_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
-        self.ctrl_widget.sig_export_path.connect(self.app_state.on_export_path_changed)
+        self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
         self.app_state.sig_pulse_changed.connect(self._on_pulse_update)

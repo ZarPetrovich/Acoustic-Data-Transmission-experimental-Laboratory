@@ -61,7 +61,6 @@ class SpectrumContainerWidget(QWidget):
         self.tab_widget.addTab(self.plot_fft, "FFT")
         self.tab_widget.addTab(self.plot_spectrogram, "Spectrogram")
 
-
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)
 
 class PulseContainerWidget(QWidget):
