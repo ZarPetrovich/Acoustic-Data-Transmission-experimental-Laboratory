@@ -20,7 +20,7 @@ class IntroDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Welcome to ADTx Lab")
-        self.setGeometry(100, 100, 900, 600)
+        self.setGeometry(100, 100, 300, 400)
         self.setModal(True)
 
         # 1. Use a QVBoxLayout as the main layout for stacking content
@@ -50,17 +50,9 @@ class IntroDialog(QDialog):
         form_layout = QFormLayout(form_container) # This is the QFormLayout instance
         form_layout.setContentsMargins(0, 15, 0, 15)
 
-        # FS ComboBox
-        self.combobox_fs = QComboBox()
-        self.combobox_fs.addItems([str(fs) for fs in AVAILABLE_FS])
-        fs_val = initial_values.get('fs', DEFAULT_FS) if initial_values else DEFAULT_FS
-        self.combobox_fs.setCurrentText(str(fs_val))
-        # Use QFormLayout.addRow(label, widget)
-        form_layout.addRow("FS (Hz):", self.combobox_fs)
-
         # Symbols per Second SpinBox
         self.spinbox_sym_rate = QSpinBox()
-        self.spinbox_sym_rate.setRange(1, 600)
+        self.spinbox_sym_rate.setRange(10, 250)
         self.spinbox_sym_rate.setSingleStep(1)
         sym_rate_val = initial_values.get('sym_rate', DEFAULT_SYM_RATE) if initial_values else DEFAULT_SYM_RATE
         self.spinbox_sym_rate.setValue(sym_rate_val) # Set a sensible default
@@ -83,10 +75,8 @@ class IntroDialog(QDialog):
 
     def get_values(self):
         """Returns the selected sampling frequency and symbol rate."""
-        fs = int(self.combobox_fs.currentText())
         sym_rate = int(self.spinbox_sym_rate.value())
 
         return {
-            "fs": fs,
             "sym_rate": sym_rate
         }

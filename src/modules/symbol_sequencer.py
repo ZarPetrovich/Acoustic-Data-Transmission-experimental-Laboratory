@@ -8,7 +8,7 @@ class SymbolSequencer:
         self.mod_scheme_lut = mod_scheme_container.look_up_table
         self.k = mod_scheme_container.cardinality
 
-    def generate(self, bit_stream: np.array) -> np.ndarray:
+    def map_bits_to_symbols(self, bit_stream: np.array) -> np.ndarray:
         """
         Generates the complex symbol sequence using the look-up book.
 
@@ -28,7 +28,7 @@ class SymbolSequencer:
         sym_idx_array = chunk_array @ powers
 
         # Map Indices to Symbols using the Look-Up Table and Index from the loop
-        symbol_sequence = np.array([self.mod_scheme_lut[idx] for idx in sym_idx_array], dtype=object) # TODO pre-compute LUT as np.array for direct indexing
+        symbol_sequence = np.array([self.mod_scheme_lut[idx] for idx in sym_idx_array], dtype=np.complex128) # TODO pre-compute LUT as np.array for direct indexing
 
         return symbol_sequence
 

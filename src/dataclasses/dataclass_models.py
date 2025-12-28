@@ -7,6 +7,7 @@ Can also be used to export the data
 """
 
 from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
 from typing import Dict
 import numpy as np
 from src.constants import PulseShape, ModulationScheme
@@ -20,7 +21,7 @@ from src.constants import PulseShape, ModulationScheme
 #------------------------------------------------------------
 # +++++ PARENT CONTAINER +++++
 #------------------------------------------------------------
-
+@dataclass_json
 @dataclass
 class DataContainer:
     name: str
@@ -29,7 +30,7 @@ class DataContainer:
 #------------------------------------------------------------
 # +++++ @@@SequenceContainer +++++
 #------------------------------------------------------------
-
+@dataclass_json
 @dataclass
 class ModSchemeLUT(DataContainer):
     """
@@ -39,8 +40,8 @@ class ModSchemeLUT(DataContainer):
     look_up_table: Dict[int, complex]
     cardinality: int
     mapper: str
-    mod_scheme: ModulationScheme
-
+    mod_scheme: str
+@dataclass_json
 @dataclass
 class StreamContainer(DataContainer):
     length: int = field(init=False)
@@ -50,11 +51,11 @@ class StreamContainer(DataContainer):
             self.length = len(self.data)
         else:
             self.length = 0
-
+@dataclass_json
 @dataclass
 class BitStream(StreamContainer):
     ...
-
+@dataclass_json
 @dataclass
 class SymbolStream(StreamContainer):
     mod_scheme: ModSchemeLUT
@@ -65,19 +66,19 @@ class SymbolStream(StreamContainer):
 # +++++ @@@SignalContainer +++++
 #------------------------------------------------------------
 
-
+@dataclass_json
 @dataclass
 class SignalContainer(DataContainer):
     fs: int
     sym_rate: int
-
+@dataclass_json
 @dataclass
 class PulseSignal(SignalContainer):
     """Data Container for created Pulses"""
-    shape: PulseShape
+    shape: str
     span: int = None
     roll_off: float = None
-
+@dataclass_json
 @dataclass
 class BasebandSignal(SignalContainer):
     """Represents a modulated baseband signal.
@@ -87,7 +88,7 @@ class BasebandSignal(SignalContainer):
         """
     pulse: PulseSignal
     symbol_stream: SymbolStream
-
+@dataclass_json
 @dataclass
 class BandpassSignal(SignalContainer):
     baseband_signal: BasebandSignal

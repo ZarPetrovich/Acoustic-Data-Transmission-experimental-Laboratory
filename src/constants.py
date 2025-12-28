@@ -23,7 +23,7 @@
      AVAILABLE_FS (list): A list of available sampling frequencies (in Hz) supported by the application.
 """
 
-from enum import Enum, auto
+from enum import StrEnum, auto
 
 # ===========================================================
 #   ENUM / MAP
@@ -33,26 +33,19 @@ from enum import Enum, auto
 # ===========================================================
 
 
-class PulseShape(Enum):
+class PulseShape(StrEnum):
     """Defines the available pulse shapes as unique constants."""
     RECTANGLE = auto()
     COSINE_SQUARED = auto()
     RAISED_COSINE = auto()
 
-# UI Mappings
-PULSE_SHAPE_MAP = {
-    PulseShape.RECTANGLE: "Rectangle",
-    PulseShape.COSINE_SQUARED: "Cosine",
-}
-
-class BitMappingScheme(Enum):
+class BitMappingScheme(StrEnum):
     """Defines the available bit mapping schemes."""
     GRAY = auto()
     BINARY = auto()
     RANDOM = auto()
 
-
-class ModulationScheme(Enum):
+class ModulationScheme(StrEnum):
     """Defines the available modulation schemes as unique constants."""
 
     AMPLITUDE_SHIFT_KEYING = auto()
@@ -61,6 +54,10 @@ class ModulationScheme(Enum):
     PHASE_SHIFT_KEYING = auto()
     PSK = PHASE_SHIFT_KEYING
 
+MOD_SCHEME_MAP = {
+    ModulationScheme.AMPLITUDE_SHIFT_KEYING: "ASK",
+    ModulationScheme.PHASE_SHIFT_KEYING: "PSK",
+}
 
 # ===========================================================
 #   App Start-Up Parameters

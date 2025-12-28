@@ -2,12 +2,12 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
     QPushButton, QGroupBox, QSlider, QComboBox, QRadioButton,
     QButtonGroup, QGridLayout, QFormLayout, QScrollArea, QFrame, QAbstractButton,
-    QPushButton, QLineEdit,QFileDialog, QStackedLayout
+    QPushButton, QLineEdit,QFileDialog, QStackedLayout, QToolButton, QStyle
 )
 
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QRegularExpression, QFileInfo
 from PySide6.QtGui import QFont, QRegularExpressionValidator
-from src.ui.plot_widgets import PlotWidget
+from src.ui.plot_widgets import PlotWidget, SpectrumContainerWidget, PulseContainerWidget
 from src.constants import PulseShape
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
 
@@ -38,6 +38,11 @@ class ControlWidget(QWidget):
     sig_save_requested = Signal(int)        # Emits slot_index (0-3) to save to
     sig_slot_selection_changed = Signal(int) # Emits slot_index (0-3) selected for viewing
 
+    # Media Player
+    sig_play_button_pressed = Signal()
+    sig_stop_button_pressed = Signal()
+    sig_export_wav_path = Signal(str)
+    sig_export_pulse_path=Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -71,6 +76,8 @@ class ControlWidget(QWidget):
         # 3. IQ Modulator
         self._init_iq_group()
 
+        self._init_media_player()
+
         self.vbox.addStretch()
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
@@ -88,7 +95,7 @@ class ControlWidget(QWidget):
         self.pulse_combo = QComboBox()
         pulse_type_layout.addWidget(self.pulse_combo)
         layout.addLayout(pulse_type_layout)
-
+        self.set_pulse_shape_map()
         # Span and Roll-off
         sliders_layout = QVBoxLayout()
 
@@ -96,7 +103,7 @@ class ControlWidget(QWidget):
         span_layout = QHBoxLayout()
         span_layout.addWidget(QLabel("Span:"))
         self.slider_span = QSlider(Qt.Orientation.Horizontal)
-        self.slider_span.setRange(1, 50)
+        self.slider_span.setRange(1, 20)
         self.slider_span.setValue(2)
         self.lbl_span = QLabel(f"{2}")
         span_layout.addWidget(self.slider_span)
@@ -117,12 +124,25 @@ class ControlWidget(QWidget):
         layout.addLayout(sliders_layout)
         self.vbox.addWidget(group)
 
-        # TODO Deactivate Roll OFF for specific Pulses
+        # ---- Export Pulse Metadata ----
+        export_vbox = QVBoxLayout()
+        file_path_hbox = QHBoxLayout()
+        file_path_hbox.addWidget(QLabel("Export Pulse as JSON"))
+        self.btn_browse_path = QPushButton("Export")
+
+        file_path_hbox.addWidget(self.btn_browse_path)
+
+        export_vbox.addLayout(file_path_hbox)
+
+        layout.addLayout(export_vbox)
+
+
 
         # Internal Connections
         self.pulse_combo.currentTextChanged.connect(self._emit_pulse)  # ComboBox: immediate
         self.slider_span.valueChanged.connect(self._on_pulse_slider_changed)
         self.slider_roll.valueChanged.connect(self._on_pulse_slider_changed)
+        self.btn_browse_path.clicked.connect(self._open_export_pulse_dialog)
 
         self.vbox.addWidget(group)
 
@@ -134,13 +154,20 @@ class ControlWidget(QWidget):
 
         # Radio Buttons
         self.modulation_bg = QButtonGroup(self)
-        h_rad = QHBoxLayout()
+        hbox_ask_radio_btn = QHBoxLayout()
         for txt in ["2-ASK", "4-ASK", "8-ASK"]:
-            rb = QRadioButton(txt)
-            self.modulation_bg.addButton(rb)
-            h_rad.addWidget(rb)
+            rb_ask = QRadioButton(txt)
+            self.modulation_bg.addButton(rb_ask)
+            hbox_ask_radio_btn.addWidget(rb_ask)
         self.modulation_bg.buttons()[0].setChecked(True)
-        layout.addLayout(h_rad)
+        layout.addLayout(hbox_ask_radio_btn)
+
+        hbox_psk_radio_btn = QHBoxLayout()
+        for txt in ["2-PSK", "4-PSK", "8-PSK"]:
+            rb_psk = QRadioButton(txt)
+            self.modulation_bg.addButton(rb_psk)
+            hbox_psk_radio_btn.addWidget(rb_psk)
+        layout.addLayout(hbox_psk_radio_btn)
 
         self.map_combo = QComboBox()
         self.map_combo.addItems(["Gray", "Binary"])
@@ -248,32 +275,89 @@ class ControlWidget(QWidget):
         self._current_bit_sequence = ""
 
     def _init_iq_group(self):
-        group = QGroupBox("4. IQ Modulator")
-        # ---- Set Font Size ----
+            group = QGroupBox("4. IQ Modulator")
+            self._style_groupbox_title(group)
+
+            layout = QVBoxLayout(group)
+            layout.addWidget(QLabel("Carrier Frequency:"))
+
+            # Radio Buttons
+            self.freq_bg = QButtonGroup(self)
+            h_rad = QHBoxLayout()
+            for txt in ["440 Hz", "4400 Hz", "8800 Hz"]:
+                rb = QRadioButton(txt)
+                self.freq_bg.addButton(rb)
+                h_rad.addWidget(rb)
+            self.freq_bg.buttons()[0].setChecked(True)
+            layout.addLayout(h_rad)
+
+            self.btn_modulate = QPushButton("Modulate")
+            layout.addWidget(self.btn_modulate)
+
+            self.vbox.addWidget(group)
+
+            # Internal Connections
+
+            self.btn_modulate.clicked.connect(self._emit_carrier_freq)
+
+    def _init_media_player(self):
+        group = QGroupBox("6. Media Player")
+
         self._style_groupbox_title(group)
+
         layout = QVBoxLayout(group)
-        layout.addWidget(QLabel("Carrier Frequency:"))
 
-        # Radio Buttons
-        self.freq_bg = QButtonGroup(self)
-        h_rad = QHBoxLayout()
-        for txt in ["440 Hz", "4400 Hz", "8800 Hz"]:
-            rb = QRadioButton(txt)
-            self.freq_bg.addButton(rb)
-            h_rad.addWidget(rb)
-        self.freq_bg.buttons()[0].setChecked(True)
-        layout.addLayout(h_rad)
+        mediaply_box = QHBoxLayout(group) # MAIN H BOX 1/3 PLAY STOP 2/3 Space 3/3 Export
 
-        self.btn_modulate = QPushButton("Modulate")
-        layout.addWidget(self.btn_modulate)
+        # ---- PLAY/STOP BUTTON ----
+        player_vbox = QVBoxLayout()
+
+        self.info_lbl = QLabel("Playback Status: Idle")
+        player_vbox.addWidget(self.info_lbl)
+
+        self.btn_play = QPushButton("Play")
+        player_vbox.addWidget(self.btn_play)
+
+        self.btn_stop = QPushButton("Stop")
+        player_vbox.addWidget(self.btn_stop)
+
+        player_vbox.addStretch(1)
+
+
+        # ---- EXPORT VBOX  ----
+        export_vbox = QVBoxLayout()
+        file_path_hbox = QHBoxLayout()
+        export_vbox.addWidget(QLabel("Export Bandpass Signal to .wav File"))
+        self.line_edit_wav_path =QLineEdit()
+        self.btn_browse_path = QPushButton("Browse")
+
+        file_path_hbox.addWidget(self.line_edit_wav_path)
+        file_path_hbox.addWidget(self.btn_browse_path)
+
+        export_vbox.addLayout(file_path_hbox)
+
+
+        self.btn_export = QPushButton("Export WAV File")
+        export_vbox.addWidget(self.btn_export)
+
+        export_vbox.addStretch(1)
+
+        mediaply_box.addLayout(player_vbox, 1)
+        mediaply_box.addStretch(1)
+        mediaply_box.addLayout(export_vbox, 1)
+
+        layout.addLayout(mediaply_box)
+
+    # --- Internal Emitters  ---
+
+        self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
+        self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
+        self.btn_browse_path.clicked.connect(self._open_export_wav_dialog)
+        self.btn_export.clicked.connect(self._emit_export_wav_path)
 
         self.vbox.addWidget(group)
 
-        # Internal Connections
 
-        self.btn_modulate.clicked.connect(self._emit_carrier_freq)
-
-    # --- Internal Emitters  ---
     def _on_pulse_slider_changed(self):
         """Update labels immediately but debounce the signal emission."""
         # Update labels for instant visual feedback
@@ -321,7 +405,8 @@ class ControlWidget(QWidget):
             "carrier_freq": carrier_freq
         })
 
-    def set_pulse_shape_map(self, map_pulse_shape):
+    def set_pulse_shape_map(self):
+        self.pulse_combo.clear()
         self.pulse_combo.addItems([shape.name for shape in PulseShape])  # Use enum names
 
     def _show_imported_bitstream_dialog(self, bit_sequence: str):
@@ -405,9 +490,27 @@ class ControlWidget(QWidget):
         self.entry_bitstream.show()
         self.entry_bitstream.setEnabled(True)
 
-    #------------------------------------------------------------
-    # +++++ Font Size Group Box Widget +++++
-    #------------------------------------------------------------
+    def _open_export_pulse_dialog(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Pulse Signal", "", "Json Files (*.json)")
+
+        if file_path:
+            self.sig_export_pulse_path.emit(file_path)
+
+    def _open_export_wav_dialog(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Bandpass Signal", "", "WAV Files (*.wav)")
+
+        if file_path:
+            self.line_edit_wav_path.setText(file_path)
+
+    def _emit_export_wav_path(self):
+        path = self.line_edit_wav_path.text()
+        if path:
+            self.sig_export_wav_path.emit(path)
+
+#------------------------------------------------------------
+# +++++ Font Size Group Box Widget +++++
+#------------------------------------------------------------
+
     def _style_groupbox_title(self, group: QGroupBox, font_size: int = 16):
         """Apply consistent title font styling to a QGroupBox."""
         font = group.font()
@@ -428,7 +531,8 @@ class MatrixWidget(QWidget):
         layout = QGridLayout(self)
 
         # +++ Pulse Plot Widget +++
-        self.plot_pulse = PlotWidget(title="Pulse Shape (Time)")
+        # self.plot_pulse = PlotWidget(title="Pulse Shape (Time)")
+        self.plot_pulse = PulseContainerWidget(title_prefix = "Pulse Shape")
 
         # 2. Constellation Plot (Scatter)
         self.plot_const = PlotWidget(title="Constellation (I/Q)")
@@ -440,21 +544,29 @@ class MatrixWidget(QWidget):
         self.plot_baseband = PlotWidget(title="Baseband (Time) - Pending")
 
         # 4. Baseband FFT (Placeholder)
-        self.plot_bb_fft = PlotWidget(title="Spectrum - Pending")
-
+        #self.plot_bb_fft = PlotWidget(title="Spectrum - Pending")
+        self.bb_spectrum_container = SpectrumContainerWidget(title_prefix="Baseband Spectrum")
         # 5. Bandpass
         self.plot_bandpass  = PlotWidget(title="Bandpass (Time) - Pending")
 
         # 6. Bandpass FFT
-        self.plot_bp_fft = PlotWidget(title ="Bandpass Spectrum")
-
+        #self.plot_bp_fft = PlotWidget(title ="Bandpass Spectrum")
+        self.bp_spectrum_container = SpectrumContainerWidget(title_prefix="Bandpass Spectrum")
 
         layout.addWidget(self.plot_pulse, 0, 0)
         layout.addWidget(self.plot_const, 0, 1)
         layout.addWidget(self.plot_baseband, 1, 0)
-        layout.addWidget(self.plot_bb_fft, 1, 1)
+        #layout.addWidget(self.plot_bb_fft, 1, 1)
+        layout.addWidget(self.bb_spectrum_container,1,1)
         layout.addWidget(self.plot_bandpass,2,0)
-        layout.addWidget(self.plot_bp_fft,2,1)
+        #layout.addWidget(self.plot_bp_fft,2,1)
+        layout.addWidget(self.bp_spectrum_container,2,1)
+
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 1)
+        layout.setRowStretch(0, 26) #
+        layout.setRowStretch(1, 32) #
+        layout.setRowStretch(2, 32) #
 
 #------------------------------------------------------------
 # +++++ Meta Data Widget +++++
@@ -491,91 +603,6 @@ class MetaDataWidget(QWidget):
         self.lbl_pulse.setText(f"{config.get('pulse_type')} (a={config.get('roll_off')})")
         self.lbl_iq.setText(f"Freq: {config.get('carrier_freq')}, Phase: {config.get('phase_offset')}")
 
-#------------------------------------------------------------
-# +++++ Media Player +++++
-#------------------------------------------------------------
-class MediaPlayerWidget(QWidget):
-
-    # ---- Signals for main Gui Controller ----
-    sig_play_button_pressed = Signal()
-    sig_stop_button_pressed = Signal()
-    sig_export_path = Signal(str)
-
-    def __init__(self, parent=None):
-
-        super().__init__(parent)
-        layout = QVBoxLayout(self)
-        group = QGroupBox("6. Media Player")
-
-        # ---- Set Font Size ----
-        font = group.font()
-        font.setPointSize(16)
-        group.setFont(font)
-
-        layout.addWidget(group)
-
-        mediaply_box = QHBoxLayout(group) # MAIN H BOX 1/3 PLAY STOP 2/3 Space 3/3 Export
-
-
-        # ---- PLAY/STOP BUTTON ----
-        player_vbox = QVBoxLayout()
-
-        self.info_lbl = QLabel("Playback Status: Idle")
-        player_vbox.addWidget(self.info_lbl)
-
-        self.btn_play = QPushButton("Play")
-        player_vbox.addWidget(self.btn_play)
-
-        self.btn_stop = QPushButton("Stop")
-        player_vbox.addWidget(self.btn_stop)
-
-        player_vbox.addStretch(1)
-
-
-        # ---- EXPORT VBOX  ----
-        export_vbox = QVBoxLayout()
-        file_path_hbox = QHBoxLayout()
-        export_vbox.addWidget(QLabel("Export Bandpass Signal to .wav File"))
-        self.path_line_edit =QLineEdit()
-        self.btn_browse_path = QPushButton("Browse")
-
-        file_path_hbox.addWidget(self.path_line_edit)
-        file_path_hbox.addWidget(self.btn_browse_path)
-
-        export_vbox.addLayout(file_path_hbox)
-
-
-        self.btn_export = QPushButton("Export WAV File")
-        export_vbox.addWidget(self.btn_export)
-        # export_vbox.addWidget(self.btn_browse_path)
-
-        export_vbox.addStretch(1)
-
-        mediaply_box.addLayout(player_vbox, 1)
-        mediaply_box.addStretch(1)
-        mediaply_box.addLayout(export_vbox, 1)
-
-
-
-        # ---- Internal Emitters ----
-
-        self.btn_play.clicked.connect(self.sig_play_button_pressed.emit)
-        self.btn_stop.clicked.connect(self.sig_stop_button_pressed.emit)
-        self.btn_browse_path.clicked.connect(self._open_export_dialog)
-        self.btn_export.clicked.connect(self._emit_export_path)
-
-    def _open_export_dialog(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "Export Bandpass Signal", "", "WAV Files (*.wav)")
-
-        if file_path:
-            self.path_line_edit.setText(file_path)
-
-    def _emit_export_path(self):
-        path = self.path_line_edit.text()
-        if path:
-            self.sig_export_path.emit(path)
-
-
 
 #------------------------------------------------------------
 # +++++ Footer Widget +++++
@@ -591,3 +618,6 @@ class FooterWidget(QWidget):
         layout.addStretch()
         self.btn_restart = QPushButton("Restart Application")
         layout.addWidget(self.btn_restart)
+
+
+

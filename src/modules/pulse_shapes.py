@@ -11,7 +11,7 @@ import numpy as np
 
 class PulseShape(ABC):
 
-    def __init__(self, symbol_rate, fs, span, roll_off):
+    def __init__(self, symbol_rate, fs, span, roll_off = None):
 
         self.symbol_rate = symbol_rate
         self.fs = fs                                        # 1/T
