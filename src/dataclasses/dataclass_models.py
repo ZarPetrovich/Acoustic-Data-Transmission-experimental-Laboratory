@@ -93,3 +93,29 @@ class BasebandSignal(SignalContainer):
 class BandpassSignal(SignalContainer):
     baseband_signal: BasebandSignal
     carrier_freq: int
+
+
+# ===========================================================
+#   DTO - Data Transfer Object
+# ===========================================================
+
+@dataclass
+class PulseUpdateTask:
+    """The Transfer Class: Only data the UI actually knows."""
+    shape_name: str
+    span: int
+    roll_off: float
+
+@dataclass
+class ModSchemeUpdateTask:
+    mod_scheme: str
+    bit_mapping: str
+
+@dataclass
+class BitstreamUpdateTask:
+    bit_stream: str
+
+@dataclass
+class CarrierUpdateTask:
+    """DTO for UI-to-Logic communication regarding the carrier."""
+    carrier_freq: int

@@ -11,11 +11,16 @@ from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 # Application Logic (Processing)
 from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
 
-from src.ui.widgets import ControlWidget, MatrixWidget, MetaDataWidget, FooterWidget
-from src.ui.plot_strategies import (
+from src.ui.ctrl_widgets.main_controls import ControlWidget
+from src.ui.plots.signal_matrix_view import SignalMatrixView
+from src.ui.footer_widget import FooterWidget
+
+# Ensure the Strategy imports are correct
+from src.ui.plots.strategies import (
     PlotManager, PulsePlotStrategy, ConstellationPlotStrategy,
     BasebandPlotStrategy, BandpassPlotStrategy, FFTPlotStrategy,
-    PeriodogrammPlotStrategy, SpectogramPlotStrategy,FrequencyResponse)
+    PeriodogrammPlotStrategy, SpectogramPlotStrategy, FrequencyResponse
+)
 
 from src.ui.style.color_pallete import LIGHT_THEME_HEX
 
@@ -30,8 +35,9 @@ class MainGUILogic(QMainWindow):
         self.resize(1600, 900)
 
         # --- 1. Initialize UI Elements First ---
+        #self.ctrl_widget = ControlWidget()
         self.ctrl_widget = ControlWidget()
-        self.matrix_widget = MatrixWidget()
+        self.matrix_widget = SignalMatrixView()
         #self.meta_widget = MetaDataWidget()
         #self.media_widget = MediaPlayerWidget()
         self.footer = FooterWidget(self)
@@ -119,18 +125,19 @@ class MainGUILogic(QMainWindow):
 
     def _setup_connections(self):
         # # ---- Connect control widget signals to app_state slots ----
-        self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
-        self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
-        self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
-        self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
-        self.ctrl_widget.sig_clear_plots.connect(self._clear_bitstream_plot)
-        self.ctrl_widget.sig_export_pulse_path.connect(self.app_state.on_export_pulse)
+        #self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
+
+        # self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
+        # self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
+        # self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
+        # self.ctrl_widget.sig_clear_plots.connect(self._clear_bitstream_plot)
+        # self.ctrl_widget.sig_export_pulse_path.connect(self.app_state.on_export_pulse)
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
-        self.ctrl_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
-        self.ctrl_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
-        self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
+        # self.ctrl_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
+        # self.ctrl_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
+        # self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
         self.app_state.sig_pulse_changed.connect(self._on_pulse_update)

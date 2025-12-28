@@ -6,7 +6,7 @@ from scipy import signal
 
 import pyqtgraph as pg
 from PySide6.QtCore import Qt,QRectF
-from src.ui.plot_widgets import PlotWidget
+from src.ui.plots.base_plot import SignalPlotCanvas
 from src.dataclasses.dataclass_models import PulseSignal, ModSchemeLUT, BasebandSignal
 from src.constants import PulseShape
 
@@ -37,16 +37,14 @@ def downsample_for_plot(x_data, y_data, max_points=10000):
     return x_downsampled, y_downsampled
 
 
-
-
 class PlotStrategy(ABC):
     @abstractmethod
-    def plot(self, widget: PlotWidget, signal_model):
+    def plot(self, widget: SignalPlotCanvas, signal_model):
         pass
 
 
 class PulsePlotStrategy(PlotStrategy):
-    def plot(self, widget: PlotWidget, signal_model: PulseSignal):
+    def plot(self, widget: SignalPlotCanvas, signal_model: PulseSignal):
         widget.plot_widget.clear()
 
         # Time Vector Calculation in Seconds
@@ -75,7 +73,7 @@ class ConstellationPlotStrategy(PlotStrategy):
     Plots the constellation diagram, including bit labels next to each symbol point.
     """
 
-    def _design_plot(self, widget: PlotWidget, modscheme_signal_container: ModSchemeLUT):
+    def _design_plot(self, widget: SignalPlotCanvas, modscheme_signal_container: ModSchemeLUT):
         """
         Sets up the design and layout of the plot.
         """
@@ -113,7 +111,7 @@ class ConstellationPlotStrategy(PlotStrategy):
 
         return dict_look_up_table, i_data, q_data, k, label_offset_i, label_offset_q
 
-    def plot(self, widget: PlotWidget, modscheme_signal_container: ModSchemeLUT):
+    def plot(self, widget: SignalPlotCanvas, modscheme_signal_container: ModSchemeLUT):
         """
         Combines design and data processing to plot the constellation diagram.
         """
@@ -172,7 +170,7 @@ class ConstellationPlotStrategy(PlotStrategy):
 
 
 class BasebandPlotStrategy(PlotStrategy):
-    def plot(self, widget: PlotWidget, signal_model: BasebandSignal):
+    def plot(self, widget: SignalPlotCanvas, signal_model: BasebandSignal):
         widget.plot_widget.clear()
 
         num_samples = len(signal_model.data)
@@ -196,7 +194,7 @@ class BasebandPlotStrategy(PlotStrategy):
 
 
 class BandpassPlotStrategy(PlotStrategy):
-    def plot(self, widget: PlotWidget, signal_model):
+    def plot(self, widget: SignalPlotCanvas, signal_model):
 
         widget.plot_widget.clear()
 
@@ -221,7 +219,8 @@ class BandpassPlotStrategy(PlotStrategy):
 
 
 class FFTPlotStrategy(PlotStrategy):
-    def plot(self, widget, signal_model):
+
+    def plot(self, widget: SignalPlotCanvas, signal_model):
         data = signal_model.data
         fs = signal_model.fs
 
@@ -255,7 +254,7 @@ class FFTPlotStrategy(PlotStrategy):
 
 
 class PeriodogrammPlotStrategy(PlotStrategy):
-    def plot(self, widget: PlotWidget, signal_model):
+    def plot(self, widget: SignalPlotCanvas, signal_model):
 
         widget.plot_widget.clear()
 
@@ -302,7 +301,7 @@ class PeriodogrammPlotStrategy(PlotStrategy):
 
 
 class SpectogramPlotStrategy(PlotStrategy):
-    def plot(self, widget: PlotWidget, signal_model):
+    def plot(self, widget: SignalPlotCanvas, signal_model):
 
         NPERSEG = 256
         OVERLAP = NPERSEG // 2
@@ -368,8 +367,9 @@ class SpectogramPlotStrategy(PlotStrategy):
         # Optional: Auto-range the view to fit the spectrogram
         widget.plot_widget.getViewBox().autoRange()
 
+
 class FrequencyResponse(PlotStrategy):
-    def plot(self, widget, signal_model):
+    def plot(self, widget: SignalPlotCanvas, signal_model):
 
         n_fft = 2 ** 8
         h = np.fft.rfft(signal_model.data, n = n_fft)
@@ -388,10 +388,8 @@ class FrequencyResponse(PlotStrategy):
         widget.plot_data(xf_hz, mag_db)
 
 
-
-
 class PlotManager:
-    def __init__(self, widget: PlotWidget):
+    def __init__(self, widget: SignalPlotCanvas):
         self.widget = widget
         self.strategy = None
 
@@ -406,5 +404,3 @@ class PlotManager:
         self.widget.plot_widget.clear()
 
 
-
-# TODO Handle Complex Data in Plotstrategies
