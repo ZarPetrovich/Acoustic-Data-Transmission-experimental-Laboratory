@@ -1,40 +1,37 @@
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSlider, QPushButton, QFileDialog, QButtonGroup, QRadioButton
 from PySide6.QtCore import Qt, Signal, QTimer
-from src.constants import PulseShape
+from src.constants import PulseShape, MOD_SCHEME_MAP, AVAILABLE_MOD_SCHEMES, BitMappingScheme
 from src.dataclasses.dataclass_models import ModSchemeUpdateTask
 
 class ModSchemeWidget(QGroupBox):
-    sig_changed = Signal(ModSchemeUpdateTask)
 
+    sig_changed = Signal(ModSchemeUpdateTask)
 
     def __init__(self, parent= None):
         super().__init__("2. Constellation", parent)
 
-
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
 
-        # Radio Buttons
         self.modulation_bg = QButtonGroup(self)
-        hbox_ask_radio_btn = QHBoxLayout()
-        for txt in ["2-ASK", "4-ASK", "8-ASK"]:
-            rb_ask = QRadioButton(txt)
-            self.modulation_bg.addButton(rb_ask)
-            hbox_ask_radio_btn.addWidget(rb_ask)
-        self.modulation_bg.buttons()[0].setChecked(True)
 
-        layout.addLayout(hbox_ask_radio_btn)
+        for scheme_enum, m_values in AVAILABLE_MOD_SCHEMES.items():
+                    hbox = QHBoxLayout()
+                    short_name = MOD_SCHEME_MAP[scheme_enum] # "ASK" or "PSK"
 
-        hbox_psk_radio_btn = QHBoxLayout()
-        for txt in ["2-PSK", "4-PSK", "8-PSK"]:
-            rb_psk = QRadioButton(txt)
-            self.modulation_bg.addButton(rb_psk)
-            hbox_psk_radio_btn.addWidget(rb_psk)
+                    for M in m_values:
+                        display_text = f"{M}-{short_name}" # "2-ASK"
+                        rb = QRadioButton(display_text)
 
-        layout.addLayout(hbox_psk_radio_btn)
+                        rb.setProperty("scheme_enum", scheme_enum)
+                        rb.setProperty("cardinality", M)
+
+                        self.modulation_bg.addButton(rb)
+                        hbox.addWidget(rb)
+                    layout.addLayout(hbox)
 
         self.map_combo = QComboBox()
-        self.map_combo.addItems(["Gray", "Binary"])
+        self.map_combo.addItems(mapper.name for mapper in BitMappingScheme)
 
         layout.addWidget(self.map_combo)
 
@@ -44,8 +41,15 @@ class ModSchemeWidget(QGroupBox):
         self.map_combo.currentTextChanged.connect(self._emit_mod)
 
     def _emit_mod(self):
-        task = ModSchemeUpdateTask(
-            mod_scheme = self.modulation_bg.checkedButton().text(),
-            bit_mapping = self.map_combo.currentText()
-        )
+            btn = self.modulation_bg.checkedButton()
+
+            # Pull the clean objects from the button properties
+            task = ModSchemeUpdateTask(
+                scheme_enum=btn.property("scheme_enum"),
+                cardinality=btn.property("cardinality"),
+                mapper_enum=BitMappingScheme[self.map_combo.currentText().upper()],
+                display_name=btn.text()
+            )
+
+            self.sig_changed.emit(task)
 

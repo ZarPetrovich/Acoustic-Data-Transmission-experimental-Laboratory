@@ -8,9 +8,10 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Slot
 
 # --- Internal: Constants & Dataclasses ---
-from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
+from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN, PulseShape, BitMappingScheme, ModulationScheme
 from src.dataclasses.dataclass_models import (
-    ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
+    PulseUpdateTask, ModSchemeUpdateTask, BitstreamUpdateTask, CarrierUpdateTask,
+    PulseModel, ModulationModel,  BasebandModel, BandpassModel
 )
 
 # --- Internal: Core Logic ---
@@ -31,6 +32,7 @@ from src.ui.plots.strategies import (
 
 # --- Internal: Styling ---
 from src.ui.style.color_pallete import LIGHT_THEME_HEX
+
 # ===========================================================
 #   GUI Constructor Logic
 # ===========================================================
@@ -45,8 +47,6 @@ class MainGUILogic(QMainWindow):
         #self.ctrl_widget = ControlWidget()
         self.ctrl_widget = ControlWidget()
         self.matrix_widget = SignalMatrixView()
-        #self.meta_widget = MetaDataWidget()
-        #self.media_widget = MediaPlayerWidget()
         self.footer = FooterWidget(self)
 
         self._setup_ui()
@@ -102,8 +102,8 @@ class MainGUILogic(QMainWindow):
         self._setup_connections()
 
         # --- 5. Manually trigger initial UI updates ---
-        self._on_pulse_update(self.app_state.current_pulse_signal)
-        self._on_mod_scheme_lut_update(self.app_state.current_mod_scheme)
+        self._on_pulse_ready(self.app_state.current_pulse_model)
+        self._on_mod_scheme_lut_update(self.app_state.current_mod_model)
 
     def _setup_ui(self):
         central = QWidget()
@@ -132,13 +132,9 @@ class MainGUILogic(QMainWindow):
 
     def _setup_connections(self):
         # # ---- Connect control widget signals to app_state slots ----
-        #self.ctrl_widget.sig_pulse_changed.connect(self.app_state.on_pulse_update)
 
-        # self.ctrl_widget.sig_mod_changed.connect(self.app_state.on_mod_update)
-        # self.ctrl_widget.sig_bit_stream_changed.connect(self.app_state.on_bitseq_update)
-        # self.ctrl_widget.sig_carrier_freq_changed.connect(self.app_state.on_carrier_freq_update)
-        # self.ctrl_widget.sig_clear_plots.connect(self._clear_bitstream_plot)
-        # self.ctrl_widget.sig_export_pulse_path.connect(self.app_state.on_export_pulse)
+        self.ctrl_widget.sig_pulse_ui_event.connect(self._handle_pulse_ui_update)
+        self.ctrl_widget.sig_mod_ui_event.connect(self._handle_mod_scheme_update)
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
@@ -147,25 +143,74 @@ class MainGUILogic(QMainWindow):
         # self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
-        self.app_state.sig_pulse_changed.connect(self._on_pulse_update)
-        self.app_state.sig_mod_lut_changed.connect(self._on_mod_scheme_lut_update)
+        self.app_state.sig_pulse_ready.connect(self._on_pulse_ready)
+        self.app_state.sig_mod_lut_ready.connect(self._on_mod_scheme_lut_update)
         self.app_state.sig_baseband_changed.connect(self._on_baseband_update)
         self.app_state.sig_bandpass_changed.connect(self._on_bandpass_update)
 
         # # ---- Footer ----
         self.footer.btn_restart.clicked.connect(self.restart_application)
 
-    @Slot(PulseSignal)
-    def _on_pulse_update(self, pulse_container):
-        self.pulse_time_plotter.update_plot(pulse_container)
-        self.pulse_fft_plotter.update_plot(pulse_container)
+    #------------------------------------------------------------
+    # +++++ SEND TO APP STATE +++++
+    #   Handling DTO to convert them into Signal Dataclasses for
+    #   for APP State
+    #------------------------------------------------------------
+
+    @Slot(PulseUpdateTask)
+    def _handle_pulse_ui_update(self, task: PulseUpdateTask):
+        """Translates Pulse UI events into the AppState Model."""
+        # ---- Validation ----
+
+        try:
+            pulse_type_enum = PulseShape[task.shape_name.upper()]
+        except:
+            print(f"Error: {task.shape_name} is not a valid Pulseshape ENUM")
+            return
+
+        # ---- Init Pulse Model ----
+        updated_pulse = PulseModel(
+            name="Pulse_Filter",
+            fs=self.app_state.FS,
+            sym_rate=self.app_state.SYM_RATE,
+            shape=pulse_type_enum,
+            span=task.span,
+            roll_off=task.roll_off,
+            data=None  # Model will fill this during generation
+        )
+        # Dispatch to the pure logic layer
+        self.app_state.on_pulse_update(updated_pulse)
+
+    @Slot(ModSchemeUpdateTask)
+    def _handle_mod_scheme_update(self, task: ModSchemeUpdateTask):
+        # The DTO gives us the clean display name AND the clean math objects
+        updated_mod_model = ModulationModel(
+            name=task.display_name,    # UI Label
+            data=None,
+            look_up_table=None,
+            cardinality=task.cardinality,
+            mapper=task.mapper_enum,   # Enum from DTO
+            mod_scheme=task.scheme_enum # Enum from DTO
+        )
+        self.app_state.on_mod_update(updated_mod_model)
+
+
+    #------------------------------------------------------------
+    # +++++ RETURN FROM APP STATE +++++
+    #   SLOT Functions for ready state Signal Objects, to update
+    #   GUI Widgets
+    #------------------------------------------------------------
+    @Slot(PulseModel)
+    def _on_pulse_ready(self, pulse_model: PulseModel):
+        self.pulse_time_plotter.update_plot(pulse_model)
+        self.pulse_fft_plotter.update_plot(pulse_model)
         #self.pulse_periodogram_plotter.update_plot(pulse_container)
 
-    @Slot(ModSchemeLUT)
+    @Slot(ModulationModel)
     def _on_mod_scheme_lut_update(self, mod_scheme_container):
         self.const_plotter.update_plot(mod_scheme_container)
 
-    @Slot(BasebandSignal)
+    @Slot(BasebandModel)
     def _on_baseband_update(self, baseband_container):
         #start = time.perf_counter()
         self.baseband_plotter.update_plot(baseband_container)
@@ -175,7 +220,7 @@ class MainGUILogic(QMainWindow):
         # elapsed = (time.perf_counter() - start) * 1000
         # print(f"🎨 Baseband plots: {elapsed:.2f}ms")
 
-    @Slot(BandpassSignal)
+    @Slot(BandpassModel)
     def _on_bandpass_update(self, bandpass_container):
         # start = time.perf_counter()
         self.bandpass_plotter.update_plot(bandpass_container)
@@ -183,6 +228,10 @@ class MainGUILogic(QMainWindow):
         # elapsed = (time.perf_counter() - start) * 1000
         # print(f"🎨 Bandpass plots: {elapsed:.2f}ms")
 
+
+    #------------------------------------------------------------
+    # +++++ Basic GUI Functions +++++
+    #------------------------------------------------------------
     @Slot()
     def restart_application(self):
         QApplication.instance().quit()
@@ -248,7 +297,11 @@ def main():
 
     app = QApplication(sys.argv)
 
-    initial_values = {"sym_rate": args.sym_rate}
+    initial_values = {
+        "Fs": DEFAULT_FS,
+        "sym_rate": args.sym_rate,
+        "span": DEFAULT_SPAN
+        }
 
     # Load and apply the stylesheet with the color palette
     qss_path = get_resource_path("src/ui/style/style.qss")

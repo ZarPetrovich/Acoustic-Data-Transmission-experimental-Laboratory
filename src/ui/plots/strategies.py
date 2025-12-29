@@ -7,7 +7,7 @@ from scipy import signal
 import pyqtgraph as pg
 from PySide6.QtCore import Qt,QRectF
 from src.ui.plots.base_plot import SignalPlotCanvas
-from src.dataclasses.dataclass_models import PulseSignal, ModSchemeLUT, BasebandSignal
+from src.dataclasses.dataclass_models import PulseModel, ModulationModel, BasebandModel
 from src.constants import PulseShape
 
 
@@ -44,7 +44,7 @@ class PlotStrategy(ABC):
 
 
 class PulsePlotStrategy(PlotStrategy):
-    def plot(self, widget: SignalPlotCanvas, signal_model: PulseSignal):
+    def plot(self, widget: SignalPlotCanvas, signal_model: PulseModel):
         widget.plot_widget.clear()
 
         # Time Vector Calculation in Seconds
@@ -73,7 +73,7 @@ class ConstellationPlotStrategy(PlotStrategy):
     Plots the constellation diagram, including bit labels next to each symbol point.
     """
 
-    def _design_plot(self, widget: SignalPlotCanvas, modscheme_signal_container: ModSchemeLUT):
+    def _design_plot(self, widget: SignalPlotCanvas, modscheme_signal_container: ModulationModel):
         """
         Sets up the design and layout of the plot.
         """
@@ -90,7 +90,7 @@ class ConstellationPlotStrategy(PlotStrategy):
         plot_item.addLine(x = 0, pen = cross_hair_pen)
         plot_item.addLine(y = 0, pen = cross_hair_pen)
 
-    def _process_data(self, modscheme_signal_container: ModSchemeLUT):
+    def _process_data(self, modscheme_signal_container: ModulationModel):
         """
         Processes the incoming data to prepare for plotting.
         """
@@ -111,7 +111,7 @@ class ConstellationPlotStrategy(PlotStrategy):
 
         return dict_look_up_table, i_data, q_data, k, label_offset_i, label_offset_q
 
-    def plot(self, widget: SignalPlotCanvas, modscheme_signal_container: ModSchemeLUT):
+    def plot(self, widget: SignalPlotCanvas, modscheme_signal_container: ModulationModel):
         """
         Combines design and data processing to plot the constellation diagram.
         """
@@ -170,7 +170,7 @@ class ConstellationPlotStrategy(PlotStrategy):
 
 
 class BasebandPlotStrategy(PlotStrategy):
-    def plot(self, widget: SignalPlotCanvas, signal_model: BasebandSignal):
+    def plot(self, widget: SignalPlotCanvas, signal_model: BasebandModel):
         widget.plot_widget.clear()
 
         num_samples = len(signal_model.data)

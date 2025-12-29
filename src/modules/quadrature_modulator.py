@@ -10,7 +10,7 @@ The Datacan be stored in a Signal dataclass Container for further Action.
 
 from abc import abstractmethod
 import numpy as np
-from src.dataclasses.dataclass_models import BasebandSignal
+from src.dataclasses.dataclass_models import BasebandModel
 
 
 
@@ -27,7 +27,7 @@ class Modulator():
 
 class QuadratureModulator(Modulator):
 
-    def modulate(self, bandpass_signal: BasebandSignal):
+    def modulate(self, bandpass_signal: BasebandModel):
 
         num_samples = len(bandpass_signal.data)
         time_vector = np.arange(num_samples) / bandpass_signal.fs

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from typing import Dict
 import numpy as np
-from src.constants import PulseShape, ModulationScheme
+from src.constants import PulseShape, ModulationScheme, BitMappingScheme
 
 # ===========================================================
 #  Dataclass Container
@@ -23,27 +23,26 @@ from src.constants import PulseShape, ModulationScheme
 #------------------------------------------------------------
 @dataclass_json
 @dataclass
-class DataContainer:
+class SignalContext:
     name: str
     data: np.ndarray
 
 #------------------------------------------------------------
 # +++++ @@@SequenceContainer +++++
 #------------------------------------------------------------
+
 @dataclass_json
 @dataclass
-class ModSchemeLUT(DataContainer):
-    """
-    ModschemeLUT is a data class that represents a Look up Table for a
-    specific Modulation Scheme with associated metadata.
-    """
+class ModulationModel(SignalContext):
+    """Represents the mathematical state of the modulation stage."""
     look_up_table: Dict[int, complex]
     cardinality: int
-    mapper: str
-    mod_scheme: str
+    mapper: BitMappingScheme
+    mod_scheme: ModulationScheme
+
 @dataclass_json
 @dataclass
-class StreamContainer(DataContainer):
+class StreamContainer(SignalContext):
     length: int = field(init=False)
 
     def __post_init__(self):
@@ -51,14 +50,16 @@ class StreamContainer(DataContainer):
             self.length = len(self.data)
         else:
             self.length = 0
+
 @dataclass_json
 @dataclass
 class BitStream(StreamContainer):
     ...
+
 @dataclass_json
 @dataclass
 class SymbolStream(StreamContainer):
-    mod_scheme: ModSchemeLUT
+    mod_scheme: ModulationModel
     bit_stream: BitStream
 
 
@@ -68,30 +69,33 @@ class SymbolStream(StreamContainer):
 
 @dataclass_json
 @dataclass
-class SignalContainer(DataContainer):
+class SignalModelContainer(SignalContext):
     fs: int
     sym_rate: int
+
 @dataclass_json
 @dataclass
-class PulseSignal(SignalContainer):
+class PulseModel(SignalModelContainer):
     """Data Container for created Pulses"""
     shape: str
     span: int = None
     roll_off: float = None
+
 @dataclass_json
 @dataclass
-class BasebandSignal(SignalContainer):
+class BasebandModel(SignalModelContainer):
     """Represents a modulated baseband signal.
     Reflect a compostion of:
         - Pulse Signal
         - Bit Sequence
         """
-    pulse: PulseSignal
+    pulse: PulseModel
     symbol_stream: SymbolStream
+
 @dataclass_json
 @dataclass
-class BandpassSignal(SignalContainer):
-    baseband_signal: BasebandSignal
+class BandpassModel(SignalModelContainer):
+    baseband_signal: BasebandModel
     carrier_freq: int
 
 
@@ -108,8 +112,10 @@ class PulseUpdateTask:
 
 @dataclass
 class ModSchemeUpdateTask:
-    mod_scheme: str
-    bit_mapping: str
+    scheme_enum: ModulationScheme
+    cardinality: int
+    mapper_enum: BitMappingScheme
+    display_name: str
 
 @dataclass
 class BitstreamUpdateTask:

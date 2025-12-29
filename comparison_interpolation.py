@@ -19,15 +19,15 @@ import sounddevice as sd
 from icecream import ic
 
 # Application Logic (Processing)
-from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal, BandpassSignal
+from src.dataclasses.dataclass_models import ModulationModel, PulseModel, BasebandModel, BandpassModel
 
 
 from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 
 # Application Logic (Processing)
-from src.dataclasses.dataclass_models import ModSchemeLUT, PulseSignal, BasebandSignal
+from src.dataclasses.dataclass_models import ModulationModel, PulseModel, BasebandModel
 from src.constants import PulseShape, BitMappingScheme, ModulationScheme
-from src.dataclasses.dataclass_models import BasebandSignal, BandpassSignal, BitStream, ModSchemeLUT, PulseSignal, SymbolStream
+from src.dataclasses.dataclass_models import BasebandModel, BandpassModel, BitStream, ModulationModel, PulseModel, SymbolStream
 from src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
 from src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from src.modules.modulation_schemes import AmpShiftKeying
@@ -62,7 +62,7 @@ def main():
     mapper = BinaryMapper()
     ask_lut = AmpShiftKeying(2,mapper).codebook
 
-    mod_scheme = ModSchemeLUT(
+    mod_scheme = ModulationModel(
         name=f"{ModulationScheme.ASK.name} LUT",
         data=None,
         look_up_table=ask_lut,
@@ -85,7 +85,7 @@ def main():
 
     pulse_shape_gen_global_fs = RectanglePulse(GLOBAL_SYM_RATE, GLOBAL_FS, GLOBAL_SPAN)
 
-    pulse_signal_global_fs = PulseSignal(
+    pulse_signal_global_fs = PulseModel(
         name= f"{PulseShape.RECTANGLE.name}_up",
         data=pulse_shape_gen_global_fs.generate(),
         fs = GLOBAL_FS,
@@ -98,7 +98,7 @@ def main():
     bb_global_fs_gen = BasebandSignalGenerator(pulse_signal_global_fs)
     bb_global_fs_gen.generate_baseband_signal(symbol_stream)
 
-    bb_global_fs = BasebandSignal (
+    bb_global_fs = BasebandModel (
         name = "Baseband_Global_FS",
         data = bb_global_fs_gen.generate_baseband_signal(symbol_stream),
         fs = GLOBAL_FS,
@@ -107,7 +107,7 @@ def main():
         symbol_stream = symbol_stream
     )
 
-    bandpass_global_fs = BandpassSignal (
+    bandpass_global_fs = BandpassModel (
         name = "Bandpass_Global_FS",
         data = iq_modulator.modulate(bb_global_fs),
         fs = GLOBAL_FS,
@@ -123,7 +123,7 @@ def main():
 
     pulse_shape_gen_internal_fs = RectanglePulse(GLOBAL_SYM_RATE, INTERNAL_FS, GLOBAL_SPAN)
 
-    pulse_signal_internal_fs = PulseSignal(
+    pulse_signal_internal_fs = PulseModel(
         name= f"{PulseShape.RECTANGLE.name}_Internal FS",
         data=pulse_shape_gen_internal_fs.generate(),
         fs = INTERNAL_FS,
@@ -157,7 +157,7 @@ def main():
 
     interpolate_bb = interpolate_bb[delay : delay + target_length]
 
-    bb_internal_fs = BasebandSignal (
+    bb_internal_fs = BasebandModel (
         name = "Baseband_Global_FS",
         data = interpolate_bb,
         fs = GLOBAL_FS,
@@ -172,7 +172,7 @@ def main():
     iq_modulator = QuadratureModulator(carrier_freq)
     interpolated_passband = iq_modulator.modulate(bb_internal_fs)
 
-    bp_interpolated_fs = BandpassSignal (
+    bp_interpolated_fs = BandpassModel (
         name = "Bandpass_Linear_Interpolated_FS",
         data = interpolated_passband,
         fs = GLOBAL_FS,
@@ -196,7 +196,7 @@ def main():
 
 
     # Create the Signal Object
-    bb_poly_fs = BasebandSignal(
+    bb_poly_fs = BasebandModel(
         name="Baseband_Polyphase_FS",
         data=poly_bb_raw,
         fs=GLOBAL_FS,
@@ -208,7 +208,7 @@ def main():
     # Modulate to Passband
     interpolated_poly_passband = iq_modulator.modulate(bb_poly_fs)
 
-    bp_poly_fs = BandpassSignal (
+    bp_poly_fs = BandpassModel (
         name = "Bandpass_poly_FS",
         data = interpolated_poly_passband,
         fs = GLOBAL_FS,

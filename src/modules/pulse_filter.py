@@ -1,7 +1,7 @@
 from scipy import signal
 import numpy as np
 
-from src.dataclasses.dataclass_models import BasebandSignal
+from src.dataclasses.dataclass_models import BasebandModel
 
 class PulseFilter:
 
@@ -24,7 +24,7 @@ class PulseFilter:
                                    ) * self.L
         return imp_response
 
-    def upscale(self, bandpass_signal: BasebandSignal):
+    def upscale(self, bandpass_signal: BasebandModel):
 
         interpolate_bb = signal.upfirdn(
             h= self.imp_response,

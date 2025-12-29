@@ -13,12 +13,6 @@ class MediaPlayerWidget(QGroupBox):
     def __init__(self, parent=None):
         super().__init__("6. Media Player", parent)
 
-        # Consistent styling from original widgets.py
-        font = self.font()
-        font.setPointSize(16)
-        font.setBold(True)
-        self.setFont(font)
-
         layout = QVBoxLayout(self)
 
         # Main horizontal box split into Playback and Export sections

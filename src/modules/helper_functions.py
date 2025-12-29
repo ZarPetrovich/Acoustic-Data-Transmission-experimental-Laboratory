@@ -2,7 +2,7 @@ import json
 import numpy as np
 from scipy.io import wavfile
 from pathlib import Path
-from src.dataclasses.dataclass_models import BandpassSignal, BitStream
+from src.dataclasses.dataclass_models import BandpassModel, BitStream
 
 
 # ===========================================================
@@ -10,7 +10,7 @@ from src.dataclasses.dataclass_models import BandpassSignal, BitStream
 # ===========================================================
 
 
-def export_transmitted_signal(signal: BandpassSignal, filename, filepath):
+def export_transmitted_signal(signal: BandpassModel, filename, filepath):
     """
     Export a signal as a WAV file.
 

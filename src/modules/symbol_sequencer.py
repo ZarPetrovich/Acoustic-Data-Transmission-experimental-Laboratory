@@ -1,10 +1,10 @@
 import numpy as np
-from src.dataclasses.dataclass_models import ModSchemeLUT
+from src.dataclasses.dataclass_models import ModulationModel
 
 
 class SymbolSequencer:
 
-    def __init__(self, mod_scheme_container: ModSchemeLUT):
+    def __init__(self, mod_scheme_container: ModulationModel):
         self.mod_scheme_lut = mod_scheme_container.look_up_table
         self.k = mod_scheme_container.cardinality
 

@@ -9,12 +9,6 @@ class IQModulatorWidget(QGroupBox):
     def __init__(self, parent=None):
         super().__init__("4. IQ Modulator", parent)
 
-        # Consistent styling from your widgets.py
-        font = self.font()
-        font.setPointSize(16)
-        font.setBold(True)
-        self.setFont(font)
-
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.addWidget(QLabel("Carrier Frequency:"))
@@ -49,4 +43,5 @@ class IQModulatorWidget(QGroupBox):
         freq_val = int(raw_text.split(" ")[0])
 
         task = CarrierUpdateTask(carrier_freq=freq_val)
+
         self.sig_modulate_clicked.emit(task)

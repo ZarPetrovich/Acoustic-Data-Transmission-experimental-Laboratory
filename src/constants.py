@@ -32,7 +32,6 @@ from enum import StrEnum, auto
 #   3. Modulation Schemes
 # ===========================================================
 
-
 class PulseShape(StrEnum):
     """Defines the available pulse shapes as unique constants."""
     RECTANGLE = auto()
@@ -46,17 +45,19 @@ class BitMappingScheme(StrEnum):
     RANDOM = auto()
 
 class ModulationScheme(StrEnum):
-    """Defines the available modulation schemes as unique constants."""
-
     AMPLITUDE_SHIFT_KEYING = auto()
     ASK = AMPLITUDE_SHIFT_KEYING
-
     PHASE_SHIFT_KEYING = auto()
     PSK = PHASE_SHIFT_KEYING
 
 MOD_SCHEME_MAP = {
     ModulationScheme.AMPLITUDE_SHIFT_KEYING: "ASK",
     ModulationScheme.PHASE_SHIFT_KEYING: "PSK",
+}
+
+AVAILABLE_MOD_SCHEMES = {
+    ModulationScheme.AMPLITUDE_SHIFT_KEYING: [2, 4, 8],
+    ModulationScheme.PHASE_SHIFT_KEYING: [2, 4, 8],
 }
 
 # ===========================================================

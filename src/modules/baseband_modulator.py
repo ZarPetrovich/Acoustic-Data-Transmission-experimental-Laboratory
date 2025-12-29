@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.signal import fftconvolve
-from src.dataclasses.dataclass_models import SymbolStream, PulseSignal
+from src.dataclasses.dataclass_models import SymbolStream, PulseModel
 
 
 class BasebandSignalGenerator:
@@ -10,7 +10,7 @@ class BasebandSignalGenerator:
     Attributes:
         PulseSignal pulse_signal_container: The Pulse Signal Dataclass Object containing the pulse shape data
     """
-    def __init__(self, pulse_signal_container: PulseSignal):
+    def __init__(self, pulse_signal_container: PulseModel):
 
         self.pulse_data = pulse_signal_container.data
         self.pulse_len = len(pulse_signal_container.data)

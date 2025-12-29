@@ -84,4 +84,5 @@ class PulseShapingWidget(QGroupBox):
             span=self.slider_span.value(),
             roll_off=self.slider_roll.value() / 100.0
         )
+
         self.sig_changed.emit(task)
