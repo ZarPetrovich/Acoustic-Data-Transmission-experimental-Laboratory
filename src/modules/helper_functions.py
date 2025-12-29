@@ -2,7 +2,7 @@ import json
 import numpy as np
 from scipy.io import wavfile
 from pathlib import Path
-from src.dataclasses.dataclass_models import BandpassModel, BitStream
+from src.dataclasses.dataclass_models import BandpassModel, BitStreamModel
 
 
 # ===========================================================
@@ -60,7 +60,7 @@ def export_transmitted_signal(signal: BandpassModel, filename, filepath):
 
 
 
-def add_barker_code(bitstream: BitStream):
+def add_barker_code(bitstream: BitStreamModel):
     barker_bits = np.array([1,1,1,0,0,1,0])
 
     bitstream = np.concatenate((barker_bits,bitstream.data))

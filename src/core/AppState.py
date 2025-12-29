@@ -7,7 +7,10 @@ from pathlib import Path
 from functools import wraps
 
 from src.constants import PulseShape, MOD_SCHEME_MAP, BitMappingScheme, ModulationScheme
-from src.dataclasses.dataclass_models import BasebandModel, BandpassModel, BitStream, ModulationModel, PulseModel, SymbolStream
+from src.dataclasses.dataclass_models import (
+    BasebandModel, BandpassModel, BitStreamModel,
+    ModulationModel, PulseModel, SymbolStreamModel
+    )
 from src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
 from src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from src.modules.modulation_schemes import AmpShiftKeying, PhaseShiftKeying
@@ -68,8 +71,8 @@ class AppState(QObject):
         # Initialize current Interactive Signals
         self.current_pulse_model: PulseModel = self._init_default_pulse()
         self.current_mod_model: ModulationModel = self._init_default_mod_scheme()
-        self.current_bitstream: BitStream
-        self.current_symbol_stream: SymbolStream
+        self.current_bitstream: BitStreamModel
+        self.current_symbol_stream: SymbolStreamModel
         self.current_baseband_signal: BasebandModel
         self.current_bandpass_signal: BandpassModel
         self.barker_baseband = None
@@ -183,7 +186,7 @@ class AppState(QObject):
         self.sig_pulse_ready.emit(self.current_pulse_model)
 
         try:
-            if isinstance(self.current_symbol_stream, SymbolStream):
+            if isinstance(self.current_symbol_stream, SymbolStreamModel):
                 self.update_baseband_signal()
         except:
             pass
@@ -246,26 +249,9 @@ class AppState(QObject):
 
 
     #@profile_method
-    def on_bitseq_update(self, partial_data):
-        bit_stream_str = partial_data.get("bit_seq")
-
-        if not bit_stream_str:
-            self.current_bitstream = BitStream(name="Empty Bit Stream", data=np.array([], dtype=np.int8))
-            return
-
-        try:
-            # Convert String into Numpy Array full of Int
-            bit_stream_arr = np.array([int(char) for char in bit_stream_str], dtype=np.int8)
-        except (ValueError, TypeError):
-            # Handle cases where the string is not valid for conversion
-            print(f"Invalid characters in bit sequence: {bit_stream_str}") # TODO CREATE A LOGGING HANDLER
-            return
-
-        self.current_bitstream = BitStream(
-            name="Current Bit Stream",
-            data=bit_stream_arr
-        )
-
+    def on_bitstream_update(self, bit_stream_model: BitStreamModel):
+        self.current_bitstream = bit_stream_model
+        print(self.current_bitstream.data)
         # Trigger the update chain
         self.update_symbol_stream()
 
@@ -281,7 +267,7 @@ class AppState(QObject):
         # Create Symbol Sequence with Symbol Sequencer Module
         symbol_stream_data = SymbolSequencer(self.current_mod_model).map_bits_to_symbols(self.current_bitstream.data)
 
-        self.current_symbol_stream = SymbolStream(
+        self.current_symbol_stream = SymbolStreamModel(
             name="Current Symbol Stream",
             data=symbol_stream_data,
             mod_scheme=self.current_mod_model,

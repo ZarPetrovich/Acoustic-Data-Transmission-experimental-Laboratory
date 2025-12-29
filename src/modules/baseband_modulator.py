@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.signal import fftconvolve
-from src.dataclasses.dataclass_models import SymbolStream, PulseModel
+from src.dataclasses.dataclass_models import SymbolStreamModel, PulseModel
 
 
 class BasebandSignalGenerator:
@@ -42,7 +42,7 @@ class BasebandSignalGenerator:
     #         baseband[start_index : start_index + self.pulse_len] += self.pulse_data * symbol
     #     return baseband
 
-    def generate_baseband_signal(self, symbol_stream: SymbolStream) -> np.ndarray:
+    def generate_baseband_signal(self, symbol_stream: SymbolStreamModel) -> np.ndarray:
 
         symbols = symbol_stream.data
         num_symbols = len(symbols)
@@ -63,7 +63,7 @@ class BasebandSignalGenerator:
 
 
 
-    def generate_iteration_breakdown(self, symbol_stream: SymbolStream):
+    def generate_iteration_breakdown(self, symbol_stream: SymbolStreamModel):
         """
         Generates the baseband signal while yielding the iteration breakdown.
         This is useful for debugging or visualization purposes.

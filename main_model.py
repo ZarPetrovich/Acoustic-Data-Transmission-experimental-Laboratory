@@ -2,6 +2,7 @@ import sys
 import os
 import argparse
 import time
+import numpy as np
 
 # --- Third-Party Libraries ---
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStatusBar
@@ -11,7 +12,7 @@ from PySide6.QtCore import Slot
 from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN, PulseShape, BitMappingScheme, ModulationScheme
 from src.dataclasses.dataclass_models import (
     PulseUpdateTask, ModSchemeUpdateTask, BitstreamUpdateTask, CarrierUpdateTask,
-    PulseModel, ModulationModel,  BasebandModel, BandpassModel
+    PulseModel, ModulationModel, BitStreamModel, BasebandModel, BandpassModel
 )
 
 # --- Internal: Core Logic ---
@@ -135,6 +136,7 @@ class MainGUILogic(QMainWindow):
 
         self.ctrl_widget.sig_pulse_ui_event.connect(self._handle_pulse_ui_update)
         self.ctrl_widget.sig_mod_ui_event.connect(self._handle_mod_scheme_update)
+        self.ctrl_widget.sig_bitstream_ui_event.connect(self._handle_bit_stream_update)
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
@@ -194,6 +196,14 @@ class MainGUILogic(QMainWindow):
         )
         self.app_state.on_mod_update(updated_mod_model)
 
+    @Slot(BitstreamUpdateTask)
+    def _handle_bit_stream_update(self, task: BitstreamUpdateTask):
+
+        new_stream = BitStreamModel(
+            name="UserStream",
+            data=np.array([int(x) for x in task.bit_stream]))
+
+        self.app_state.on_bitstream_update(new_stream)
 
     #------------------------------------------------------------
     # +++++ RETURN FROM APP STATE +++++

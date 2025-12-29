@@ -26,7 +26,7 @@ from src.constants import DEFAULT_FS, DEFAULT_SYM_RATE, DEFAULT_SPAN
 # Application Logic (Processing)
 from src.dataclasses.dataclass_models import ModulationModel, PulseModel, BasebandModel
 from src.constants import PulseShape, BitMappingScheme, ModulationScheme
-from src.dataclasses.dataclass_models import BasebandModel, BandpassModel, BitStream, ModulationModel, PulseModel, SymbolStream
+from src.dataclasses.dataclass_models import BasebandModel, BandpassModel, BitStreamModel, ModulationModel, PulseModel, SymbolStreamModel
 from src.modules.pulse_shapes import CosineSquarePulse, RectanglePulse, RaisedCosinePulse
 from src.modules.bit_mapping import BinaryMapper, GrayMapper, RandomMapper
 from src.modules.modulation_schemes import AmpShiftKeying
@@ -52,7 +52,7 @@ INTERNAL_SPS = INTERNAL_FS // GLOBAL_SYM_RATE
 
 def main():
 
-    bit_stream = BitStream(
+    bit_stream = BitStreamModel(
         name = "Bit Stream",
         data = np.array([1])
     )

@@ -42,7 +42,7 @@ class ModulationModel(SignalContext):
 
 @dataclass_json
 @dataclass
-class StreamContainer(SignalContext):
+class StreamContextModel(SignalContext):
     length: int = field(init=False)
 
     def __post_init__(self):
@@ -53,14 +53,21 @@ class StreamContainer(SignalContext):
 
 @dataclass_json
 @dataclass
-class BitStream(StreamContainer):
-    ...
+class BitStreamModel(StreamContextModel):
+    def __post_init__(self):
+        super().__post_init__() # Sets the .length field
+
+        # HEADLESS PROTECTION:
+        # If someone calls this class from a script with bad data, it crashes here.
+        if self.data is not None and self.data.size > 0:
+            if not np.all((self.data == 0) | (self.data == 1)):
+                raise ValueError("BitStream data must be binary (0 or 1).")
 
 @dataclass_json
 @dataclass
-class SymbolStream(StreamContainer):
+class SymbolStreamModel(StreamContextModel):
     mod_scheme: ModulationModel
-    bit_stream: BitStream
+    bit_stream: BitStreamModel
 
 
 #------------------------------------------------------------
@@ -90,7 +97,7 @@ class BasebandModel(SignalModelContainer):
         - Bit Sequence
         """
     pulse: PulseModel
-    symbol_stream: SymbolStream
+    symbol_stream: SymbolStreamModel
 
 @dataclass_json
 @dataclass
