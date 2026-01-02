@@ -40,8 +40,8 @@ class AppState(QObject):
     # Signals to notify the GUI of state changes
     sig_pulse_ready = Signal(PulseModel)
     sig_mod_lut_ready = Signal(ModulationModel)
-    sig_baseband_changed = Signal(BasebandModel)
-    sig_bandpass_changed = Signal(BandpassModel)
+    sig_baseband_ready = Signal(BasebandModel)
+    sig_bandpass_processed = Signal(BandpassModel)
 
 
     sig_playback_status_changed = Signal(str)
@@ -251,7 +251,8 @@ class AppState(QObject):
     #@profile_method
     def on_bitstream_update(self, bit_stream_model: BitStreamModel):
         self.current_bitstream = bit_stream_model
-        print(self.current_bitstream.data)
+
+
         # Trigger the update chain
         self.update_symbol_stream()
 
@@ -262,7 +263,6 @@ class AppState(QObject):
 
         if not hasattr(self, 'current_bitstream') or self.current_bitstream.data is None:
             return
-
 
         # Create Symbol Sequence with Symbol Sequencer Module
         symbol_stream_data = SymbolSequencer(self.current_mod_model).map_bits_to_symbols(self.current_bitstream.data)
@@ -281,20 +281,21 @@ class AppState(QObject):
     #@profile_method
     def update_baseband_signal(self):
         """Generates a new baseband signal."""
-        if not hasattr(self, 'current_symbol_stream') or not hasattr(self, 'current_pulse_signal'):
-            return
+
+        if not hasattr(self, 'current_symbol_stream'):
+            raise AttributeError("Missing 'current_symbol_stream'. Bitstream must be processed first")
+
+        if not hasattr(self, 'current_pulse_model'):
+            raise AttributeError("Missing 'current_pulse_model'. Pulse must be initialized.")
 
         # Init Baseband generator with active Pulse Object
         baseband_gen_obj = BasebandSignalGenerator(self.current_pulse_model)
-
         # Generate Baseband Signal
-        #bb_data = baseband_gen_obj.generate_baseband_signal(self.current_symbol_stream)
-
+        bb_data = baseband_gen_obj.generate_baseband_signal(self.current_symbol_stream)
         bb_data = signal.upfirdn(
             h = self.current_pulse_model.data,
             x = self.current_symbol_stream.data,
             up= self.SPS)
-
         self.current_baseband_signal = BasebandModel (
             name = "Current Baseband Signal",
             data = bb_data,
@@ -304,21 +305,14 @@ class AppState(QObject):
             symbol_stream = self.current_symbol_stream
         )
 
-        self.sig_baseband_changed.emit(self.current_baseband_signal)
+        self.sig_baseband_ready.emit(self.current_baseband_signal)
+
 
 
     #@profile_method
-    def on_carrier_freq_update(self, partial_data):
+    def on_carrier_freq_update(self, updated_bandpass_model):
 
-        carrier_freq = partial_data.get("carrier_freq")
-        if carrier_freq is None:
-            print("Carrier frequency is missing in the provided data.")
-            return
-        try:
-            carrier_freq = int(carrier_freq)
-        except ValueError:
-            print(f"Invalid carrier frequency value: {carrier_freq}")
-            return
+        self.current_bandpass_signal = updated_bandpass_model
 
         # Init Barker Preemble
         self.init_barker_preemble()
@@ -326,17 +320,18 @@ class AppState(QObject):
         self.current_baseband_signal.data = np.concatenate((self.barker_baseband, self.current_baseband_signal.data))
 
         # IQ Modulation
-        iq_data = QuadratureModulator(carrier_freq).modulate(self.current_baseband_signal)
+        iq_data = QuadratureModulator(self.current_bandpass_signal.carrier_freq).modulate(self.current_baseband_signal)
 
         self.current_bandpass_signal = BandpassModel (
-            name = "Current Bandpass Signal",
+            name = self.current_bandpass_signal.name,
             data = iq_data,
             fs = self.FS,
             sym_rate = self.SYM_RATE,
             baseband_signal = self.current_baseband_signal,
-            carrier_freq = carrier_freq
+            carrier_freq = self.current_bandpass_signal.carrier_freq
         )
-        self.sig_bandpass_changed.emit(self.current_bandpass_signal)
+
+        self.sig_bandpass_processed.emit(self.current_bandpass_signal)
 
 
     #@profile_method
@@ -414,7 +409,6 @@ class AppState(QObject):
         except Exception as e:
             print(f"Error saving file: {e}")
 
-# TODO Reorga Dataclasses for export
-# TODO Frequency Response for Pulse
-# TODO Create Start Chirp?
+
+
 

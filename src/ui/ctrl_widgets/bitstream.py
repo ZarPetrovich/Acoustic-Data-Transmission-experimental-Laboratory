@@ -132,6 +132,10 @@ class BitstreamWidget(QGroupBox):
 
     def _on_revert_to_manual(self):
         self._current_bit_sequence = ""
-        self.entry_bitstream.clear()
+        self.clear_bitstream_entry()
         self.stacked_layout.setCurrentIndex(0)
-        self._emit_bitstream_from_entry()
+
+    def clear_bitstream_entry(self):
+        self.entry_bitstream.clear()
+        self.entry_bitstream.show()
+        self.entry_bitstream.setEnabled(True)

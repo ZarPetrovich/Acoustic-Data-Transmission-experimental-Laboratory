@@ -39,13 +39,13 @@ from src.ui.style.color_pallete import LIGHT_THEME_HEX
 # ===========================================================
 
 class MainGUILogic(QMainWindow):
+
     def __init__(self, initial_values):
         super().__init__()
         self.setWindowTitle(f"ADTX Labor Sym Rate: {initial_values['sym_rate']} baud")
         self.resize(1600, 900)
 
         # --- 1. Initialize UI Elements First ---
-        #self.ctrl_widget = ControlWidget()
         self.ctrl_widget = ControlWidget()
         self.matrix_widget = SignalMatrixView()
         self.footer = FooterWidget(self)
@@ -103,7 +103,7 @@ class MainGUILogic(QMainWindow):
         self._setup_connections()
 
         # --- 5. Manually trigger initial UI updates ---
-        self._on_pulse_ready(self.app_state.current_pulse_model)
+        self._on_pulse_update(self.app_state.current_pulse_model)
         self._on_mod_scheme_lut_update(self.app_state.current_mod_model)
 
     def _setup_ui(self):
@@ -137,6 +137,8 @@ class MainGUILogic(QMainWindow):
         self.ctrl_widget.sig_pulse_ui_event.connect(self._handle_pulse_ui_update)
         self.ctrl_widget.sig_mod_ui_event.connect(self._handle_mod_scheme_update)
         self.ctrl_widget.sig_bitstream_ui_event.connect(self._handle_bit_stream_update)
+        self.ctrl_widget.sig_clear_plots.connect(self._clear_plots_data)
+        self.ctrl_widget.sig_carrier_ui_event.connect(self._handle_carrier_freq_update)
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
@@ -145,10 +147,10 @@ class MainGUILogic(QMainWindow):
         # self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
-        self.app_state.sig_pulse_ready.connect(self._on_pulse_ready)
+        self.app_state.sig_pulse_ready.connect(self._on_pulse_update)
         self.app_state.sig_mod_lut_ready.connect(self._on_mod_scheme_lut_update)
-        self.app_state.sig_baseband_changed.connect(self._on_baseband_update)
-        self.app_state.sig_bandpass_changed.connect(self._on_bandpass_update)
+        self.app_state.sig_baseband_ready.connect(self._on_baseband_update)
+        self.app_state.sig_bandpass_processed.connect(self._on_bandpass_update)
 
         # # ---- Footer ----
         self.footer.btn_restart.clicked.connect(self.restart_application)
@@ -172,7 +174,7 @@ class MainGUILogic(QMainWindow):
 
         # ---- Init Pulse Model ----
         updated_pulse = PulseModel(
-            name="Pulse_Filter",
+            name=f"{pulse_type_enum.name} Pulse (Span: {task.span})",
             fs=self.app_state.FS,
             sym_rate=self.app_state.SYM_RATE,
             shape=pulse_type_enum,
@@ -205,13 +207,31 @@ class MainGUILogic(QMainWindow):
 
         self.app_state.on_bitstream_update(new_stream)
 
+    @Slot(CarrierUpdateTask)
+    def _handle_carrier_freq_update(self, task:CarrierUpdateTask):
+
+        carrier_freq = task.carrier_freq
+
+        updated_bandpass = BandpassModel(
+                    name=f"Bandpass Signal @ {task.carrier_freq} Hz",
+                    data=None,                          # AppState will calculate this
+                    fs=self.app_state.FS,               # Pull context from state
+                    sym_rate=self.app_state.SYM_RATE,   # Pull context from state
+                    baseband_signal=self.app_state.current_baseband_signal,
+                    carrier_freq=carrier_freq
+                )
+
+        self.app_state.on_carrier_freq_update(updated_bandpass)
+
+
     #------------------------------------------------------------
     # +++++ RETURN FROM APP STATE +++++
     #   SLOT Functions for ready state Signal Objects, to update
     #   GUI Widgets
     #------------------------------------------------------------
+
     @Slot(PulseModel)
-    def _on_pulse_ready(self, pulse_model: PulseModel):
+    def _on_pulse_update(self, pulse_model: PulseModel):
         self.pulse_time_plotter.update_plot(pulse_model)
         self.pulse_fft_plotter.update_plot(pulse_model)
         #self.pulse_periodogram_plotter.update_plot(pulse_container)
@@ -250,7 +270,7 @@ class MainGUILogic(QMainWindow):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     @Slot()
-    def _clear_bitstream_plot(self):
+    def _clear_plots_data(self):
         # Clear visual plots
         self.baseband_plotter.clear_plot()
         self.bb_spectrogram_plotter.clear_plot()
@@ -265,7 +285,7 @@ class MainGUILogic(QMainWindow):
         self.app_state.clear_signals()
 
         # Clear bitstream entry
-        self.ctrl_widget.clear_bitstream_entry()
+        self.ctrl_widget.bitstream_group.clear_bitstream_entry()
 
 
 #------------------------------------------------------------
@@ -298,7 +318,6 @@ def get_resource_path(relative_path):
 # +++++ Main Loop +++++
 #------------------------------------------------------------
 def main():
-
 
     parser = argparse.ArgumentParser(description="ADTx Laboratory")
     parser.add_argument('--no-intro', action='store_true', help='Skip the intro dialog and use default values.')
@@ -338,5 +357,3 @@ if __name__ == '__main__':
     main()
 
 
-# TODO Implement all Spectogram and FFT option
-# TODO Implement Interpolater
