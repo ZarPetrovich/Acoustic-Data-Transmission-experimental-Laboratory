@@ -135,6 +135,7 @@ class MainGUILogic(QMainWindow):
         # # ---- Connect control widget signals to app_state slots ----
 
         self.ctrl_widget.sig_pulse_ui_event.connect(self._handle_pulse_ui_update)
+        self.ctrl_widget.sig_export_pulse_path.connect(self.app_state.on_export_pulse)
         self.ctrl_widget.sig_mod_ui_event.connect(self._handle_mod_scheme_update)
         self.ctrl_widget.sig_bitstream_ui_event.connect(self._handle_bit_stream_update)
         self.ctrl_widget.sig_clear_plots.connect(self._clear_plots_data)
@@ -142,9 +143,9 @@ class MainGUILogic(QMainWindow):
 
         # ---- Connect Media Player widget signals to app_state slots ----
 
-        # self.ctrl_widget.sig_play_button_pressed.connect(self.app_state.on_play_btn_pressed)
-        # self.ctrl_widget.sig_stop_button_pressed.connect(self.app_state.on_stop_signal_pressed)
-        # self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
+        self.ctrl_widget.sig_play_pressed.connect(self.app_state.on_play_btn_pressed)
+        self.ctrl_widget.sig_stop_pressed.connect(self.app_state.on_stop_signal_pressed)
+        self.ctrl_widget.sig_export_wav_path.connect(self.app_state.on_export_path_changed)
 
         # # ---- Connect app_state signals to GUI update slots ----
         self.app_state.sig_pulse_ready.connect(self._on_pulse_update)

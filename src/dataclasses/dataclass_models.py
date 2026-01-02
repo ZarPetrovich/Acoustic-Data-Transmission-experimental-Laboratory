@@ -7,7 +7,7 @@ Can also be used to export the data
 """
 
 from dataclasses import dataclass, field
-from dataclasses_json import dataclass_json
+from dataclasses_json import dataclass_json, config
 from typing import Dict
 import numpy as np
 from src.constants import PulseShape, ModulationScheme, BitMappingScheme
@@ -25,7 +25,7 @@ from src.constants import PulseShape, ModulationScheme, BitMappingScheme
 @dataclass
 class SignalContext:
     name: str
-    data: np.ndarray
+    data: np.ndarray = field(metadata=config(exclude=lambda x: True))
 
 #------------------------------------------------------------
 # +++++ @@@SequenceContainer +++++
@@ -35,7 +35,12 @@ class SignalContext:
 @dataclass
 class ModulationModel(SignalContext):
     """Represents the mathematical state of the modulation stage."""
-    look_up_table: Dict[int, complex]
+    look_up_table: Dict[int, complex] = field(
+        metadata=config(
+            encoder=lambda x: {str(k): str(v) for k, v in x.items()},
+            decoder=lambda x: {int(k): complex(v) for k, v in x.items()}
+        )
+    )
     cardinality: int
     mapper: BitMappingScheme
     mod_scheme: ModulationScheme

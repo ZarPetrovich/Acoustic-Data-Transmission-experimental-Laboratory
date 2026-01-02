@@ -18,7 +18,7 @@ from src.modules.symbol_sequencer import SymbolSequencer
 from src.modules.baseband_modulator import BasebandSignalGenerator
 from src.modules.quadrature_modulator import QuadratureModulator
 from src.modules.audio_player import AudioPlaybackHandler
-from src.modules.helper_functions import export_transmitted_signal, add_barker_code
+from src.modules.helper_functions import export_transmitted_signal
 
 
 # def profile_method(method):
@@ -376,25 +376,42 @@ class AppState(QObject):
 
     @Slot()
     def on_export_path_changed(self, path):
-        """ Slot to be connected to the UI's export path change. """
-        if not hasattr(self, 'current_bandpass_signal') or self.current_bandpass_signal.data is None:
-                print("Error: No bandpass signal available to save.")
-                return
+        if not hasattr(self, 'current_bandpass_signal') or self.current_bandpass_signal is None:
+            print("Error: No bandpass signal available.")
+            return
 
+        # 1. Setup Paths
+        p = Path(path).with_suffix(".wav")
+        json_path = p.with_suffix(".json")
+
+        # 2. Export WAV
         try:
-            p = Path(path)
+            export_transmitted_signal(
+                self.current_bandpass_signal,
+                p.name,
+                str(p.parent.resolve())
+            )
+        except Exception as e:
+            print(f"WAV Export Failed: {e}")
 
-            if p.suffix.lower() != ".wav":
-                p = p.with_suffix(".wav")
+        # 3. Export JSON
+        try:
+            # Generate the string
+            json_data = self.current_bandpass_signal.to_json(indent=4)
 
-            file_name = p.name
-
-            file_path = str(p.parent.resolve())
-
-            export_transmitted_signal(self.current_bandpass_signal, file_name, file_path)
+            with open(json_path, 'w', encoding='utf-8') as f:
+                f.write(json_data)
+            print(f"Successfully saved metadata to {json_path.name}")
 
         except Exception as e:
-            print(f"Error during WAV file export: {e}")
+            import traceback
+            print(f"--- JSON Serialization Error Detail ---")
+            print(f"Error Type: {type(e).__name__}")
+            print(f"Message: {e}")
+            # This will point to the exact nested class that failed
+            traceback.print_exc()
+
+
 
     @Slot()
     def on_export_pulse(self, path):

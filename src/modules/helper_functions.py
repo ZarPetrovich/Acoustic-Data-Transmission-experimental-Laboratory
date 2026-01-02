@@ -58,11 +58,3 @@ def export_transmitted_signal(signal: BandpassModel, filename, filepath):
     except TypeError as e:
         print(f"Error during WAV file export: {e}")
 
-
-
-def add_barker_code(bitstream: BitStreamModel):
-    barker_bits = np.array([1,1,1,0,0,1,0])
-
-    bitstream = np.concatenate((barker_bits,bitstream.data))
-
-    return bitstream
